@@ -77,15 +77,15 @@ public:
 	KaminoCenteredAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
 	virtual ~KaminoCenteredAttr();
 
-	/* Getter */
-	fReal getValueAt(size_t x, size_t y) override;
-	/* Setter */
-	void setValueAt(size_t x, size_t y, fReal val) override;
+	// /* Getter */
+	// fReal getValueAt(size_t x, size_t y) override;
+	//  Setter 
+	// void setValueAt(size_t x, size_t y, fReal val) override;
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
 
-	/* Lerped Sampler */
-	fReal sampleAt(fReal x, fReal y) override;
+	// /* Lerped Sampler */
+	// fReal sampleAt(fReal x, fReal y) override;
 };
 
 
@@ -99,15 +99,15 @@ public:
 	KaminoUAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
 	virtual ~KaminoUAttr();
 
-	/* Getter */
-	fReal getValueAt(size_t x, size_t y) override;
-	/* Setter */
-	void setValueAt(size_t x, size_t y, fReal val) override;
+	// /* Getter */
+	// fReal getValueAt(size_t x, size_t y) override;
+	//  Setter 
+	// void setValueAt(size_t x, size_t y, fReal val) override;
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
 
-	/* Lerped Sampler */
-	fReal sampleAt(fReal x, fReal y) override;
+	// /* Lerped Sampler */
+	// fReal sampleAt(fReal x, fReal y) override;
 };
 
 
@@ -121,15 +121,15 @@ public:
 	KaminoVAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
 	virtual ~KaminoVAttr();
 
-	/* Getter */
-	fReal getValueAt(size_t x, size_t y) override;
-	/* Setter */
-	void setValueAt(size_t x, size_t y, fReal val) override;
+	// /* Getter */
+	// fReal getValueAt(size_t x, size_t y) override;
+	//  Setter 
+	// void setValueAt(size_t x, size_t y, fReal val) override;
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
 
-	/* Lerped Sampler */
-	fReal sampleAt(fReal x, fReal y) override;
+	// /* Lerped Sampler */
+	// fReal sampleAt(fReal x, fReal y) override;
 };
 
 // The solver class.
@@ -141,6 +141,8 @@ private:
 	size_t ny;
 	/* Grid size */
 	fReal gridLen;
+	/* Grid cell positions */
+	Eigen::Matrix<float, 2, 1>* gridPositions;
 
 	/* So that it remembers all these attributes within */
 	std::map<std::string, KaminoAttribute*> attributeTable;
@@ -150,14 +152,13 @@ private:
 	fReal timeStep;
 	fReal timeElapsed;
 
-	void advection();
-	void projection();
-	void bodyForce();
+	// TODO
+	// void advection();
+	// void projection();
+	// void bodyForce();
 
-	/* construct particle grid for viewing */
-	void build_particle_grid();
 	/* distribute initial velocity values at grid points */
-    void distribute_velocity();
+    void initialize_velocity();
     /* FBM noise function for velocity distribution */
     fReal FBM(const fReal x, const fReal y, const fReal persistance, const int octaves) const;
     /* 2D noise interpolation function for smooth FBM noise */

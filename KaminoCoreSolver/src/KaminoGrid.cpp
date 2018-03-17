@@ -20,9 +20,10 @@ KaminoGrid::~KaminoGrid()
 void KaminoGrid::stepForward(fReal timeStep)
 {
 	this->timeStep = timeStep;
-	advection();
-	projection();
-	bodyForce();
+	// TODO
+	// advection();
+	// projection();
+	// bodyForce();
 }
 
 void KaminoGrid::addCenteredAttr(std::string name)
@@ -100,34 +101,26 @@ void KaminoGrid::write_data_bgeo(const std::string& s, const int frame)
 {
     std::string file = s + std::to_string(frame) + ".bgeo";
 
-    Eigen::Matrix<float, 2, 1> gridPos[nx][ny];
-    Eigen::Matrix<float, 2, 1> gridVel[nx][ny];
-
-    float x = gridLen / 2.0;
-    float y = gridLen / 2.0;
-    for(size_t i = 0; i < nx; ++i){
-    	for(size_t j = 0; j < ny; ++j){
-    		gridPos[i][j] = Eigen::Matrix<float, 2, 1>(x, y);
-    		gridVel[i][j] = Eigen::Matrix<float, 2, 1>(0.0, 0.0);
-    		x += gridLen;
-    	}
-    	y += gridLen;
-    }
     // TODO: interpolate velocities to grid centers and combine into vec2
 
     Partio::ParticlesDataMutable* parts = Partio::create();
     Partio::ParticleAttribute pH, vH;
-    pH = parts->addAttribute("p", Partio::VECTOR, 2);
-    vH = parts->addAttribute("v", Partio::VECTOR, 2);
+    pH = parts->addAttribute("position", Partio::VECTOR, 3);
+    vH = parts->addAttribute("v", Partio::VECTOR, 3);
+
+    Eigen::Matrix<float, 3, 1> pos;
+    Eigen::Matrix<float, 3, 1> vel;
 
     for(size_t i = 0; i < ny; ++i){
         for(size_t j = 0; j < nx; ++j){
+        	pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
+        	vel = Eigen::Matrix<float, 3, 1>(0.0, 1.0, 0.0);
             int idx = parts->addParticle();
             float* p = parts->dataWrite<float>(pH, idx);
             float* v = parts->dataWrite<float>(vH, idx);
-            for (int k = 0; k < 2; ++k){
-                p[k] = gridPos[i][j][k];
-                v[k] = gridVel[i][j][k];
+            for (int k = 0; k < 3; ++k){
+                p[k] = pos(k, 0);
+                v[k] = vel(k, 0);
             }
         }
     }
@@ -135,18 +128,7 @@ void KaminoGrid::write_data_bgeo(const std::string& s, const int frame)
     parts->release();
 }
 
-void KaminoGrid::build_particle_grid()
-{
-	// fReal x = gridLen / 2.0;
-	// fReal y = gridLen / 2.0;
- //    for(size_t i = 0; i < nx; ++i){
- //    	for(size_t j = 0; j < ny; ++j){
- //    		//
- //    	}
- //    }
-}
-
-void KaminoGrid::distribute_velocity()
+void KaminoGrid::initialize_velocity()
 {
     // for(int i = 0; i < nx; ++i){
     //     for(int j = 0; j < ny; ++j){
