@@ -13,19 +13,30 @@
 *.userprefs
 
 # Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-bld/
-[Bb]in/
-[Oo]bj/
-[Ll]og/
+KaminoCoreSolver/[Dd]ebug/
+KaminoPlugin/[Dd]ebug/
+KaminoCoreSolver/[Dd]ebugPublic/
+KaminoPlugin/[Dd]ebugPublic/
+KaminoCoreSolver/[Rr]elease/
+KaminoPlugin/[Rr]elease/
+KaminoCoreSolver/[Rr]eleases/
+KaminoPlugin/[Rr]eleases/
+KaminoCoreSolver/x64/
+KaminoPlugin/x64/
+KaminoCoreSolver/x86/
+KaminoPlugin/x86/
+KaminoCoreSolver/bld/
+KaminoPlugin/bld/
+KaminoCoreSolver/[Bb]in/
+KaminoPlugin/[Bb]in/
+KaminoCoreSolver/[Oo]bj/
+KaminoPlugin/[Oo]bj/
+KaminoCoreSolver/[Ll]og/
+KaminoPlugin/[Ll]og/
 
 # Visual Studio 2015/2017 cache/options directory
-.vs/
+KaminoPlugin/.vs/
+KaminoCoreSolver/.vs/
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
