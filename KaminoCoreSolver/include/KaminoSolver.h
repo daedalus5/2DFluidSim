@@ -58,8 +58,10 @@ public:
 	virtual void setValueAt(size_t x, size_t y, fReal val);
 	/* Access */
 	virtual fReal& accessValueAt(size_t x, size_t y) = 0;
-	/* Lerped Sampler */
+	/* Lerped Sampler using world coordinates */
 	virtual fReal sampleAt(fReal x, fReal y);
+	/* Lerped Sampler taking in grid coordinates (treat gridLen as 1.0) */
+	virtual fReal sampleAtGC(fReal x, fReal y) = 0;
 };
 
 
@@ -84,7 +86,7 @@ public:
 	fReal& accessValueAt(size_t x, size_t y) override;
 
 	/* Lerped Sampler */
-	fReal sampleAt(fReal x, fReal y) override;
+	fReal sampleAtGC(fReal x, fReal y) override;
 };
 
 
@@ -101,7 +103,7 @@ public:
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
 	/* Lerped Sampler */
-	fReal sampleAt(fReal x, fReal y) override;
+	fReal sampleAtGC(fReal x, fReal y) override;
 };
 
 
@@ -118,7 +120,7 @@ public:
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
 	/* Lerped Sampler */
-	fReal sampleAt(fReal x, fReal y) override;
+	fReal sampleAtGC(fReal x, fReal y) override;
 };
 
 // The solver class.
