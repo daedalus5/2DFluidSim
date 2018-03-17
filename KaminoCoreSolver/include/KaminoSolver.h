@@ -4,7 +4,7 @@
 # include <map>
 # include <iostream>
 # include <vector>
-//#include "Partio.h"
+# include "Partio.h"
 # include <Eigen/Core>
 # include <Eigen/Dense>
 # include <cmath>
@@ -61,7 +61,7 @@ public:
 	/* Lerped Sampler using world coordinates */
 	virtual fReal sampleAt(fReal x, fReal y);
 	/* Lerped Sampler taking in grid coordinates (treat gridLen as 1.0) */
-	virtual fReal sampleAtGC(fReal x, fReal y) = 0;
+	//virtual fReal sampleAtGC(fReal x, fReal y) = 0;
 };
 
 
@@ -81,7 +81,7 @@ public:
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
 	/* Lerped Sampler */
-	fReal sampleAtGC(fReal x, fReal y) override;
+	//fReal sampleAtGC(fReal x, fReal y) override;
 };
 
 
@@ -98,7 +98,7 @@ public:
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
 	/* Lerped Sampler */
-	fReal sampleAtGC(fReal x, fReal y) override;
+	//fReal sampleAtGC(fReal x, fReal y) override;
 };
 
 
@@ -115,7 +115,7 @@ public:
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
 	/* Lerped Sampler */
-	fReal sampleAtGC(fReal x, fReal y) override;
+	//fReal sampleAtGC(fReal x, fReal y) override;
 };
 
 // The solver class.
@@ -127,8 +127,6 @@ private:
 	size_t ny;
 	/* Grid size */
 	fReal gridLen;
-	/* Grid cell positions */
-	Eigen::Matrix<float, 2, 1>* gridPositions;
 
 	/* So that it remembers all these attributes within */
 	std::map<std::string, KaminoAttribute*> attributeTable;
