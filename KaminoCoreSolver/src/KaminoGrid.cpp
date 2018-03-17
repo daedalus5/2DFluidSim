@@ -98,7 +98,7 @@ fReal KaminoGrid::rand(const Eigen::Matrix<fReal, 2, 1> vecA) const{
 
 void KaminoGrid::write_data_bgeo(const std::string& s, const int frame)
 {
-    std::string file = s + std::to_string(frame) + ".bgeo";
+   /* std::string file = s + std::to_string(frame) + ".bgeo";
 
     Eigen::Matrix<float, 2, 1> gridPos[nx][ny];
     Eigen::Matrix<float, 2, 1> gridVel[nx][ny];
@@ -132,7 +132,7 @@ void KaminoGrid::write_data_bgeo(const std::string& s, const int frame)
         }
     }
     Partio::write(file.c_str(), *parts);
-    parts->release();
+    parts->release();*/
 }
 
 void KaminoGrid::build_particle_grid()
