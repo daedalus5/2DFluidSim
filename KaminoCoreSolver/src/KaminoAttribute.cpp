@@ -1,6 +1,4 @@
-# include "KaminoSolver.h"
-# include <iostream>
-# include <cmath>
+# include "../include/KaminoSolver.h"
 
 KaminoAttribute::KaminoAttribute(std::string attributeName, size_t nx, size_t ny, fReal gridLen)
 	: nx(nx), ny(ny), gridLen(gridLen), attrName(attributeName)
@@ -33,10 +31,4 @@ void KaminoAttribute::setValueAt(size_t x, size_t y, fReal val)
 fReal KaminoAttribute::sampleAt(fReal x, fReal y)
 {
 
-}
-
-int main(int argc, char** argv)
-{
-	std::cout << "This worked" << std::endl;
-	return 0;
 }

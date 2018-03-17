@@ -7,12 +7,13 @@ if(CREATE_LOCAL_MAKEFILES)
   configure_file(${CISPBA_SOURCE_DIR}/Scripts/Makefile.in ${CMAKE_CURRENT_SOURCE_DIR}/Makefile @ONLY)
 endif()
 
-add_cispba_executable(2DFluidSim main.cpp
-                        KaminoSolver.h
-                        KaminoAttribute.cpp
-                        KaminoCenteredAttr.cpp
-                        KaminoFacedAttr.cpp
-                        KaminoGrid.cpp)
+add_cispba_executable(2DFluidSim KaminoCoreSolver/main.cpp
+                        KaminoCoreSolver/include/KaminoSolver.h
+                        KaminoCoreSolver/src/KaminoAttribute.cpp
+                        KaminoCoreSolver/src/KaminoCenteredAttr.cpp
+                        KaminoCoreSolver/src/KaminoUAttr.cpp
+                        KaminoCoreSolver/src/KaminoVAttr.cpp
+                        KaminoCoreSolver/src/KaminoGrid.cpp)
         
 target_include_directories(2DFluidSim SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIR})
 set(CMAKE_CXX_FLAGS "-O3")

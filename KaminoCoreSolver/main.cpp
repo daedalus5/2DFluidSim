@@ -8,6 +8,8 @@ const float dt = 1.0;
 const int frames = 10;
 const std::string filepath = "output/frame";
 
-int main(){
+int main(int argc, char** argv)
+{
+    std::cout << "This worked" << std::endl;
     return 0;
 }

@@ -1,4 +1,4 @@
-# include "KaminoSolver.h"
+# include "../include/KaminoSolver.h"
 
 KaminoCenteredAttr::KaminoCenteredAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen)
 	: KaminoAttribute(attributeName, nx, ny, gridLen)
@@ -6,6 +6,8 @@ KaminoCenteredAttr::KaminoCenteredAttr(std::string attributeName, size_t nx, siz
 	thisStep = new fReal[nx * ny];
 	nextStep = new fReal[nx * ny];
 }
+
+KaminoCenteredAttr::~KaminoCenteredAttr(){}
 
 fReal& KaminoCenteredAttr::accessValueAt(size_t x, size_t y)
 {

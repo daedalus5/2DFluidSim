@@ -4,10 +4,9 @@ KaminoGrid::KaminoGrid(size_t nx, size_t ny, fReal gridLength, fReal frameDurati
 	nx(nx), ny(ny), gridLen(gridLength), frameDuration(frameDuration),
 	timeStep(0.0), timeElapsed(0.0)
 {
-	addFacedAttr(u);		// u velocity
-	addFacedAttr(v);		// v velocity
-	addCenteredAttr(rho);	// rho density
-	addCenteredAttr(p);		// grid positions
+	addUAttr("u");		// u velocity
+	addVAttr("v");		// v velocity
+	addCenteredAttr("rho");	// rho density
 }
 
 KaminoGrid::~KaminoGrid()
@@ -32,9 +31,15 @@ void KaminoGrid::addCenteredAttr(std::string name)
 	this->attributeTable.emplace(std::pair<std::string, KaminoAttribute*>(name, ptr));
 }
 
-void KaminoGrid::addFacedAttr(std::string name)
+void KaminoGrid::addUAttr(std::string name)
 {
-	KaminoAttribute* ptr = new KaminoFacedAttr(name, this->nx, this->ny, this->gridLen);
+	KaminoAttribute* ptr = new KaminoUAttr(name, this->nx, this->ny, this->gridLen);
+	this->attributeTable.emplace(std::pair<std::string, KaminoAttribute*>(name, ptr));
+}
+
+void KaminoGrid::addVAttr(std::string name)
+{
+	KaminoAttribute* ptr = new KaminoVAttr(name, this->nx, this->ny, this->gridLen);
 	this->attributeTable.emplace(std::pair<std::string, KaminoAttribute*>(name, ptr));
 }
 
@@ -84,7 +89,7 @@ fReal KaminoGrid::interpNoise2D(const fReal x, const fReal y) const{
 fReal KaminoGrid::rand(const Eigen::Matrix<fReal, 2, 1> vecA) const{
     // return pseudorandom number between -1 and 1
     Eigen::Matrix<fReal, 2, 1> vecB = Eigen::Matrix<fReal, 2, 1>(12.9898, 4.1414);
-	freal val = sin(vecA.Eigen::dot(vecB) * 43758.5453);
+	fReal val = sin(vecA.dot(vecB) * 43758.5453);
 	return val - std::floor(val);
 }
 
@@ -94,18 +99,35 @@ fReal KaminoGrid::rand(const Eigen::Matrix<fReal, 2, 1> vecA) const{
 void KaminoGrid::write_data_bgeo(const std::string& s, const int frame)
 {
     std::string file = s + std::to_string(frame) + ".bgeo";
+
+    Eigen::Matrix<float, 2, 1> gridPos[nx][ny];
+    Eigen::Matrix<float, 2, 1> gridVel[nx][ny];
+
+    float x = gridLen / 2.0;
+    float y = gridLen / 2.0;
+    for(size_t i = 0; i < nx; ++i){
+    	for(size_t j = 0; j < ny; ++j){
+    		gridPos[i][j] = Eigen::Matrix<float, 2, 1>(x, y);
+    		gridVel[i][j] = Eigen::Matrix<float, 2, 1>(0.0, 0.0);
+    		x += gridLen;
+    	}
+    	y += gridLen;
+    }
+    // TODO: interpolate velocities to grid centers and combine into vec2
+
     Partio::ParticlesDataMutable* parts = Partio::create();
     Partio::ParticleAttribute pH, vH;
     pH = parts->addAttribute("p", Partio::VECTOR, 2);
     vH = parts->addAttribute("v", Partio::VECTOR, 2);
-    for(int i = 0; i < ny; ++i){
-        for(int j = 0; j < nx; ++j){
+
+    for(size_t i = 0; i < ny; ++i){
+        for(size_t j = 0; j < nx; ++j){
             int idx = parts->addParticle();
             float* p = parts->dataWrite<float>(pH, idx);
             float* v = parts->dataWrite<float>(vH, idx);
             for (int k = 0; k < 2; ++k){
-                p[k] = attributeTable[u].getValueAt(i, j);
-                v[k] = attributeTable[v].getValueAt(i, j);
+                p[k] = gridPos[i][j][k];
+                v[k] = gridVel[i][j][k];
             }
         }
     }
@@ -113,30 +135,22 @@ void KaminoGrid::write_data_bgeo(const std::string& s, const int frame)
     parts->release();
 }
 
-Eigen::Matrix<float, 2, 1> KaminoGrid::FBM() const
-{
-    return Eigen::Matrix<float, 2, 1>(0.0,0.0);
-}
-
 void KaminoGrid::build_particle_grid()
 {
-    float x = 0.f;
-    float y = 0.f;
-
-    for(int i = 0; i < ny; ++i){
-        for(int j = 0; j < nx; ++j){
-             = Eigen::Matrix<float, 2, 1>(x, y);
-            x += gridLen;
-        }
-        y += gridLen;
-    }
+	// fReal x = gridLen / 2.0;
+	// fReal y = gridLen / 2.0;
+ //    for(size_t i = 0; i < nx; ++i){
+ //    	for(size_t j = 0; j < ny; ++j){
+ //    		//
+ //    	}
+ //    }
 }
 
 void KaminoGrid::distribute_velocity()
 {
-    for(int i = 0; i < nx; ++i){
-        for(int j = 0; j < ny; ++j){
-            velocities[i][j] = Eigen::Matrix<float, 2, 1>(0.0, 0.0);
-        }
-    }
+    // for(int i = 0; i < nx; ++i){
+    //     for(int j = 0; j < ny; ++j){
+    //         velocities[i][j] = Eigen::Matrix<float, 2, 1>(0.0, 0.0);
+    //     }
+    // }
 }

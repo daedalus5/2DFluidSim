@@ -8,6 +8,7 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <math.h>
+#include <cmath>
 
 # define DEBUGBUILD
 
@@ -74,6 +75,7 @@ class KaminoCenteredAttr : public KaminoAttribute
 {
 public:
 	KaminoCenteredAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
+	virtual ~KaminoCenteredAttr();
 
 	/* Getter */
 	fReal getValueAt(size_t x, size_t y) override;
@@ -87,14 +89,37 @@ public:
 };
 
 
-// Those that are on the faces of the grids.
+// The U velocity.
 /*
-	Note that we have to allocate for (nx + 1) by (ny + 1) fReals
+	Note that we have to allocate for (nx + 1) by ny fReals
 */
-class KaminoFacedAttr : public KaminoAttribute
+class KaminoUAttr : public KaminoAttribute
 {
 public:
-	KaminoFacedAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
+	KaminoUAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
+	virtual ~KaminoUAttr();
+
+	/* Getter */
+	fReal getValueAt(size_t x, size_t y) override;
+	/* Setter */
+	void setValueAt(size_t x, size_t y, fReal val) override;
+	/* Access */
+	fReal& accessValueAt(size_t x, size_t y) override;
+
+	/* Lerped Sampler */
+	fReal sampleAt(fReal x, fReal y) override;
+};
+
+
+// The V velocity
+/*
+	Note that we have to allocate for nx by (ny + 1) fReals
+*/
+class KaminoVAttr : public KaminoAttribute
+{
+public:
+	KaminoVAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
+	virtual ~KaminoVAttr();
 
 	/* Getter */
 	fReal getValueAt(size_t x, size_t y) override;
@@ -147,7 +172,8 @@ public:
 	void stepForward(fReal timeStep);
 
 	void addCenteredAttr(std::string name);
-	void addFacedAttr(std::string name);
+	void addUAttr(std::string name);
+	void addVAttr(std::string name);
 	KaminoAttribute* getAttributeNamed(std::string name);
 	KaminoAttribute* operator[](std::string name);
 

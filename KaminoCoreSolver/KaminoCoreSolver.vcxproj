@@ -17,7 +17,11 @@
     <ClInclude Include="include\KaminoSolver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\KaminoSolver.cpp" />
+    <ClCompile Include="src\KaminoAttribute.cpp" />
+    <ClCompile Include="src\KaminoCenteredAttr.cpp" />
+    <ClCompile Include="src\KaminoUAttr.cpp" />
+    <ClCompile Include="src\KaminoGrid.cpp" />
+    <ClCompile Include="src\KaminoVAttr.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8137E345-F77E-4CFE-9233-EBAFE607315A}</ProjectGuid>

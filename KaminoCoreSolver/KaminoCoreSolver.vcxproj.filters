@@ -22,7 +22,19 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\KaminoSolver.cpp">
+    <ClCompile Include="src\KaminoAttribute.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KaminoCenteredAttr.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KaminoGrid.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KaminoUAttr.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KaminoVAttr.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
