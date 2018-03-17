@@ -99,6 +99,7 @@ fReal KaminoGrid::rand(const Eigen::Matrix<fReal, 2, 1> vecA) const{
 
 void KaminoGrid::write_data_bgeo(const std::string& s, const int frame)
 {
+# ifndef _MSC_VER
     std::string file = s + std::to_string(frame) + ".bgeo";
 
     // TODO: interpolate velocities to grid centers and combine into vec2
@@ -126,6 +127,7 @@ void KaminoGrid::write_data_bgeo(const std::string& s, const int frame)
     }
     Partio::write(file.c_str(), *parts);
     parts->release();
+# endif
 }
 
 void KaminoGrid::initialize_velocity()

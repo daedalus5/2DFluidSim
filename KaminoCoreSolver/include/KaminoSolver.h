@@ -2,13 +2,12 @@
 
 # include <string>
 # include <map>
-#include <iostream>
-#include <vector>
-#include "Partio.h"
-#include <Eigen/Core>
-#include <Eigen/Dense>
-#include <math.h>
-#include <cmath>
+# include <iostream>
+# include <vector>
+//#include "Partio.h"
+# include <Eigen/Core>
+# include <Eigen/Dense>
+# include <cmath>
 
 # define DEBUGBUILD
 
@@ -59,8 +58,10 @@ public:
 	virtual void setValueAt(size_t x, size_t y, fReal val);
 	/* Access */
 	virtual fReal& accessValueAt(size_t x, size_t y) = 0;
-	/* Lerped Sampler */
+	/* Lerped Sampler using world coordinates */
 	virtual fReal sampleAt(fReal x, fReal y);
+	/* Lerped Sampler taking in grid coordinates (treat gridLen as 1.0) */
+	virtual fReal sampleAtGC(fReal x, fReal y) = 0;
 };
 
 
@@ -77,15 +78,10 @@ public:
 	KaminoCenteredAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
 	virtual ~KaminoCenteredAttr();
 
-	// /* Getter */
-	// fReal getValueAt(size_t x, size_t y) override;
-	//  Setter 
-	// void setValueAt(size_t x, size_t y, fReal val) override;
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
-
-	// /* Lerped Sampler */
-	// fReal sampleAt(fReal x, fReal y) override;
+	/* Lerped Sampler */
+	fReal sampleAtGC(fReal x, fReal y) override;
 };
 
 
@@ -99,15 +95,10 @@ public:
 	KaminoUAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
 	virtual ~KaminoUAttr();
 
-	// /* Getter */
-	// fReal getValueAt(size_t x, size_t y) override;
-	//  Setter 
-	// void setValueAt(size_t x, size_t y, fReal val) override;
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
-
-	// /* Lerped Sampler */
-	// fReal sampleAt(fReal x, fReal y) override;
+	/* Lerped Sampler */
+	fReal sampleAtGC(fReal x, fReal y) override;
 };
 
 
@@ -121,15 +112,10 @@ public:
 	KaminoVAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
 	virtual ~KaminoVAttr();
 
-	// /* Getter */
-	// fReal getValueAt(size_t x, size_t y) override;
-	//  Setter 
-	// void setValueAt(size_t x, size_t y, fReal val) override;
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
-
-	// /* Lerped Sampler */
-	// fReal sampleAt(fReal x, fReal y) override;
+	/* Lerped Sampler */
+	fReal sampleAtGC(fReal x, fReal y) override;
 };
 
 // The solver class.
