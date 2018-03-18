@@ -146,7 +146,7 @@ private:
 	/* distribute initial velocity values at grid points */
     void initialize_velocity();
     /* FBM noise function for velocity distribution */
-    fReal FBM(const fReal x, const fReal y, const fReal persistance, const int octaves) const;
+    fReal FBM(const fReal x, const fReal y);
     /* 2D noise interpolation function for smooth FBM noise */
     fReal interpNoise2D(const fReal x, const fReal y) const;
     /* returns a pseudorandom number between -1 and 1 */
