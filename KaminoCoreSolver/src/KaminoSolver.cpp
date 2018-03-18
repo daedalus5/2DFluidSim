@@ -4,8 +4,8 @@ KaminoSolver::KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDu
 	nx(nx), ny(ny), gridLen(gridLength), frameDuration(frameDuration),
 	timeStep(0.0), timeElapsed(0.0)
 {
-	addAttr("u");		// u velocity
-	addAttr("v");		// v velocity
+	addAttr("u", 0.5, 0.0);		// u velocity
+	addAttr("v", 0.0, 0.5);		// v velocity
 	addAttr("rho");	// rho density
 
 	initialize_velocity();

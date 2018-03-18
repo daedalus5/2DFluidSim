@@ -63,6 +63,9 @@ Bilinear interpolated for now.
 */
 fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 {
+	x /= gridLen;
+	y /= gridLen;
+
 	size_t lowerX = getWarpedXIndex(x);
 	size_t lowerY = getWarpedYIndex(y);
 	size_t upperX = (lowerX + 1) % nx;
@@ -85,7 +88,8 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 
 size_t KaminoQuantity::getWarpedXIndex(fReal x)
 {
-	int loops = static_cast<int>(std::floor(x / (static_cast<fReal>(this->nx) * gridLen)));
+	x += xOffset;
+	int loops = static_cast<int>(std::floor(x / static_cast<fReal>(this->nx)));
 	int flooredX = static_cast<int>(std::floor(x));
 	int warpedX = flooredX - loops * static_cast<int>(nx);
 
@@ -94,7 +98,8 @@ size_t KaminoQuantity::getWarpedXIndex(fReal x)
 
 size_t KaminoQuantity::getWarpedYIndex(fReal y)
 {
-	int loops = static_cast<int>(std::floor(y / (static_cast<fReal>(this->ny) * gridLen)));
+	y += yOffset;
+	int loops = static_cast<int>(std::floor(y / static_cast<fReal>(this->ny)));
 	int flooredY = static_cast<int>(std::floor(y));
 	int warpedY = flooredY - loops * static_cast<int>(ny);
 
