@@ -72,9 +72,7 @@ public:
 	/* Access */
 	virtual fReal& accessValueAt(size_t x, size_t y);
 	/* Lerped Sampler using world coordinates */
-	virtual fReal sampleAt(fReal x, fReal y);
-	/* Lerped Sampler taking in grid coordinates (treat gridLen as 1.0) */
-	virtual fReal sampleAtGC(fReal x, fReal y) = 0;
+	virtual fReal sampleAt(fReal x, fReal y) = 0;
 };
 
 
@@ -96,7 +94,7 @@ public:
 	virtual ~KaminoCenteredAttr();
 
 	/* Lerped Sampler */
-	fReal sampleAtGC(fReal x, fReal y) override;
+	fReal sampleAt(fReal x, fReal y) override;
 };
 
 
@@ -115,7 +113,7 @@ public:
 	virtual ~KaminoUAttr();
 
 	/* Lerped Sampler */
-	fReal sampleAtGC(fReal x, fReal y) override;
+	fReal sampleAt(fReal x, fReal y) override;
 };
 
 
@@ -134,7 +132,7 @@ public:
 	virtual ~KaminoVAttr();
 
 	/* Lerped Sampler */
-	fReal sampleAtGC(fReal x, fReal y) override;
+	fReal sampleAt(fReal x, fReal y) override;
 };
 
 

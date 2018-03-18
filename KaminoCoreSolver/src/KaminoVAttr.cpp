@@ -3,8 +3,8 @@
 KaminoVAttr::KaminoVAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen)
 	: KaminoAttribute(attributeName, nx, ny, gridLen)
 {
-	thisStep = new fReal[nx * (ny + 1)];
-	nextStep = new fReal[nx * (ny + 1)];
+	thisStep = new fReal[nx * ny];
+	nextStep = new fReal[nx * ny];
 }
 
 KaminoVAttr::~KaminoVAttr(){}
@@ -20,7 +20,7 @@ size_t KaminoVAttr::getIndex(size_t x, size_t y)
 /*
 	Interpolated with Hermite spline.
 */
-fReal KaminoVAttr::sampleAtGC(fReal x, fReal y)
+fReal KaminoVAttr::sampleAt(fReal x, fReal y)
 {
 	fReal xOffset = 0.5;
 	fReal yOffset = 0.5;
@@ -30,7 +30,7 @@ fReal KaminoVAttr::sampleAtGC(fReal x, fReal y)
 	size_t lowerX = getWarpedXIndex(x);
 	size_t lowerY = getWarpedYIndex(y);
 	size_t upperX = (lowerX + 1) % nx;
-	size_t upperY = (lowerY + 1) % (ny + 1);
+	size_t upperY = (lowerY + 1) % ny;
 
 	fReal lowerLeft = getValueAt(lowerX, lowerY);
 	fReal upperLeft = getValueAt(lowerX, upperY);
@@ -51,8 +51,9 @@ fReal KaminoVAttr::sampleAtGC(fReal x, fReal y)
 // x has no offset yet.
 size_t KaminoVAttr::getWarpedXIndex(fReal x)
 {
-	int loops = std::floor(x / static_cast<fReal>(this->nx));
-	int flooredX = std::floor(x);
+	x = x / gridLen;
+	int loops = static_cast<int>(std::floor(x / static_cast<fReal>(this->nx)));
+	int flooredX = static_cast<int>(std::floor(x));
 	int warpedX = flooredX - loops * static_cast<int>(nx);
 
 	return static_cast<size_t>(warpedX);
@@ -61,8 +62,9 @@ size_t KaminoVAttr::getWarpedXIndex(fReal x)
 // y has no offset yet either.
 size_t KaminoVAttr::getWarpedYIndex(fReal y)
 {
-	int loops = std::floor(y / static_cast<fReal>(this->ny + 1));
-	int flooredY = std::floor(y);
+	y = y / gridLen;
+	int loops = static_cast<int>(std::floor(y / static_cast<fReal>(this->ny)));
+	int flooredY = static_cast<int>(std::floor(y));
 	int warpedY = flooredY - loops * static_cast<int>(ny);
 
 	return static_cast<size_t>(warpedY);

@@ -27,11 +27,6 @@ void KaminoAttribute::setValueAt(size_t x, size_t y, fReal val)
 	this->accessValueAt(x, y) = val;
 }
 
-fReal KaminoAttribute::sampleAt(fReal x, fReal y)
-{
-	return sampleAtGC(x / gridLen, y / gridLen);
-}
-
 fReal& KaminoAttribute::accessValueAt(size_t x, size_t y)
 {
 	return this->thisStep[getIndex(x, y)];
