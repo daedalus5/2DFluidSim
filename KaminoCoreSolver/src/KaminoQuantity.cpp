@@ -76,8 +76,8 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 	fReal lowerRight = getValueAt(upperX, lowerY);
 	fReal upperRight = getValueAt(upperX, upperY);
 
-	fReal alphaX = x - lowerX;
-	fReal alphaY = y - lowerY;
+	fReal alphaX = x - static_cast<fReal>(std::floor(x));
+	fReal alphaY = y - static_cast<fReal>(std::floor(y));
 
 	fReal lerpedLower = KaminoLerp<fReal>(lowerLeft, lowerRight, alphaX);
 	fReal lerpedUpper = KaminoLerp<fReal>(upperLeft, upperRight, alphaX);

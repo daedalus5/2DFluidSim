@@ -26,6 +26,16 @@ void KaminoSolver::stepForward(fReal timeStep)
 	advection();
 	// bodyForce();
 	// projection();
+# ifdef DEBUGBUILD
+	for (unsigned gridX = 0; gridX != nx; ++gridX)
+	{
+		for (unsigned gridY = 0; gridY != ny; ++gridY)
+		{
+			std::cout << attributeTable["u"]->getValueAt(gridX, gridY) << '\t';
+		}
+		std::cout << '\n';
+	}
+# endif
 }
 
 void KaminoSolver::addAttr(std::string name, fReal xOffset, fReal yOffset)
