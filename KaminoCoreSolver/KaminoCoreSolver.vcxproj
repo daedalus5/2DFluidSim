@@ -15,12 +15,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\KaminoQuantity.h" />
-    <ClInclude Include="include\KaminoSolver.h" />
+    <ClInclude Include="include\KaminoAttribute.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\KaminoAttribute.cpp" />
     <ClCompile Include="src\KaminoCenteredAttr.cpp" />
     <ClCompile Include="src\KaminoQuantity.cpp" />
+    <ClCompile Include="src\KaminoSolver.cpp" />
     <ClCompile Include="src\KaminoUAttr.cpp" />
     <ClCompile Include="src\KaminoGrid.cpp" />
     <ClCompile Include="src\KaminoVAttr.cpp" />

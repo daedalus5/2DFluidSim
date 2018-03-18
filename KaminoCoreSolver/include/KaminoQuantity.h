@@ -72,6 +72,9 @@ public:
 	fReal& accessValueAt(size_t x, size_t y);
 	/* Lerped Sampler using world coordinates */
 	fReal sampleAt(fReal x, fReal y);
+	/* Given the index, show its origin in world coordinates*/
+	fReal getXCoordinateAt(size_t x);
+	fReal getYCoordinateAt(size_t y);
 };
 
 

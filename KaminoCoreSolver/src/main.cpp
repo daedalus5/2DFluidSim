@@ -1,7 +1,7 @@
-# include "../include/KaminoAttribute.h"
+# include "../include/KaminoQuantity.h"
 
 int main(int argc, char** argv)
 {
-	KaminoGrid solver = KaminoGrid(4, 4, 0.1);
+	KaminoSolver solver = KaminoSolver(4, 4, 0.1);
 	solver.stepForward(0.001);
 }

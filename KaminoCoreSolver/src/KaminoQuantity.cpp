@@ -9,8 +9,8 @@ KaminoQuantity::KaminoQuantity(std::string attributeName, size_t nx, size_t ny, 
 
 KaminoQuantity::~KaminoQuantity()
 {
-	delete[] this->thisStep;
-	delete[] this->nextStep;
+	delete[] thisStep;
+	delete[] nextStep;
 }
 
 void KaminoQuantity::swapBuffer()
@@ -48,6 +48,16 @@ size_t KaminoQuantity::getIndex(size_t x, size_t y)
 	return x * nx + y;
 }
 
+fReal KaminoQuantity::getXCoordinateAt(size_t x)
+{
+	return x * this->gridLen - xOffset;
+}
+
+fReal KaminoQuantity::getYCoordinateAt(size_t y)
+{
+	return y * this->gridLen - yOffset;
+}
+
 /*
 Bilinear interpolated for now.
 */
@@ -75,7 +85,7 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 
 size_t KaminoQuantity::getWarpedXIndex(fReal x)
 {
-	int loops = static_cast<int>(std::floor(x / static_cast<fReal>(this->nx)));
+	int loops = static_cast<int>(std::floor(x / (static_cast<fReal>(this->nx) * gridLen)));
 	int flooredX = static_cast<int>(std::floor(x));
 	int warpedX = flooredX - loops * static_cast<int>(nx);
 
@@ -84,7 +94,7 @@ size_t KaminoQuantity::getWarpedXIndex(fReal x)
 
 size_t KaminoQuantity::getWarpedYIndex(fReal y)
 {
-	int loops = static_cast<int>(std::floor(y / static_cast<fReal>(this->ny)));
+	int loops = static_cast<int>(std::floor(y / (static_cast<fReal>(this->ny) * gridLen)));
 	int flooredY = static_cast<int>(std::floor(y));
 	int warpedY = flooredY - loops * static_cast<int>(ny);
 

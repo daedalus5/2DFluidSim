@@ -141,7 +141,7 @@ void KaminoSolver::initialize_velocity()
 	y = -gridLen / 2.0;
 
 	for (size_t i = 0; i < nx; ++i) {
-		for (size_t j = 0; j < ny + 1; ++j) {
+		for (size_t j = 0; j < ny; ++j) {
 			val = FBM(std::sin(2.0 * M_PI *x / (nx * gridLen)), sin(2.0 * M_PI * y / (ny * gridLen)));
 			attributeTable["v"]->setValueAt(i, j, val);
 			y += gridLen;
@@ -159,8 +159,8 @@ void KaminoSolver::advection()
 		{
 			for (size_t gridY = 0; gridY < this->ny; ++gridY)
 			{
-				fReal gX = static_cast<fReal>(gridX * this->gridLen);
-				fReal gY = static_cast<fReal>(gridY * this->gridLen);
+				fReal gX = attr->getXCoordinateAt(gridX);
+				fReal gY = attr->getYCoordinateAt(gridY);
 
 				fReal uG = (*this)["u"]->sampleAt(gX, gY);
 				fReal vG = (*this)["v"]->sampleAt(gX, gY);
