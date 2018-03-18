@@ -23,7 +23,7 @@ void KaminoGrid::stepForward(fReal timeStep)
 {
 	this->timeStep = timeStep;
 	// TODO
-	// advection();
+	advection();
 	// bodyForce();
 	// projection();
 }
@@ -48,7 +48,7 @@ void KaminoGrid::addVAttr(std::string name)
 
 KaminoAttribute* KaminoGrid::getAttributeNamed(std::string name)
 {
-	return (*this).getAttributeNamed(name);
+	return (*this)[name];
 }
 
 KaminoAttribute* KaminoGrid::operator[](std::string name)
@@ -191,4 +191,9 @@ void KaminoGrid::advection()
 			}
 		}
 	}
+}
+
+void KaminoGrid::swapAttrBuffers()
+{
+
 }

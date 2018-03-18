@@ -159,6 +159,9 @@ private:
 	void projection();
 	void bodyForce();
 
+	// Swap all these buffers of the attributes.
+	void swapAttrBuffers();
+
 	/* distribute initial velocity values at grid points */
     void initialize_velocity();
     /* FBM noise function for velocity distribution */
