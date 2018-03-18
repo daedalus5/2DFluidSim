@@ -13,6 +13,8 @@
 *.userprefs
 
 # Build results
+Release64/
+KaminoPlugin/Release64
 KaminoCoreSolver/[Dd]ebug/
 KaminoPlugin/[Dd]ebug/
 KaminoCoreSolver/[Dd]ebugPublic/

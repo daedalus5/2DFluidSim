@@ -154,7 +154,7 @@ void KaminoGrid::initialize_velocity()
 
     for(size_t i = 0; i < nx; ++i){
         for(size_t j = 0; j < ny + 1; ++j){
-        	val = FBM(sin(2*M_PI*x / (nx*gridLen)), sin(2*M_PI*y / (ny*gridLen)));
+        	val = FBM(std::sin(2.0 * M_PI *x / (nx * gridLen)), sin(2.0 * M_PI * y / (ny * gridLen)));
             attributeTable["v"]->setValueAt(i, j, val);
             y += gridLen;
         }
