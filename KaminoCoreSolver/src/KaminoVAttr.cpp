@@ -16,3 +16,11 @@ fReal& KaminoVAttr::accessValueAt(size_t x, size_t y)
 # endif
 	return this->thisStep[x * nx + y];
 }
+
+/*
+	Interpolated with Hermite spline.
+*/
+fReal KaminoVAttr::sampleAtGC(fReal x, fReal y)
+{
+
+}

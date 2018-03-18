@@ -16,3 +16,8 @@ fReal& KaminoUAttr::accessValueAt(size_t x, size_t y)
 # endif
 	return this->thisStep[x * (nx + 1) + y];
 }
+
+fReal KaminoUAttr::sampleAtGC(fReal x, fReal y)
+{
+
+}

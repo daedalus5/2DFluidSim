@@ -4,7 +4,9 @@
 # include <map>
 # include <iostream>
 # include <vector>
+# ifndef _MSC_VER
 # include "Partio.h"
+# endif
 # include <Eigen/Core>
 # include <Eigen/Dense>
 # include <cmath>
@@ -61,7 +63,7 @@ public:
 	/* Lerped Sampler using world coordinates */
 	virtual fReal sampleAt(fReal x, fReal y);
 	/* Lerped Sampler taking in grid coordinates (treat gridLen as 1.0) */
-	//virtual fReal sampleAtGC(fReal x, fReal y) = 0;
+	virtual fReal sampleAtGC(fReal x, fReal y) = 0;
 };
 
 
@@ -81,7 +83,7 @@ public:
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
 	/* Lerped Sampler */
-	//fReal sampleAtGC(fReal x, fReal y) override;
+	fReal sampleAtGC(fReal x, fReal y) override;
 };
 
 
@@ -98,7 +100,7 @@ public:
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
 	/* Lerped Sampler */
-	//fReal sampleAtGC(fReal x, fReal y) override;
+	fReal sampleAtGC(fReal x, fReal y) override;
 };
 
 
@@ -115,7 +117,7 @@ public:
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y) override;
 	/* Lerped Sampler */
-	//fReal sampleAtGC(fReal x, fReal y) override;
+	fReal sampleAtGC(fReal x, fReal y) override;
 };
 
 // The solver class.
