@@ -21,7 +21,11 @@ typedef double fReal;
 
 // Handy Lerp.
 template <class Type>
-Type KaminoLerp(const Type &fromEndPoint, const Type &toEndPoint, double factor);
+Type KaminoLerp(const Type &fromEndPoint, const Type &toEndPoint, double factor)
+{
+	return (1.0 - factor) * fromEndPoint + factor * toEndPoint;
+}
+
 
 // The attribute base class.
 class KaminoQuantity
