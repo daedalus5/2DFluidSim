@@ -47,9 +47,6 @@ protected:
 	fReal* thisStep;
 	fReal* nextStep;
 
-	/* Swap the buffer */
-	void swapBuffer();
-
 	/* Wrap things up */
 	virtual size_t getWarpedXIndex(fReal x) = 0;
 	virtual size_t getWarpedYIndex(fReal y) = 0;
@@ -62,6 +59,9 @@ public:
 	KaminoAttribute(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
 	/* Destructor */
 	virtual ~KaminoAttribute();
+
+	/* Swap the buffer */
+	void swapBuffer();
 
 	/* Get the current step */
 	virtual fReal getValueAt(size_t x, size_t y);

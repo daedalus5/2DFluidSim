@@ -191,9 +191,13 @@ void KaminoGrid::advection()
 			}
 		}
 	}
+	this->swapAttrBuffers();
 }
 
 void KaminoGrid::swapAttrBuffers()
 {
-
+	for (auto quantity : this->attributeTable)
+	{
+		quantity.second->swapBuffer();
+	}
 }
