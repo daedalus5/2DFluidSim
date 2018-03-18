@@ -164,5 +164,31 @@ void KaminoGrid::initialize_velocity()
 
 void KaminoGrid::advection()
 {
+	for (auto quantity : this->attributeTable)
+	{
+		KaminoAttribute* attr = quantity.second;
+		for (size_t gridX = 0; gridX < this->nx; ++gridX)
+		{
+			for (size_t gridY = 0; gridY < this->ny; ++gridY)
+			{
+				fReal gX = static_cast<fReal>(gridX * this->gridLen);
+				fReal gY = static_cast<fReal>(gridY * this->gridLen);
 
+				fReal uG = (*this)["u"]->sampleAt(gX, gY);
+				fReal vG = (*this)["v"]->sampleAt(gX, gY);
+
+				fReal midX = gX - 0.5 * timeStep * uG;
+				fReal midY = gY - 0.5 * timeStep * vG;
+
+				fReal uMid = (*this)["u"]->sampleAt(midX, midY);
+				fReal vMid = (*this)["v"]->sampleAt(midX, midY);
+
+				fReal pX = gX - timeStep * uMid;
+				fReal pY = gY - timeStep * vMid;
+
+				fReal advectedVal = attr->sampleAt(pX, pY);
+				attr->writeValueTo(gridX, gridY, advectedVal);
+			}
+		}
+	}
 }
