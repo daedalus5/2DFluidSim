@@ -81,7 +81,7 @@ void KaminoGrid::projection()
 	// Populate updated quantities
     for(size_t i = 0; i < nx; ++i){
     	for(size_t j = 0; j < ny; ++j){
-    		attributeTable["rho"]->setValueAt(i, j) = rho(j*nx + i);
+    		attributeTable["rho"]->writeValueTo(i, j) = rho(j*nx + i);
     	}	
     }
     attributeTable["rho"]->swapBuffer();
@@ -89,15 +89,15 @@ void KaminoGrid::projection()
     for(size_t i = 0; i < nx + 1; ++i){
     	for(size_t j = 0; j < ny; ++j){
     		if(i == 0){
-    			attributeTable["u"]->setValueAt(i, j) = attributeTable["u"]->getValueAt(i, j) -
+    			attributeTable["u"]->writeValueTo(i, j) = attributeTable["u"]->getValueAt(i, j) -
     			scale * invGridLen * (attributeTable["rho"]->getValueAt(i, j) - attributeTable["rho"]->getValueAt(nx - 1, j))
     		}
     		else if(i == nx){
-    			attributeTable["u"]->setValueAt(i, j) = attributeTable["u"]->getValueAt(i, j) -
+    			attributeTable["u"]->writeValueTo(i, j) = attributeTable["u"]->getValueAt(i, j) -
     			scale * invGridLen * (attributeTable["rho"]->getValueAt(0, j) - attributeTable["rho"]->getValueAt(i - 1, j))
     		}
     		else{
-    			attributeTable["u"]->setValueAt(i, j) = attributeTable["u"]->getValueAt(i, j) -
+    			attributeTable["u"]->writeValueTo(i, j) = attributeTable["u"]->getValueAt(i, j) -
     			scale * invGridLen * (attributeTable["rho"]->getValueAt(i, j) - attributeTable["rho"]->getValueAt(i - 1, j))
     		}
     	}
@@ -107,15 +107,15 @@ void KaminoGrid::projection()
     for(size_t i = 0; i < nx; ++i){
     	for(size_t j = 0; j < ny + 1; ++j){
     		if(j == 0){
-    			attributeTable["v"]->setValueAt(i, j) = attributeTable["v"]->getValueAt(i, j) -
+    			attributeTable["v"]->writeValueTo(i, j) = attributeTable["v"]->getValueAt(i, j) -
     			scale * invGridLen * (attributeTable["rho"]->getValueAt(i, j) - attributeTable["v"]->getValueAt(i, ny - 1));
     		}
     		else if(j == ny){
-    			attributeTable["v"]->setValueAt(i, j) = attributeTable["v"]->getValueAt(i, j) -
-    			scale * invGridLen * (attributeTable["rho"]->getValueAt(i, j - 1) - attributeTable["v"]->getValueAt(i, 0));    			
+    			attributeTable["v"]->writeValueTo(i, j) = attributeTable["v"]->getValueAt(i, j) -
+    			scale * invGridLen * (attributeTable["rho"]->getValueAt(i, 0) - attributeTable["v"]->getValueAt(i, ny - 1));    			
     		}
     		else{
-    			attributeTable["v"]->setValueAt(i, j) = attributeTable["v"]->getValueAt(i, j) -
+    			attributeTable["v"]->writeValueTo(i, j) = attributeTable["v"]->getValueAt(i, j) -
     			scale * invGridLen * (attributeTable["rho"]->getValueAt(i, j) - attributeTable["v"]->getValueAt(i, j - 1));
     		}
     	}
