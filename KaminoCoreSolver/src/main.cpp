@@ -1,4 +1,4 @@
-# include "../include/KaminoSolver.h"
+# include "../include/KaminoAttribute.h"
 
 int main(int argc, char** argv)
 {

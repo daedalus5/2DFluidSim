@@ -1,4 +1,4 @@
-# include "../include/KaminoSolver.h"
+# include "../include/KaminoAttribute.h"
 
 KaminoCenteredAttr::KaminoCenteredAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen)
 	: KaminoAttribute(attributeName, nx, ny, gridLen)

@@ -1,4 +1,4 @@
-# include "../include/KaminoSolver.h"
+# include "../include/KaminoAttribute.h"
 
 KaminoGrid::KaminoGrid(size_t nx, size_t ny, fReal gridLength, fReal frameDuration) :
 	nx(nx), ny(ny), gridLen(gridLength), frameDuration(frameDuration),

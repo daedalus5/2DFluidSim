@@ -1,7 +1,7 @@
 # include "../include/KaminoQuantity.h"
 
-KaminoQuantity::KaminoQuantity(std::string attributeName, size_t nx, size_t ny, fReal gridLen)
-	: nx(nx), ny(ny), gridLen(gridLen), attrName(attributeName)
+KaminoQuantity::KaminoQuantity(std::string attributeName, size_t nx, size_t ny, fReal gridLen, fReal xOffset, fReal yOffset)
+	: nx(nx), ny(ny), gridLen(gridLen), attrName(attributeName), xOffset(xOffset), yOffset(yOffset)
 {
 	thisStep = new fReal[nx * ny];
 	nextStep = new fReal[nx * ny];
