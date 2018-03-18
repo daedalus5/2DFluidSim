@@ -14,5 +14,5 @@ fReal& KaminoUAttr::accessValueAt(size_t x, size_t y)
 # ifdef DEBUGBUILD
 	// Handle exception
 # endif
-	return this->thisStep[x * (nx + 1) + y];
+	return this->thisStep[x * nx + y];
 }

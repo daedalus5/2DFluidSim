@@ -15,7 +15,6 @@ KaminoAttribute::~KaminoAttribute()
 {
 	delete[] this->thisStep;
 	delete[] this->nextStep;
-
 }
 
 fReal KaminoAttribute::getValueAt(size_t x, size_t y)

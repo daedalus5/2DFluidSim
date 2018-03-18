@@ -7,6 +7,8 @@ KaminoGrid::KaminoGrid(size_t nx, size_t ny, fReal gridLength, fReal frameDurati
 	addUAttr("u");		// u velocity
 	addVAttr("v");		// v velocity
 	addCenteredAttr("rho");	// rho density
+
+	initialize_velocity();
 }
 
 KaminoGrid::~KaminoGrid()
@@ -22,8 +24,8 @@ void KaminoGrid::stepForward(fReal timeStep)
 	this->timeStep = timeStep;
 	// TODO
 	// advection();
-	// projection();
 	// bodyForce();
+	// projection();
 }
 
 void KaminoGrid::addCenteredAttr(std::string name)
@@ -54,10 +56,11 @@ KaminoAttribute* KaminoGrid::operator[](std::string name)
 	return this->attributeTable.at(name);
 }
 
-////////////// NEW ////////////////////////
-fReal KaminoGrid::FBM(const fReal x, const fReal y, const fReal persistance, const int octaves) const{
+fReal KaminoGrid::FBM(const fReal x, const fReal y){
     fReal total = 0.0f;
-    fReal resolution = 1.f;
+    fReal resolution = 10.f;
+    fReal persistance = 0.5;
+    int octaves = 4;
 
     for(int i = 0; i < octaves; i++){
         fReal freq = std::pow(2.0f, i);
@@ -66,7 +69,7 @@ fReal KaminoGrid::FBM(const fReal x, const fReal y, const fReal persistance, con
     }
     fReal a = 1 - persistance;  // normalization
 
-    return a * (1 + total) / 2.0f;  // normalized, pseudorandom number between 0 and 1
+    return a * total / 2.0f;  // normalized, pseudorandom number between -1 and 1
 
 }
 
@@ -94,9 +97,6 @@ fReal KaminoGrid::rand(const Eigen::Matrix<fReal, 2, 1> vecA) const{
 	return val - std::floor(val);
 }
 
-
-///////////// FIX //////////////////////
-
 void KaminoGrid::write_data_bgeo(const std::string& s, const int frame)
 {
 # ifndef _MSC_VER
@@ -111,11 +111,14 @@ void KaminoGrid::write_data_bgeo(const std::string& s, const int frame)
 
     Eigen::Matrix<float, 3, 1> pos;
     Eigen::Matrix<float, 3, 1> vel;
+    fReal velX, velY;
 
-    for(size_t i = 0; i < ny; ++i){
-        for(size_t j = 0; j < nx; ++j){
+    for(size_t i = 0; i < nx; ++i){
+        for(size_t j = 0; j < ny; ++j){
+        	velX = (attributeTable["u"]->getValueAt(i, j) + attributeTable["u"]->getValueAt(i + 1, j)) / 2.0;
+        	velY = (attributeTable["v"]->getValueAt(i, j) + attributeTable["v"]->getValueAt(i, j + 1)) / 2.0;
         	pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
-        	vel = Eigen::Matrix<float, 3, 1>(0.0, 1.0, 0.0);
+        	vel = Eigen::Matrix<float, 3, 1>(velX, velY, 0.0);
             int idx = parts->addParticle();
             float* p = parts->dataWrite<float>(pH, idx);
             float* v = parts->dataWrite<float>(vH, idx);
@@ -132,9 +135,29 @@ void KaminoGrid::write_data_bgeo(const std::string& s, const int frame)
 
 void KaminoGrid::initialize_velocity()
 {
-    // for(int i = 0; i < nx; ++i){
-    //     for(int j = 0; j < ny; ++j){
-    //         velocities[i][j] = Eigen::Matrix<float, 2, 1>(0.0, 0.0);
-    //     }
-    // }
+	// initialize u velocities
+	fReal x = -gridLen / 2.0;
+	fReal y = 0.0;
+	fReal val = 0.0;
+
+    for(size_t i = 0; i < nx; ++i){
+        for(size_t j = 0; j < ny; ++j){
+        	val = FBM(sin(2*M_PI*x / (nx*gridLen)), sin(2*M_PI*y / (ny*gridLen)));
+            attributeTable["u"]->setValueAt(i, j, val);
+            y += gridLen;
+        }
+        x += gridLen;
+    }
+    // initialize v velocities
+    x = 0.0;
+    y = -gridLen / 2.0;
+
+    for(size_t i = 0; i < nx; ++i){
+        for(size_t j = 0; j < ny + 1; ++j){
+        	val = FBM(sin(2*M_PI*x / (nx*gridLen)), sin(2*M_PI*y / (ny*gridLen)));
+            attributeTable["v"]->setValueAt(i, j, val);
+            y += gridLen;
+        }
+        x += gridLen;
+    }
 }
