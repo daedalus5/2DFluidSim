@@ -249,10 +249,41 @@ void KaminoGrid::initialize_velocity()
 
     for(size_t i = 0; i < nx; ++i){
         for(size_t j = 0; j < ny + 1; ++j){
-        	val = FBM(sin(2*M_PI*x / (nx*gridLen)), sin(2*M_PI*y / (ny*gridLen)));
+        	val = FBM(std::sin(2.0 * M_PI *x / (nx * gridLen)), sin(2.0 * M_PI * y / (ny * gridLen)));
             attributeTable["v"]->setValueAt(i, j, val);
             y += gridLen;
         }
         x += gridLen;
     }
+}
+
+void KaminoGrid::advection()
+{
+	for (auto quantity : this->attributeTable)
+	{
+		KaminoAttribute* attr = quantity.second;
+		for (size_t gridX = 0; gridX < this->nx; ++gridX)
+		{
+			for (size_t gridY = 0; gridY < this->ny; ++gridY)
+			{
+				fReal gX = static_cast<fReal>(gridX * this->gridLen);
+				fReal gY = static_cast<fReal>(gridY * this->gridLen);
+
+				fReal uG = (*this)["u"]->sampleAt(gX, gY);
+				fReal vG = (*this)["v"]->sampleAt(gX, gY);
+
+				fReal midX = gX - 0.5 * timeStep * uG;
+				fReal midY = gY - 0.5 * timeStep * vG;
+
+				fReal uMid = (*this)["u"]->sampleAt(midX, midY);
+				fReal vMid = (*this)["v"]->sampleAt(midX, midY);
+
+				fReal pX = gX - timeStep * uMid;
+				fReal pY = gY - timeStep * vMid;
+
+				fReal advectedVal = attr->sampleAt(pX, pY);
+				attr->writeValueTo(gridX, gridY, advectedVal);
+			}
+		}
+	}
 }
