@@ -27,14 +27,14 @@ void KaminoSolver::stepForward(fReal timeStep)
 	// bodyForce();
 	// projection();
 # ifdef DEBUGBUILD
-	for (unsigned gridX = 0; gridX != nx; ++gridX)
+	/*for (unsigned gridX = 0; gridX != nx; ++gridX)
 	{
 		for (unsigned gridY = 0; gridY != ny; ++gridY)
 		{
 			std::cout << attributeTable["u"]->getValueAt(gridX, gridY) << '\t';
 		}
 		std::cout << '\n';
-	}
+	}*/
 # endif
 }
 
