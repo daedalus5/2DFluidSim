@@ -77,7 +77,6 @@ public:
 	fReal getYCoordinateAt(size_t y);
 };
 
-
 // The solver class.
 class KaminoSolver
 {

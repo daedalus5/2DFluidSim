@@ -8,12 +8,9 @@ if(CREATE_LOCAL_MAKEFILES)
 endif()
 
 add_cispba_executable(2DFluidSim KaminoCoreSolver/main.cpp
-                        KaminoCoreSolver/include/KaminoSolver.h
-                        KaminoCoreSolver/src/KaminoAttribute.cpp
-                        KaminoCoreSolver/src/KaminoCenteredAttr.cpp
-                        KaminoCoreSolver/src/KaminoUAttr.cpp
-                        KaminoCoreSolver/src/KaminoVAttr.cpp
-                        KaminoCoreSolver/src/KaminoGrid.cpp)
+                        KaminoCoreSolver/include/KaminoQuantity.h
+                        KaminoCoreSolver/src/KaminoQuantity.cpp
+                        KaminoCoreSolver/src/KaminoSolver.cpp)
         
 target_include_directories(2DFluidSim SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIR})
 set(CMAKE_CXX_FLAGS "-O3")
