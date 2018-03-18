@@ -24,8 +24,8 @@ fReal KaminoUAttr::sampleAtGC(fReal x, fReal y)
 	x = x + xOffset;
 	y = y + yOffset;
 
-	size_t lowerX = std::floor(x);
-	size_t lowerY = std::floor(y);
+	size_t lowerX = getWarpedXIndex(x);
+	size_t lowerY = getWarpedYIndex(y);
 	size_t upperX = (lowerX + 1) % (nx + 1);
 	size_t upperY = (lowerY + 1) % ny;
 
