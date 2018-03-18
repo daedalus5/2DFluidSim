@@ -161,3 +161,8 @@ void KaminoGrid::initialize_velocity()
         x += gridLen;
     }
 }
+
+void KaminoGrid::advection()
+{
+
+}

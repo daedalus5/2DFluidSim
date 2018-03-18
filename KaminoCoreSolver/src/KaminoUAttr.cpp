@@ -9,12 +9,12 @@ KaminoUAttr::KaminoUAttr(std::string attributeName, size_t nx, size_t ny, fReal 
 
 KaminoUAttr::~KaminoUAttr(){}
 
-fReal& KaminoUAttr::accessValueAt(size_t x, size_t y)
+size_t KaminoUAttr::getIndex(size_t x, size_t y)
 {
 # ifdef DEBUGBUILD
 	// Handle exception
 # endif
-	return this->thisStep[x * (nx + 1) + y];
+	return x * (nx + 1) + y;
 }
 
 fReal KaminoUAttr::sampleAtGC(fReal x, fReal y)
@@ -42,4 +42,24 @@ fReal KaminoUAttr::sampleAtGC(fReal x, fReal y)
 	fReal lerped = KaminoLerp<fReal>(lerpedLower, lerpedUpper, alphaY);
 
 	return lerped;
+}
+
+// x has no offset yet.
+size_t KaminoUAttr::getWarpedXIndex(fReal x)
+{
+	int loops = std::floor(x / static_cast<fReal>(this->nx + 1));
+	int flooredX = std::floor(x);
+	int warpedX = flooredX - loops * static_cast<int>(nx);
+
+	return static_cast<size_t>(warpedX);
+}
+
+// y has no offset yet either.
+size_t KaminoUAttr::getWarpedYIndex(fReal y)
+{
+	int loops = std::floor(y / static_cast<fReal>(this->ny));
+	int flooredY = std::floor(y);
+	int warpedY = flooredY - loops * static_cast<int>(ny);
+
+	return static_cast<size_t>(warpedY);
 }

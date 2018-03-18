@@ -50,18 +50,27 @@ protected:
 	/* Swap the buffer */
 	void swapBuffer();
 
+	/* Wrap things up */
+	virtual size_t getWarpedXIndex(fReal x) = 0;
+	virtual size_t getWarpedYIndex(fReal y) = 0;
+
+	/* Get index */
+	virtual size_t getIndex(size_t x, size_t y) = 0;
+
 public:
 	/* Constructor */
 	KaminoAttribute(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
 	/* Destructor */
 	virtual ~KaminoAttribute();
 
-	/* Getter */
+	/* Get the current step */
 	virtual fReal getValueAt(size_t x, size_t y);
-	/* Setter */
+	/* Set the current step */
 	virtual void setValueAt(size_t x, size_t y, fReal val);
+	/* Write to the next step */
+	virtual void writeValueTo(size_t x, size_t y, fReal val);
 	/* Access */
-	virtual fReal& accessValueAt(size_t x, size_t y) = 0;
+	virtual fReal& accessValueAt(size_t x, size_t y);
 	/* Lerped Sampler using world coordinates */
 	virtual fReal sampleAt(fReal x, fReal y);
 	/* Lerped Sampler taking in grid coordinates (treat gridLen as 1.0) */
@@ -78,12 +87,14 @@ public:
 */
 class KaminoCenteredAttr : public KaminoAttribute
 {
+private:
+	size_t getWarpedXIndex(fReal x) override;
+	size_t getWarpedYIndex(fReal y) override;
+	size_t getIndex(size_t x, size_t y) override;
 public:
 	KaminoCenteredAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
 	virtual ~KaminoCenteredAttr();
 
-	/* Access */
-	fReal& accessValueAt(size_t x, size_t y) override;
 	/* Lerped Sampler */
 	fReal sampleAtGC(fReal x, fReal y) override;
 };
@@ -95,12 +106,14 @@ public:
 */
 class KaminoUAttr : public KaminoAttribute
 {
+private:
+	size_t getWarpedXIndex(fReal x) override;
+	size_t getWarpedYIndex(fReal y) override;
+	size_t getIndex(size_t x, size_t y) override;
 public:
 	KaminoUAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
 	virtual ~KaminoUAttr();
 
-	/* Access */
-	fReal& accessValueAt(size_t x, size_t y) override;
 	/* Lerped Sampler */
 	fReal sampleAtGC(fReal x, fReal y) override;
 };
@@ -112,15 +125,18 @@ public:
 */
 class KaminoVAttr : public KaminoAttribute
 {
+private:
+	size_t getWarpedXIndex(fReal x) override;
+	size_t getWarpedYIndex(fReal y) override;
+	size_t getIndex(size_t x, size_t y) override;
 public:
 	KaminoVAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen);
 	virtual ~KaminoVAttr();
 
-	/* Access */
-	fReal& accessValueAt(size_t x, size_t y) override;
 	/* Lerped Sampler */
 	fReal sampleAtGC(fReal x, fReal y) override;
 };
+
 
 // The solver class.
 class KaminoGrid
@@ -141,9 +157,9 @@ private:
 	fReal timeElapsed;
 
 	// TODO
-	// void advection();
-	// void projection();
-	// void bodyForce();
+	void advection();
+	void projection();
+	void bodyForce();
 
 	/* distribute initial velocity values at grid points */
     void initialize_velocity();
