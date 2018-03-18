@@ -1,4 +1,4 @@
-# include "../include/KaminoSolver.h"
+# include "../include/KaminoAttribute.h"
 
 KaminoGrid::KaminoGrid(size_t nx, size_t ny, fReal gridLength, fReal frameDuration) :
 	nx(nx), ny(ny), gridLen(gridLength), frameDuration(frameDuration),
@@ -23,7 +23,7 @@ void KaminoGrid::stepForward(fReal timeStep)
 {
 	this->timeStep = timeStep;
 	// TODO
-	// advection();
+	advection();
 	// bodyForce();
 	// projection();
 }
@@ -143,7 +143,7 @@ void KaminoGrid::addVAttr(std::string name)
 
 KaminoAttribute* KaminoGrid::getAttributeNamed(std::string name)
 {
-	return (*this).getAttributeNamed(name);
+	return (*this)[name];
 }
 
 KaminoAttribute* KaminoGrid::operator[](std::string name)
@@ -285,5 +285,14 @@ void KaminoGrid::advection()
 				attr->writeValueTo(gridX, gridY, advectedVal);
 			}
 		}
+	}
+	this->swapAttrBuffers();
+}
+
+void KaminoGrid::swapAttrBuffers()
+{
+	for (auto quantity : this->attributeTable)
+	{
+		quantity.second->swapBuffer();
 	}
 }

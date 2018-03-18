@@ -49,9 +49,6 @@ protected:
 	fReal* thisStep;
 	fReal* nextStep;
 
-	/* Swap the buffer */
-	void swapBuffer();
-
 	/* Wrap things up */
 	virtual size_t getWarpedXIndex(fReal x) = 0;
 	virtual size_t getWarpedYIndex(fReal y) = 0;
@@ -65,6 +62,9 @@ public:
 	/* Destructor */
 	virtual ~KaminoAttribute();
 
+	/* Swap the buffer */
+	void swapBuffer();
+
 	/* Get the current step */
 	virtual fReal getValueAt(size_t x, size_t y);
 	/* Set the current step */
@@ -74,9 +74,7 @@ public:
 	/* Access */
 	virtual fReal& accessValueAt(size_t x, size_t y);
 	/* Lerped Sampler using world coordinates */
-	virtual fReal sampleAt(fReal x, fReal y);
-	/* Lerped Sampler taking in grid coordinates (treat gridLen as 1.0) */
-	virtual fReal sampleAtGC(fReal x, fReal y) = 0;
+	virtual fReal sampleAt(fReal x, fReal y) = 0;
 };
 
 
@@ -98,7 +96,7 @@ public:
 	virtual ~KaminoCenteredAttr();
 
 	/* Lerped Sampler */
-	fReal sampleAtGC(fReal x, fReal y) override;
+	fReal sampleAt(fReal x, fReal y) override;
 };
 
 
@@ -117,7 +115,7 @@ public:
 	virtual ~KaminoUAttr();
 
 	/* Lerped Sampler */
-	fReal sampleAtGC(fReal x, fReal y) override;
+	fReal sampleAt(fReal x, fReal y) override;
 };
 
 
@@ -136,7 +134,7 @@ public:
 	virtual ~KaminoVAttr();
 
 	/* Lerped Sampler */
-	fReal sampleAtGC(fReal x, fReal y) override;
+	fReal sampleAt(fReal x, fReal y) override;
 };
 
 
@@ -162,6 +160,9 @@ private:
 	void advection();
 	void projection();
 	void bodyForce();
+
+	// Swap all these buffers of the attributes.
+	void swapAttrBuffers();
 
 	/* distribute initial velocity values at grid points */
     void initialize_velocity();

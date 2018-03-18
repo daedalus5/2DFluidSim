@@ -1,10 +1,10 @@
-# include "../include/KaminoSolver.h"
+# include "../include/KaminoAttribute.h"
 
 KaminoUAttr::KaminoUAttr(std::string attributeName, size_t nx, size_t ny, fReal gridLen)
 	: KaminoAttribute(attributeName, nx, ny, gridLen)
 {
-	thisStep = new fReal[(nx + 1) * ny];
-	nextStep = new fReal[(nx + 1) * ny];
+	thisStep = new fReal[nx * ny];
+	nextStep = new fReal[nx * ny];
 }
 
 KaminoUAttr::~KaminoUAttr(){}
@@ -14,19 +14,19 @@ size_t KaminoUAttr::getIndex(size_t x, size_t y)
 # ifdef DEBUGBUILD
 	// Handle exception
 # endif
-	return x * (nx + 1) + y;
+	return x * nx + y;
 }
 
-fReal KaminoUAttr::sampleAtGC(fReal x, fReal y)
+fReal KaminoUAttr::sampleAt(fReal x, fReal y)
 {
 	fReal xOffset = 0.5;
 	fReal yOffset = 0.5;
 	x = x + xOffset;
 	y = y + yOffset;
 
-	size_t lowerX = std::floor(x);
-	size_t lowerY = std::floor(y);
-	size_t upperX = (lowerX + 1) % (nx + 1);
+	size_t lowerX = getWarpedXIndex(x);
+	size_t lowerY = getWarpedYIndex(y);
+	size_t upperX = (lowerX + 1) % nx;
 	size_t upperY = (lowerY + 1) % ny;
 
 	fReal lowerLeft = getValueAt(lowerX, lowerY);
@@ -47,8 +47,8 @@ fReal KaminoUAttr::sampleAtGC(fReal x, fReal y)
 // x has no offset yet.
 size_t KaminoUAttr::getWarpedXIndex(fReal x)
 {
-	int loops = std::floor(x / static_cast<fReal>(this->nx + 1));
-	int flooredX = std::floor(x);
+	int loops = static_cast<int>(std::floor(x / static_cast<fReal>(this->nx)));
+	int flooredX = static_cast<int>(std::floor(x));
 	int warpedX = flooredX - loops * static_cast<int>(nx);
 
 	return static_cast<size_t>(warpedX);
@@ -57,8 +57,8 @@ size_t KaminoUAttr::getWarpedXIndex(fReal x)
 // y has no offset yet either.
 size_t KaminoUAttr::getWarpedYIndex(fReal y)
 {
-	int loops = std::floor(y / static_cast<fReal>(this->ny));
-	int flooredY = std::floor(y);
+	int loops = static_cast<int>(std::floor(y / static_cast<fReal>(this->ny)));
+	int flooredY = static_cast<int>(std::floor(y));
 	int warpedY = flooredY - loops * static_cast<int>(ny);
 
 	return static_cast<size_t>(warpedY);

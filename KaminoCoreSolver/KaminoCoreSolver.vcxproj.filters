@@ -17,7 +17,10 @@
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\KaminoSolver.h">
+    <ClInclude Include="include\KaminoQuantity.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\KaminoAttribute.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -35,6 +38,15 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\KaminoVAttr.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KaminoQuantity.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KaminoSolver.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
