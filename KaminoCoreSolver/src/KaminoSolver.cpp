@@ -215,7 +215,10 @@ void KaminoSolver::projection()
 			i - 1 < 0 ? ARow(j*nx + nx - 1) = -1 : ARow(j*nx + i - 1) = -1;
 			j + 1 > ny - 1 ? ARow(i) = -1 : ARow((j + 1)*nx + i) = -1;
 			j - 1 < 0 ? ARow((ny - 1)*nx + i) = -1 : ARow((j - 1)*nx + i) = -1;
-			A.row(k) = ARow;
+			for(int l = 0; l < nx * ny; ++l){
+				A.coeffRef(k, l) = ARow(l);
+			}
+			//A.row(k) = ARow;
 			k++;
 		}
 	}
