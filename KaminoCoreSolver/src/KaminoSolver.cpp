@@ -211,10 +211,10 @@ void KaminoSolver::projection()
 		for(size_t j = 0; j < ny; ++j){
 			ARow.setZero();
 			ARow(j*nx + i) = 4;
-			i + 1 > nx - 1 ? ARow(j*nx) = -1 : ARow(j*nx + i + 1) = -1;
-			i - 1 < 0 ? ARow(j*nx + nx - 1) = -1 : ARow(j*nx + i - 1) = -1;
-			j + 1 > ny - 1 ? ARow(i) = -1 : ARow((j + 1)*nx + i) = -1;
-			j - 1 < 0 ? ARow((ny - 1)*nx + i) = -1 : ARow((j - 1)*nx + i) = -1;
+			i > (nx - 2) ? (ARow(j*nx) = -1) : (ARow(j*nx + i + 1) = -1);
+			i < 1 ? (ARow(j*nx + nx - 1) = -1) : (ARow(j*nx + i - 1) = -1);
+			j > (ny - 2) ? (ARow(i) = -1) : (ARow((j + 1)*nx + i) = -1);
+			j < 1 ? (ARow((ny - 1)*nx + i) = -1) : (ARow((j - 1)*nx + i) = -1);
 			for(int l = 0; l < nx * ny; ++l){
 				A.coeffRef(k, l) = ARow(l);
 			}
@@ -231,27 +231,27 @@ void KaminoSolver::projection()
 	for(size_t i = 0; i < nx; ++i){
 		for(size_t j = 0; j < ny; ++j){
 			fReal uPlus, uMinus, vPlus, vMinus;
-			i + 1 > nx - 1 ? uPlus = attributeTable["u"]->getValueAt(0, j) : uPlus = attributeTable["u"]->getValueAt(i + 1, j);
+			i > (nx - 2) ? (uPlus = attributeTable["u"]->getValueAt(0, j)) : (uPlus = attributeTable["u"]->getValueAt(i + 1, j));
 			uMinus = attributeTable["u"]->getValueAt(i, j); 
-			j + 1 > ny - 1 ? vPlus = attributeTable["v"]->getValueAt(i, 0) : vPlus = attributeTable["v"]->getValueAt(i, j + 1);
+			j > (ny - 2) ? (vPlus = attributeTable["v"]->getValueAt(i, 0)) : (vPlus = attributeTable["v"]->getValueAt(i, j + 1));
 			vMinus = attributeTable["v"]->getValueAt(i, j);
 			b(j*nx + i) = -((uPlus - uMinus) * invGridLen + (vPlus - vMinus) * invGridLen);
 		}
 	}
 
 	// pressure vector
-	Eigen::VectorXd p(nx * ny);
+	//Eigen::VectorXd p(nx * ny);
 	//Eigen::VectorXf p(nx * ny);
-	p.setZero();
+	//p.setZero();
 
 	// solving Ax = b
 	// Eigen::MINRES<Eigen::MatrixXf, Eigen::Lower|Eigen::Upper, Eigen::IdentityPreconditioner> minres;
  	// minres.compute(A);
  	// p = minres.solve(b);
 
-	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower|Eigen::Upper> cg;
-	cg.compute(A);
-	p = cg.solve(b);
+	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower|Eigen::Upper> cg(A);
+	//cg.compute(A);
+	Eigen::VectorXd p = cg.solve(b);
 
 	// Populate updated pressure values
     for(size_t i = 0; i < nx; ++i){
