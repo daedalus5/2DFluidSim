@@ -199,12 +199,14 @@ void KaminoSolver::projection()
 
 	// construct the matrix A
 	// present construction assumes 2D fluid in every cell and toroidal BCs
-	Eigen::MatrixXf A(nx*ny, nx*ny);
+	//Eigen::MatrixXf A(nx*ny, nx*ny);
+	Eigen::SparseMatrix<fReal> A(nx*ny, nx*ny);
 	A.setZero();
 
 	// construct A row-by-row
 	size_t k = 0;
-	Eigen::VectorXf ARow(nx * ny);
+	Eigen::VectorXd ARow(nx * ny);
+	//Eigen::VectorXf ARow(nx * ny);
 	for(size_t i = 0; i < nx; ++i){
 		for(size_t j = 0; j < ny; ++j){
 			ARow.setZero();
@@ -220,7 +222,8 @@ void KaminoSolver::projection()
 	A *= scale;		
 
 	// construct the vector b
-	Eigen::VectorXf b(nx * ny);
+	Eigen::VectorXd b(nx * ny);
+	//Eigen::VectorXf b(nx * ny);
 	b.setZero();
 	for(size_t i = 0; i < nx; ++i){
 		for(size_t j = 0; j < ny; ++j){
@@ -234,13 +237,18 @@ void KaminoSolver::projection()
 	}
 
 	// pressure vector
-	Eigen::VectorXf p(nx * ny);
+	Eigen::VectorXd p(nx * ny);
+	//Eigen::VectorXf p(nx * ny);
 	p.setZero();
 
 	// solving Ax = b
-	Eigen::MINRES<Eigen::MatrixXf, Eigen::Lower|Eigen::Upper, Eigen::IdentityPreconditioner> minres;
-    minres.compute(A);
-    p = minres.solve(b);
+	// Eigen::MINRES<Eigen::MatrixXf, Eigen::Lower|Eigen::Upper, Eigen::IdentityPreconditioner> minres;
+ 	// minres.compute(A);
+ 	// p = minres.solve(b);
+
+	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower|Eigen::Upper> cg;
+	cg.compute(A);
+	p = cg.solve(b);
 
 	// Populate updated pressure values
     for(size_t i = 0; i < nx; ++i){

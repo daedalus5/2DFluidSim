@@ -50,7 +50,7 @@ size_t KaminoQuantity::getIndex(size_t x, size_t y)
 # ifdef DEBUGBUILD
 	// Handle exception
 # endif
-	return x * nx + y;
+	return y * nx + x;
 }
 
 fReal KaminoQuantity::getXCoordinateAt(size_t x)
