@@ -6,7 +6,7 @@ KaminoSolver::KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDu
 {
 	addAttr("u", 0.5, 0.0);		// u velocity
 	addAttr("v", 0.0, 0.5);		// v velocity
-	addAttr("rho");	// rho density
+	addAttr("p");				// p density
 
 	initialize_velocity();
 }
@@ -22,10 +22,9 @@ KaminoSolver::~KaminoSolver()
 void KaminoSolver::stepForward(fReal timeStep)
 {
 	this->timeStep = timeStep;
-	// TODO
 	advection();
 	// bodyForce();
-	// projection();
+	projection();
 # ifdef DEBUGBUILD
 	/*for (unsigned gridX = 0; gridX != nx; ++gridX)
 	{
@@ -56,7 +55,7 @@ KaminoQuantity* KaminoSolver::operator[](std::string name)
 
 fReal KaminoSolver::FBM(const fReal x, const fReal y) {
 	fReal total = 0.0f;
-	fReal resolution = 10.f;
+	fReal resolution = 1.0;
 	fReal persistance = 0.5;
 	int octaves = 4;
 
@@ -190,6 +189,94 @@ void KaminoSolver::advection()
 		}
 	}
 	this->swapAttrBuffers();
+}
+
+void KaminoSolver::projection()
+{
+	fReal density = 1.0;	// rest fluid density
+	fReal scale = timeStep / density;
+	fReal invGridLen = 1 / gridLen;
+
+	// construct the matrix A
+	// present construction assumes 2D fluid in every cell and toroidal BCs
+	Eigen::MatrixXf A(nx*ny, nx*ny);
+	A.setZero();
+
+	// construct A row-by-row
+	size_t k = 0;
+	Eigen::VectorXf ARow(nx * ny);
+	for(size_t i = 0; i < nx; ++i){
+		for(size_t j = 0; j < ny; ++j){
+			ARow.setZero();
+			ARow(j*nx + i) = 4;
+			i + 1 > nx - 1 ? ARow(j*nx) = -1 : ARow(j*nx + i + 1) = -1;
+			i - 1 < 0 ? ARow(j*nx + nx - 1) = -1 : ARow(j*nx + i - 1) = -1;
+			j + 1 > ny - 1 ? ARow(i) = -1 : ARow((j + 1)*nx + i) = -1;
+			j - 1 < 0 ? ARow((ny - 1)*nx + i) = -1 : ARow((j - 1)*nx + i) = -1;
+			A.row(k) = ARow;
+			k++;
+		}
+	}
+	A *= scale;		
+
+	// construct the vector b
+	Eigen::VectorXf b(nx * ny);
+	b.setZero();
+	for(size_t i = 0; i < nx; ++i){
+		for(size_t j = 0; j < ny; ++j){
+			fReal uPlus, uMinus, vPlus, vMinus;
+			i + 1 > nx - 1 ? uPlus = attributeTable["u"]->getValueAt(0, j) : uPlus = attributeTable["u"]->getValueAt(i + 1, j);
+			uMinus = attributeTable["u"]->getValueAt(i, j); 
+			j + 1 > ny - 1 ? vPlus = attributeTable["v"]->getValueAt(i, 0) : vPlus = attributeTable["v"]->getValueAt(i, j + 1);
+			vMinus = attributeTable["v"]->getValueAt(i, j);
+			b(j*nx + i) = -((uPlus - uMinus) * invGridLen + (vPlus - vMinus) * invGridLen);
+		}
+	}
+
+	// pressure vector
+	Eigen::VectorXf p(nx * ny);
+	p.setZero();
+
+	// solving Ax = b
+	Eigen::MINRES<Eigen::MatrixXf, Eigen::Lower|Eigen::Upper, Eigen::IdentityPreconditioner> minres;
+    minres.compute(A);
+    p = minres.solve(b);
+
+	// Populate updated pressure values
+    for(size_t i = 0; i < nx; ++i){
+    	for(size_t j = 0; j < ny; ++j){
+    		attributeTable["p"]->writeValueTo(i, j, p(j*nx + i));
+    	}	
+    }
+
+    // Populate updated u values
+    for(size_t i = 0; i < nx; ++i){
+    	for(size_t j = 0; j < ny; ++j){
+    		if(i == 0){
+    			attributeTable["u"]->writeValueTo(i, j, attributeTable["u"]->getValueAt(i, j) -
+    			scale * invGridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(nx - 1, j)));
+    		}
+    		else{
+    			attributeTable["u"]->writeValueTo(i, j, attributeTable["u"]->getValueAt(i, j) -
+    			scale * invGridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(i - 1, j)));
+    		}
+    	}
+    }
+
+    // Populate updated v values
+    for(size_t i = 0; i < nx; ++i){
+    	for(size_t j = 0; j < ny; ++j){
+    		if(j == 0){
+    			attributeTable["v"]->writeValueTo(i, j, attributeTable["v"]->getValueAt(i, j) -
+    			scale * invGridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, ny - 1)));
+    		}
+    		else{
+    			attributeTable["v"]->writeValueTo(i, j, attributeTable["v"]->getValueAt(i, j) -
+    			scale * invGridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, j - 1)));
+    		}
+    	}
+    }
+    this->swapAttrBuffers();
 }
 
 void KaminoSolver::swapAttrBuffers()

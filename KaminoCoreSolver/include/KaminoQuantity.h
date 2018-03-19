@@ -10,6 +10,8 @@
 # include <Eigen/Core>
 # include <Eigen/Dense>
 # include <cmath>
+# include <Eigen/IterativeLinearSolvers>
+# include <unsupported/Eigen/IterativeSolvers>
 
 # define M_PI           3.14159265358979323846  /* pi */
 
@@ -68,6 +70,8 @@ public:
 
 	/* Get the current step */
 	fReal getValueAt(size_t x, size_t y);
+	/* Get the next step */
+	fReal getNextValueAt(size_t x, size_t y);
 	/* Set the current step */
 	void setValueAt(size_t x, size_t y, fReal val);
 	/* Write to the next step */

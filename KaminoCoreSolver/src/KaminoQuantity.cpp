@@ -25,6 +25,11 @@ fReal KaminoQuantity::getValueAt(size_t x, size_t y)
 	return this->accessValueAt(x, y);
 }
 
+fReal KaminoQuantity::getNextValueAt(size_t x, size_t y)
+{
+	return this->nextStep[getIndex(x, y)];
+}
+
 void KaminoQuantity::setValueAt(size_t x, size_t y, fReal val)
 {
 	this->accessValueAt(x, y) = val;
