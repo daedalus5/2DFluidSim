@@ -10,6 +10,8 @@
 # include <Eigen/Core>
 # include <Eigen/Dense>
 # include <cmath>
+# include <Eigen/IterativeLinearSolvers>
+# include <unsupported/Eigen/IterativeSolvers>
 
 # define M_PI           3.14159265358979323846  /* pi */
 

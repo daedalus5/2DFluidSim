@@ -28,6 +28,101 @@ void KaminoGrid::stepForward(fReal timeStep)
 	// projection();
 }
 
+void KaminoGrid::projection()
+{
+	fReal density = 1.0;	// rest fluid density
+	fReal scale = timeStep / density;
+	fReal invGridLen = 1 / gridLen;
+
+	// construct the matrix A
+	// present construction assumes 2D fluid in every cell and toroidal BCs
+	Eigen::Matrix<fReal, nx*ny, nx*ny> A;
+	A.setZero();
+
+	// construct A row-by-row
+	size_t k = 1;
+	Eigen::Matrix<fReal, nx*ny, 1> row;
+	for(size_t i = 0; i < nx; ++i){
+		for(size_t j = 0; j < ny; ++j){
+			row.setZero();
+			row(j*nx + i) = 4;
+			i + 1 > nx ? row(j*nx) = -1 : row(j*nx + i + 1) = -1;
+			i - 1 < 0 ? row(j*nx + nx - 1) = -1 : row(j*nx + i - 1) = -1;
+			j + 1 > ny ? row(i) = -1 : row((j + 1)*nx + i) = -1;
+			j - 1 < 0 ? row((ny - 1)*nx + i) = -1 : row((j - 1)*nx + i) = -1;
+			A.row(k) = row;
+			k++;
+		}
+	}
+	A *= scale;		
+
+	// construct the vector b
+	Eigen::Matrix<fReal, nx*ny, 1> b;
+	b.setZero();
+	for(size_t i = 0; i < nx; ++i){
+		for(size_t j = 0; j < ny; ++j){
+			fReal uPlus, uMinus, vPlus, vMinus;
+			uPlus = attributeTable["u"]->getValueAt(i + 1, j);
+			uMinus = attributeTable["u"]->getValueAt(i, j);
+			vPlus = attributeTable["v"]->getValueAt(i, j + 1);
+			vMinus = attributeTable["v"]->getValueAt(i, j);
+			b(j*nx + i) = -((uPlus - uMinus) * invGridLen + (vPlus - vMinus) * invGridLen);
+		}
+	}
+
+	// density vector
+	Eigen::Matrix<fReal, nx*ny, 1> rho;
+
+	// solving Ax = b
+	Eigen::MINRES<SparseMatrix<fReal>, Eigen::Lower|Eigen::Upper, Eigen::IdentityPreconditioner> minres;
+    minres.compute(A);
+    rho = minres.solve(b);
+
+	// Populate updated quantities
+    for(size_t i = 0; i < nx; ++i){
+    	for(size_t j = 0; j < ny; ++j){
+    		attributeTable["rho"]->writeValueTo(i, j) = rho(j*nx + i);
+    	}	
+    }
+    attributeTable["rho"]->swapBuffer();
+
+    for(size_t i = 0; i < nx + 1; ++i){
+    	for(size_t j = 0; j < ny; ++j){
+    		if(i == 0){
+    			attributeTable["u"]->writeValueTo(i, j) = attributeTable["u"]->getValueAt(i, j) -
+    			scale * invGridLen * (attributeTable["rho"]->getValueAt(i, j) - attributeTable["rho"]->getValueAt(nx - 1, j))
+    		}
+    		else if(i == nx){
+    			attributeTable["u"]->writeValueTo(i, j) = attributeTable["u"]->getValueAt(i, j) -
+    			scale * invGridLen * (attributeTable["rho"]->getValueAt(0, j) - attributeTable["rho"]->getValueAt(i - 1, j))
+    		}
+    		else{
+    			attributeTable["u"]->writeValueTo(i, j) = attributeTable["u"]->getValueAt(i, j) -
+    			scale * invGridLen * (attributeTable["rho"]->getValueAt(i, j) - attributeTable["rho"]->getValueAt(i - 1, j))
+    		}
+    	}
+    }
+    attributeTable["u"]->swapBuffer();
+
+    for(size_t i = 0; i < nx; ++i){
+    	for(size_t j = 0; j < ny + 1; ++j){
+    		if(j == 0){
+    			attributeTable["v"]->writeValueTo(i, j) = attributeTable["v"]->getValueAt(i, j) -
+    			scale * invGridLen * (attributeTable["rho"]->getValueAt(i, j) - attributeTable["v"]->getValueAt(i, ny - 1));
+    		}
+    		else if(j == ny){
+    			attributeTable["v"]->writeValueTo(i, j) = attributeTable["v"]->getValueAt(i, j) -
+    			scale * invGridLen * (attributeTable["rho"]->getValueAt(i, 0) - attributeTable["v"]->getValueAt(i, ny - 1));    			
+    		}
+    		else{
+    			attributeTable["v"]->writeValueTo(i, j) = attributeTable["v"]->getValueAt(i, j) -
+    			scale * invGridLen * (attributeTable["rho"]->getValueAt(i, j) - attributeTable["v"]->getValueAt(i, j - 1));
+    		}
+    	}
+    }
+    attributeTable["v"]->swapBuffer();
+}
+
 void KaminoGrid::addCenteredAttr(std::string name)
 {
 	KaminoAttribute* ptr = new KaminoCenteredAttr(name, this->nx, this->ny, this->gridLen);
