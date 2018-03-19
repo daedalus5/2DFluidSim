@@ -28,7 +28,7 @@ void KaminoGrid::stepForward(fReal timeStep)
 	// projection();
 }
 
-void KaminoGrid::projection()
+/*void KaminoGrid::projection()
 {
 	fReal density = 1.0;	// rest fluid density
 	fReal scale = timeStep / density;
@@ -121,7 +121,7 @@ void KaminoGrid::projection()
     	}
     }
     attributeTable["v"]->swapBuffer();
-}
+}*/
 
 void KaminoGrid::addCenteredAttr(std::string name)
 {
