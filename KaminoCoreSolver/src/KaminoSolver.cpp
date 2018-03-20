@@ -112,8 +112,18 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 
 	for (size_t i = 0; i < nx; ++i) {
 		for (size_t j = 0; j < ny; ++j) {
-			velX = (attributeTable["u"]->getValueAt(i, j) + attributeTable["u"]->getValueAt(i + 1, j)) / 2.0;
-			velY = (attributeTable["v"]->getValueAt(i, j) + attributeTable["v"]->getValueAt(i, j + 1)) / 2.0;
+			if(i == (nx - 1)){
+				velX = (attributeTable["u"]->getValueAt(i, j) + attributeTable["u"]->getValueAt(0, j)) / 2.0;
+			}
+			else{
+				velX = (attributeTable["u"]->getValueAt(i, j) + attributeTable["u"]->getValueAt(i + 1, j)) / 2.0;
+			}
+			if(j == (ny - 1)){
+				velY = (attributeTable["v"]->getValueAt(i, j) + attributeTable["v"]->getValueAt(i, 0)) / 2.0;
+			}
+			else{
+				velY = (attributeTable["v"]->getValueAt(i, j) + attributeTable["v"]->getValueAt(i, j + 1)) / 2.0;
+			}
 			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
 			vel = Eigen::Matrix<float, 3, 1>(velX, velY, 0.0);
 			int idx = parts->addParticle();
@@ -182,7 +192,7 @@ void KaminoSolver::advection()
 
 				fReal pX = gX - timeStep * uMid;
 				fReal pY = gY - timeStep * vMid;
-
+				
 				fReal advectedVal = attr->sampleAt(pX, pY);
 				attr->writeValueTo(gridX, gridY, advectedVal);
 			}
@@ -193,20 +203,18 @@ void KaminoSolver::advection()
 
 void KaminoSolver::projection()
 {
-	fReal density = 1.0;	// rest fluid density
-	fReal scale = timeStep / density;
+	fReal density = 1000;	// rest fluid density
+	fReal scale = timeStep / (density * gridLen * gridLen);
 	fReal invGridLen = 1 / gridLen;
 
 	// construct the matrix A
 	// present construction assumes 2D fluid in every cell and toroidal BCs
-	//Eigen::MatrixXf A(nx*ny, nx*ny);
 	Eigen::SparseMatrix<fReal> A(nx*ny, nx*ny);
 	A.setZero();
 
 	// construct A row-by-row
 	size_t k = 0;
 	Eigen::VectorXd ARow(nx * ny);
-	//Eigen::VectorXf ARow(nx * ny);
 	for(size_t i = 0; i < nx; ++i){
 		for(size_t j = 0; j < ny; ++j){
 			ARow.setZero();
@@ -218,15 +226,13 @@ void KaminoSolver::projection()
 			for(int l = 0; l < nx * ny; ++l){
 				A.coeffRef(k, l) = ARow(l);
 			}
-			//A.row(k) = ARow;
 			k++;
 		}
 	}
-	A *= scale;		
+	A *= scale;
 
 	// construct the vector b
 	Eigen::VectorXd b(nx * ny);
-	//Eigen::VectorXf b(nx * ny);
 	b.setZero();
 	for(size_t i = 0; i < nx; ++i){
 		for(size_t j = 0; j < ny; ++j){
@@ -235,23 +241,22 @@ void KaminoSolver::projection()
 			uMinus = attributeTable["u"]->getValueAt(i, j); 
 			j > (ny - 2) ? (vPlus = attributeTable["v"]->getValueAt(i, 0)) : (vPlus = attributeTable["v"]->getValueAt(i, j + 1));
 			vMinus = attributeTable["v"]->getValueAt(i, j);
-			b(j*nx + i) = -((uPlus - uMinus) * invGridLen + (vPlus - vMinus) * invGridLen);
+			b(j*nx + i) = -1 * ((uPlus - uMinus) * invGridLen + (vPlus - vMinus) * invGridLen);
 		}
 	}
 
 	// pressure vector
-	//Eigen::VectorXd p(nx * ny);
-	//Eigen::VectorXf p(nx * ny);
-	//p.setZero();
+	Eigen::VectorXd p(nx * ny);
+	p.setZero();
 
 	// solving Ax = b
-	// Eigen::MINRES<Eigen::MatrixXf, Eigen::Lower|Eigen::Upper, Eigen::IdentityPreconditioner> minres;
- 	// minres.compute(A);
- 	// p = minres.solve(b);
+	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower|Eigen::Upper> cg;
+	cg.setTolerance(pow(10, -1));
+	cg.compute(A);
+	p = cg.solve(b);
 
-	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower|Eigen::Upper> cg(A);
-	//cg.compute(A);
-	Eigen::VectorXd p = cg.solve(b);
+	std::cout << "#iterations:     " << cg.iterations() << std::endl;
+	std::cout << "estimated error: " << cg.error()      << std::endl;
 
 	// Populate updated pressure values
     for(size_t i = 0; i < nx; ++i){
@@ -265,11 +270,11 @@ void KaminoSolver::projection()
     	for(size_t j = 0; j < ny; ++j){
     		if(i == 0){
     			attributeTable["u"]->writeValueTo(i, j, attributeTable["u"]->getValueAt(i, j) -
-    			scale * invGridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(nx - 1, j)));
+    			scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(nx - 1, j)));
     		}
     		else{
     			attributeTable["u"]->writeValueTo(i, j, attributeTable["u"]->getValueAt(i, j) -
-    			scale * invGridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(i - 1, j)));
+    			scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(i - 1, j)));
     		}
     	}
     }
@@ -279,14 +284,15 @@ void KaminoSolver::projection()
     	for(size_t j = 0; j < ny; ++j){
     		if(j == 0){
     			attributeTable["v"]->writeValueTo(i, j, attributeTable["v"]->getValueAt(i, j) -
-    			scale * invGridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, ny - 1)));
+    			scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, ny - 1)));
     		}
     		else{
     			attributeTable["v"]->writeValueTo(i, j, attributeTable["v"]->getValueAt(i, j) -
-    			scale * invGridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, j - 1)));
+    			scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, j - 1)));
     		}
     	}
     }
+
     this->swapAttrBuffers();
 }
 
