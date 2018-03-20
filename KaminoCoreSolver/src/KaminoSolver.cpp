@@ -215,8 +215,8 @@ void KaminoSolver::projection()
 	// construct A row-by-row
 	size_t k = 0;
 	Eigen::VectorXd ARow(nx * ny);
-	for(size_t i = 0; i < nx; ++i){
-		for(size_t j = 0; j < ny; ++j){
+	for(size_t j = 0; j < ny; ++j){
+		for(size_t i = 0; i < nx; ++i){
 			ARow.setZero();
 			ARow(j*nx + i) = 4;
 			i > (nx - 2) ? (ARow(j*nx) = -1) : (ARow(j*nx + i + 1) = -1);
@@ -234,8 +234,8 @@ void KaminoSolver::projection()
 	// construct the vector b
 	Eigen::VectorXd b(nx * ny);
 	b.setZero();
-	for(size_t i = 0; i < nx; ++i){
-		for(size_t j = 0; j < ny; ++j){
+	for(size_t j = 0; j < ny; ++j){
+		for(size_t i = 0; i < nx; ++i){
 			fReal uPlus, uMinus, vPlus, vMinus;
 			i > (nx - 2) ? (uPlus = attributeTable["u"]->getValueAt(0, j)) : (uPlus = attributeTable["u"]->getValueAt(i + 1, j));
 			uMinus = attributeTable["u"]->getValueAt(i, j); 
@@ -259,15 +259,15 @@ void KaminoSolver::projection()
 	std::cout << "estimated error: " << cg.error()      << std::endl;
 
 	// Populate updated pressure values
-    for(size_t i = 0; i < nx; ++i){
-    	for(size_t j = 0; j < ny; ++j){
+    for(size_t j = 0; j < ny; ++j){
+    	for(size_t i = 0; i < nx; ++i){
     		attributeTable["p"]->writeValueTo(i, j, p(j*nx + i));
     	}	
     }
 
     // Populate updated u values
-    for(size_t i = 0; i < nx; ++i){
-    	for(size_t j = 0; j < ny; ++j){
+    for(size_t j = 0; j < ny; ++j){
+    	for(size_t i = 0; i < nx; ++i){
     		if(i == 0){
     			attributeTable["u"]->writeValueTo(i, j, attributeTable["u"]->getValueAt(i, j) -
     			scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(nx - 1, j)));
@@ -280,8 +280,8 @@ void KaminoSolver::projection()
     }
 
     // Populate updated v values
-    for(size_t i = 0; i < nx; ++i){
-    	for(size_t j = 0; j < ny; ++j){
+    for(size_t j = 0; j < ny; ++j){
+    	for(size_t i = 0; i < nx; ++i){
     		if(j == 0){
     			attributeTable["v"]->writeValueTo(i, j, attributeTable["v"]->getValueAt(i, j) -
     			scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, ny - 1)));
