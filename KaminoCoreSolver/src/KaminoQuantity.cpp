@@ -48,7 +48,10 @@ void KaminoQuantity::writeValueTo(size_t x, size_t y, fReal val)
 size_t KaminoQuantity::getIndex(size_t x, size_t y)
 {
 # ifdef DEBUGBUILD
-	// Handle exception
+	if (x >= this->nx || y >= this->ny)
+	{
+		std::cerr << "Index out of bound at x: " << x << " y: " << y << std::endl;
+	}
 # endif
 	return y * nx + x;
 }
