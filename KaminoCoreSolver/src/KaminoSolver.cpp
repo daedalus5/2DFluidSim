@@ -192,9 +192,9 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < ny; ++j) {
 		for (size_t i = 0; i < nx; ++i) {
 			val = FBM(sin(2 * M_PI*i / nx), sin(2 * M_PI*j / ny));
-			attributeTable["u"]->setValueAt(i, j, val);
+			attributeTable["u"]->setValueAt(i, j, 0.0);
 			val = FBM(cos(2 * M_PI*i / nx), cos(2 * M_PI*j / ny));
-			attributeTable["v"]->setValueAt(i, j, val);
+			attributeTable["v"]->setValueAt(i, j, 1.0);
 		}
 	}
 }
