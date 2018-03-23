@@ -124,6 +124,9 @@ private:
 	/* returns a pseudorandom number between -1 and 1 */
 	fReal rand(const Eigen::Matrix<fReal, 2, 1> vecA) const;
 
+	/*map to spherical coordinates*/
+	void mapToSphere(Eigen::Matrix<fReal, 3, 1> pos) const;
+
 public:
 	KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDuration = 1.0 / 30.0);
 	~KaminoSolver();

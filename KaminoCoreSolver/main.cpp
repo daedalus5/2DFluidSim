@@ -15,13 +15,13 @@ int main(int argc, char** argv)
     KaminoSolver solver(nx, ny, gridLen, dt);
     float T = 0.0;              // simulation time
     for(int i = 1; i <= frames; i++){
-        solver.write_data_bgeo(filepath, i);
         while(T < i*DT){
             solver.stepForward(dt);
             T += dt;
         }
         solver.stepForward(dt + i*DT - T);
         T = i*DT;
+        solver.write_data_bgeo(filepath, i);
     }
     return 0;
 }

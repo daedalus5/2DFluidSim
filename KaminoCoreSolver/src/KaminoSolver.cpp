@@ -1,5 +1,9 @@
 # include "../include/KaminoQuantity.h"
 
+
+// CONSTRUCTOR / DESTRUCTOR >>>>>>>>>>
+
+
 KaminoSolver::KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDuration) :
 	nx(nx), ny(ny), gridLen(gridLength), frameDuration(frameDuration),
 	timeStep(0.0), timeElapsed(0.0)
@@ -21,12 +25,17 @@ KaminoSolver::~KaminoSolver()
 	}
 }
 
+
+// <<<<<<<<<<
+// CORE FLUID SOLVER >>>>>>>>>>
+
+
 void KaminoSolver::stepForward(fReal timeStep)
 {
 	this->timeStep = timeStep;
 	advection();
 	// bodyForce();
-	//projection();
+	projection();
 # ifdef DEBUGBUILD
 	/*for (unsigned gridX = 0; gridX != nx; ++gridX)
 	{
@@ -37,128 +46,6 @@ void KaminoSolver::stepForward(fReal timeStep)
 		std::cout << '\n';
 	}*/
 # endif
-}
-
-void KaminoSolver::addAttr(std::string name, fReal xOffset, fReal yOffset)
-{
-	KaminoQuantity* ptr = new KaminoQuantity(name, this->nx, this->ny, this->gridLen, xOffset, yOffset);
-	this->attributeTable.emplace(std::pair<std::string, KaminoQuantity*>(name, ptr));
-}
-
-KaminoQuantity* KaminoSolver::getAttributeNamed(std::string name)
-{
-	return (*this)[name];
-}
-
-KaminoQuantity* KaminoSolver::operator[](std::string name)
-{
-	return this->attributeTable.at(name);
-}
-
-fReal KaminoSolver::FBM(const fReal x, const fReal y) {
-	fReal total = 0.0f;
-	fReal resolution = 1.0;
-	fReal persistance = 0.5;
-	int octaves = 4;
-
-	for (int i = 0; i < octaves; i++) {
-		fReal freq = std::pow(2.0f, i);
-		fReal amp = std::pow(persistance, i);
-		total += amp * interpNoise2D(x * freq / resolution, y * freq / resolution);
-	}
-	fReal a = 1 - persistance;  // normalization
-
-	//return a * total / 2.0f;  // normalized, pseudorandom number between -1 and 1
-	return a * total / 4.0f;  // normalized, pseudorandom number between -1 and 1
-}
-
-fReal KaminoSolver::interpNoise2D(const fReal x, const fReal y) const {
-	fReal intX = std::floor(x);
-	fReal fractX = x - intX;
-	fReal intY = std::floor(y);
-	fReal fractY = y - intY;
-
-	fReal v1 = rand(Eigen::Matrix<fReal, 2, 1>(intX, intY));
-	fReal v2 = rand(Eigen::Matrix<fReal, 2, 1>(intX + 1, intY));
-	fReal v3 = rand(Eigen::Matrix<fReal, 2, 1>(intX, intY + 1));
-	fReal v4 = rand(Eigen::Matrix<fReal, 2, 1>(intX + 1, intY + 1));
-
-	// interpolate for smooth transitions
-	fReal i1 = KaminoLerp(v1, v2, fractX);
-	fReal i2 = KaminoLerp(v3, v4, fractX);
-	return KaminoLerp(i1, i2, fractY);
-}
-
-fReal KaminoSolver::rand(const Eigen::Matrix<fReal, 2, 1> vecA) const {
-	// return pseudorandom number between -1 and 1
-	Eigen::Matrix<fReal, 2, 1> vecB = Eigen::Matrix<fReal, 2, 1>(12.9898, 4.1414);
-	fReal val = sin(vecA.dot(vecB) * 43758.5453);
-	return val - std::floor(val);
-}
-
-void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
-{
-# ifndef _MSC_VER
-	std::string file = s + std::to_string(frame) + ".bgeo";
-
-	// TODO: interpolate velocities to grid centers and combine into vec2
-
-	Partio::ParticlesDataMutable* parts = Partio::create();
-	Partio::ParticleAttribute pH, vH, psH;
-	pH = parts->addAttribute("position", Partio::VECTOR, 3);
-	vH = parts->addAttribute("v", Partio::VECTOR, 3);
-	psH = parts->addAttribute("pressure", Partio::VECTOR, 1);
-
-	Eigen::Matrix<float, 3, 1> pos;
-	Eigen::Matrix<float, 3, 1> vel;
-	fReal pressure;
-	fReal velX, velY;
-
-	for (size_t j = 0; j < ny; ++j) {
-		for (size_t i = 0; i < ny; ++i) {
-			if(i == (nx - 1)){
-				velX = (attributeTable["u"]->getValueAt(i, j) + attributeTable["u"]->getValueAt(0, j)) / 2.0;
-			}
-			else{
-				velX = (attributeTable["u"]->getValueAt(i, j) + attributeTable["u"]->getValueAt(i + 1, j)) / 2.0;
-			}
-			if(j == (ny - 1)){
-				velY = (attributeTable["v"]->getValueAt(i, j) + attributeTable["v"]->getValueAt(i, 0)) / 2.0;
-			}
-			else{
-				velY = (attributeTable["v"]->getValueAt(i, j) + attributeTable["v"]->getValueAt(i, j + 1)) / 2.0;
-			}
-			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
-			vel = Eigen::Matrix<float, 3, 1>(velX, velY, 0.0);
-			pressure = attributeTable["p"]->getValueAt(i, j);
-			int idx = parts->addParticle();
-			float* p = parts->dataWrite<float>(pH, idx);
-			float* v = parts->dataWrite<float>(vH, idx);
-			float* ps = parts->dataWrite<float>(psH, idx);
-			ps[0] = pressure;
-			for (int k = 0; k < 3; ++k) {
-				p[k] = pos(k, 0);
-				v[k] = vel(k, 0);
-			}
-		}
-	}
-	Partio::write(file.c_str(), *parts);
-	parts->release();
-# endif
-}
-
-void KaminoSolver::initialize_velocity()
-{
-	fReal val = 0.0;
-	// initialize u velocities
-	for (size_t j = 0; j < ny; ++j) {
-		for (size_t i = 0; i < nx; ++i) {
-			val = FBM(sin(2 * M_PI*i / nx), sin(2 * M_PI*j / ny));
-			attributeTable["u"]->setValueAt(i, j, val);
-			val = FBM(cos(2 * M_PI*i / nx), cos(2 * M_PI*j / ny));
-			attributeTable["v"]->setValueAt(i, j, val);
-		}
-	}
 }
 
 void KaminoSolver::advection()
@@ -264,6 +151,11 @@ void KaminoSolver::projection()
     this->swapAttrBuffers();
 }
 
+
+// <<<<<<<<<<
+// INITIALIZATION >>>>>>>>>>
+
+
 void KaminoSolver::precomputeLaplacian()
 {
 	// present construction assumes 2D fluid in every cell and toroidal BCs
@@ -281,7 +173,6 @@ void KaminoSolver::precomputeLaplacian()
 			j > (ny - 2) ? (Laplacian.coeffRef(k, i) = -1) : (Laplacian.coeffRef(k, (j + 1)*nx + i) = -1);
 			j < 1 ? (Laplacian.coeffRef(k, (ny - 1)*nx + i) = -1) : (Laplacian.coeffRef(k, (j - 1)*nx + i) = -1);
 			k++;
-			std::cout << "here" << std::endl;
 		}
 	}
 }
@@ -295,6 +186,134 @@ void KaminoSolver::initialize_pressure()
 	}
 }
 
+void KaminoSolver::initialize_velocity()
+{
+	fReal val = 0.0;
+	for (size_t j = 0; j < ny; ++j) {
+		for (size_t i = 0; i < nx; ++i) {
+			val = FBM(sin(2 * M_PI*i / nx), sin(2 * M_PI*j / ny));
+			attributeTable["u"]->setValueAt(i, j, val);
+			val = FBM(cos(2 * M_PI*i / nx), cos(2 * M_PI*j / ny));
+			attributeTable["v"]->setValueAt(i, j, val);
+		}
+	}
+}
+
+fReal KaminoSolver::FBM(const fReal x, const fReal y) {
+	fReal total = 0.0f;
+	fReal resolution = 1.0;
+	fReal persistance = 0.5;
+	int octaves = 4;
+
+	for (int i = 0; i < octaves; i++) {
+		fReal freq = std::pow(2.0f, i);
+		fReal amp = std::pow(persistance, i);
+		total += amp * interpNoise2D(x * freq / resolution, y * freq / resolution);
+	}
+	fReal a = 1 - persistance;  // normalization
+
+	return a * total / 2.0f;  // normalized, pseudorandom number between -1 and 1
+}
+
+fReal KaminoSolver::interpNoise2D(const fReal x, const fReal y) const {
+	fReal intX = std::floor(x);
+	fReal fractX = x - intX;
+	fReal intY = std::floor(y);
+	fReal fractY = y - intY;
+
+	fReal v1 = rand(Eigen::Matrix<fReal, 2, 1>(intX, intY));
+	fReal v2 = rand(Eigen::Matrix<fReal, 2, 1>(intX + 1, intY));
+	fReal v3 = rand(Eigen::Matrix<fReal, 2, 1>(intX, intY + 1));
+	fReal v4 = rand(Eigen::Matrix<fReal, 2, 1>(intX + 1, intY + 1));
+
+	// interpolate for smooth transitions
+	fReal i1 = KaminoLerp(v1, v2, fractX);
+	fReal i2 = KaminoLerp(v3, v4, fractX);
+	return KaminoLerp(i1, i2, fractY);
+}
+
+fReal KaminoSolver::rand(const Eigen::Matrix<fReal, 2, 1> vecA) const {
+	// return pseudorandom number between -1 and 1
+	Eigen::Matrix<fReal, 2, 1> vecB = Eigen::Matrix<fReal, 2, 1>(12.9898, 4.1414);
+	fReal val = sin(vecA.dot(vecB) * 43758.5453);
+	return val - std::floor(val);
+}
+
+
+// <<<<<<<<<<
+// OUTPUT >>>>>>>>>>
+
+
+void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
+{
+# ifndef _MSC_VER
+	std::string file = s + std::to_string(frame) + ".bgeo";
+
+	Partio::ParticlesDataMutable* parts = Partio::create();
+	Partio::ParticleAttribute pH, vH, psH;
+	pH = parts->addAttribute("position", Partio::VECTOR, 3);
+	vH = parts->addAttribute("v", Partio::VECTOR, 3);
+	psH = parts->addAttribute("pressure", Partio::VECTOR, 1);
+
+	Eigen::Matrix<float, 3, 1> pos;
+	Eigen::Matrix<float, 3, 1> vel;
+	fReal pressure;
+	fReal velX, velY;
+
+	for (size_t j = 0; j < ny; ++j) {
+		for (size_t i = 0; i < ny; ++i) {
+			if(i == (nx - 1)){
+				velX = (attributeTable["u"]->getValueAt(i, j) + attributeTable["u"]->getValueAt(0, j)) / 2.0;
+			}
+			else{
+				velX = (attributeTable["u"]->getValueAt(i, j) + attributeTable["u"]->getValueAt(i + 1, j)) / 2.0;
+			}
+			if(j == (ny - 1)){
+				velY = (attributeTable["v"]->getValueAt(i, j) + attributeTable["v"]->getValueAt(i, 0)) / 2.0;
+			}
+			else{
+				velY = (attributeTable["v"]->getValueAt(i, j) + attributeTable["v"]->getValueAt(i, j + 1)) / 2.0;
+			}
+			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
+			vel = Eigen::Matrix<float, 3, 1>(velX, velY, 0.0);
+			pressure = attributeTable["p"]->getValueAt(i, j);
+			int idx = parts->addParticle();
+			float* p = parts->dataWrite<float>(pH, idx);
+			float* v = parts->dataWrite<float>(vH, idx);
+			float* ps = parts->dataWrite<float>(psH, idx);
+			ps[0] = pressure;
+			for (int k = 0; k < 3; ++k) {
+				p[k] = pos(k, 0);
+				v[k] = vel(k, 0);
+			}
+		}
+	}
+	Partio::write(file.c_str(), *parts);
+	parts->release();
+# endif
+}
+
+
+// <<<<<<<<<<
+// ACCESS >>>>>>>>>>
+
+
+void KaminoSolver::addAttr(std::string name, fReal xOffset, fReal yOffset)
+{
+	KaminoQuantity* ptr = new KaminoQuantity(name, this->nx, this->ny, this->gridLen, xOffset, yOffset);
+	this->attributeTable.emplace(std::pair<std::string, KaminoQuantity*>(name, ptr));
+}
+
+KaminoQuantity* KaminoSolver::getAttributeNamed(std::string name)
+{
+	return (*this)[name];
+}
+
+KaminoQuantity* KaminoSolver::operator[](std::string name)
+{
+	return this->attributeTable.at(name);
+}
+
 void KaminoSolver::swapAttrBuffers()
 {
 	for (auto quantity : this->attributeTable)
@@ -302,3 +321,6 @@ void KaminoSolver::swapAttrBuffers()
 		quantity.second->swapBuffer();
 	}
 }
+
+
+// <<<<<<<<<<
