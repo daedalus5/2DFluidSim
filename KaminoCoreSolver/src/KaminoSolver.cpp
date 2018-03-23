@@ -82,9 +82,12 @@ void KaminoSolver::advection()
 
 void KaminoSolver::projection()
 {
-	fReal density = 1000;	// rest fluid density
-	fReal scale = timeStep / (density * gridLen * gridLen);
-	fReal invGridLen = 1 / gridLen;
+	// fReal density = 1000;	// rest fluid density
+	// fReal scale = timeStep / (density * gridLen * gridLen);
+	// fReal invGridLen = 1 / gridLen;
+	fReal density = 1.0;
+	fReal scale = 1.0;
+	fReal invGridLen = 1.0;
 
 	// construct the vector b
 	Eigen::VectorXd b(nx * ny);
@@ -109,6 +112,7 @@ void KaminoSolver::projection()
 	cg.setTolerance(pow(10, -1));
 	cg.compute(Laplacian * scale);
 	p = cg.solve(b);
+	p *= 0.01;
 
 	//std::cout << "#iterations:     " << cg.iterations() << std::endl;
 	//std::cout << "estimated error: " << cg.error()      << std::endl;
@@ -192,9 +196,9 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < ny; ++j) {
 		for (size_t i = 0; i < nx; ++i) {
 			val = FBM(sin(2 * M_PI*i / nx), sin(2 * M_PI*j / ny));
-			attributeTable["u"]->setValueAt(i, j, 0.0);
-			val = FBM(cos(2 * M_PI*i / nx), cos(2 * M_PI*j / ny));
-			attributeTable["v"]->setValueAt(i, j, 1.0);
+			attributeTable["u"]->setValueAt(i, j, val);
+			//val = FBM(cos(2 * M_PI*i / nx), cos(2 * M_PI*j / ny));
+			attributeTable["v"]->setValueAt(i, j, 0.0);
 		}
 	}
 }
