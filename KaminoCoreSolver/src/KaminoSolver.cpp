@@ -9,6 +9,7 @@ KaminoSolver::KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDu
 	addAttr("p");				// p density
 
 	initialize_velocity();
+	initialize_pressure();
 	precomputeLaplacian();
 }
 
@@ -103,12 +104,14 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 	// TODO: interpolate velocities to grid centers and combine into vec2
 
 	Partio::ParticlesDataMutable* parts = Partio::create();
-	Partio::ParticleAttribute pH, vH;
+	Partio::ParticleAttribute pH, vH, psH;
 	pH = parts->addAttribute("position", Partio::VECTOR, 3);
 	vH = parts->addAttribute("v", Partio::VECTOR, 3);
+	psH = parts->addAttribute("pressure", Partio::VECTOR, 1);
 
 	Eigen::Matrix<float, 3, 1> pos;
 	Eigen::Matrix<float, 3, 1> vel;
+	fReal pressure;
 	fReal velX, velY;
 
 	for (size_t j = 0; j < ny; ++j) {
@@ -127,9 +130,12 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			}
 			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
 			vel = Eigen::Matrix<float, 3, 1>(velX, velY, 0.0);
+			pressure = attributeTable["p"]->getValueAt(i, j);
 			int idx = parts->addParticle();
 			float* p = parts->dataWrite<float>(pH, idx);
 			float* v = parts->dataWrite<float>(vH, idx);
+			float* ps = parts->dataWrite<float>(psH, idx);
+			ps[0] = pressure;
 			for (int k = 0; k < 3; ++k) {
 				p[k] = pos(k, 0);
 				v[k] = vel(k, 0);
@@ -264,21 +270,27 @@ void KaminoSolver::precomputeLaplacian()
 	Laplacian = Eigen::SparseMatrix<fReal>(nx*ny, nx*ny);
 	Laplacian.setZero();
 
-	// construct A row-by-row
+	// construct Laplacian row-by-row
 	size_t k = 0;
-	Eigen::VectorXd ARow(nx * ny);
+
 	for(size_t j = 0; j < ny; ++j){
 		for(size_t i = 0; i < nx; ++i){
-			ARow.setZero();
-			ARow(j*nx + i) = 4;
-			i > (nx - 2) ? (ARow(j*nx) = -1) : (ARow(j*nx + i + 1) = -1);
-			i < 1 ? (ARow(j*nx + nx - 1) = -1) : (ARow(j*nx + i - 1) = -1);
-			j > (ny - 2) ? (ARow(i) = -1) : (ARow((j + 1)*nx + i) = -1);
-			j < 1 ? (ARow((ny - 1)*nx + i) = -1) : (ARow((j - 1)*nx + i) = -1);
-			for(int l = 0; l < nx * ny; ++l){
-				Laplacian.coeffRef(k, l) = ARow(l);
-			}
+			Laplacian.coeffRef(k, j*nx + i) = 4;
+			i > (nx - 2) ? (Laplacian.coeffRef(k, j*nx) = -1) : (Laplacian.coeffRef(k, j*nx + i + 1) = -1);
+			i < 1 ? (Laplacian.coeffRef(k, j*nx + nx - 1) = -1) : (Laplacian.coeffRef(k, j*nx + i - 1) = -1);
+			j > (ny - 2) ? (Laplacian.coeffRef(k, i) = -1) : (Laplacian.coeffRef(k, (j + 1)*nx + i) = -1);
+			j < 1 ? (Laplacian.coeffRef(k, (ny - 1)*nx + i) = -1) : (Laplacian.coeffRef(k, (j - 1)*nx + i) = -1);
 			k++;
+			std::cout << "here" << std::endl;
+		}
+	}
+}
+
+void KaminoSolver::initialize_pressure()
+{
+	for(size_t i = 0; i < nx; ++i){
+		for(size_t j = 0; j < ny; ++j){
+			attributeTable["p"]->setValueAt(i, j, 0.0);
 		}
 	}
 }
