@@ -112,7 +112,7 @@ void KaminoSolver::projection()
 	cg.setTolerance(pow(10, -1));
 	cg.compute(Laplacian * scale);
 	p = cg.solve(b);
-	p *= 0.01;
+	p *= 0.1;
 
 	//std::cout << "#iterations:     " << cg.iterations() << std::endl;
 	//std::cout << "estimated error: " << cg.error()      << std::endl;
@@ -205,7 +205,7 @@ void KaminoSolver::initialize_velocity()
 
 fReal KaminoSolver::FBM(const fReal x, const fReal y) {
 	fReal total = 0.0f;
-	fReal resolution = 1.0;
+	fReal resolution = 100.0;
 	fReal persistance = 0.5;
 	int octaves = 4;
 
@@ -279,6 +279,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 				velY = (attributeTable["v"]->getValueAt(i, j) + attributeTable["v"]->getValueAt(i, j + 1)) / 2.0;
 			}
 			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
+			mapToSphere(pos);
 			vel = Eigen::Matrix<float, 3, 1>(velX, velY, 0.0);
 			pressure = attributeTable["p"]->getValueAt(i, j);
 			int idx = parts->addParticle();
@@ -297,6 +298,15 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 # endif
 }
 
+void KaminoSolver::mapToSphere(Eigen::Matrix<float, 3, 1>& pos) const
+{
+	float radius = 5.0;
+	float theta = M_PI*pos[1] / (ny * gridLen);
+	float phi = 2*M_PI*pos[0] / (nx * gridLen);
+	pos[0] = radius * sin(theta) * cos(phi);
+	pos[1] = radius * cos(theta);
+	pos[2] = radius * sin(theta) * sin(phi);
+}
 
 // <<<<<<<<<<
 // ACCESS >>>>>>>>>>
