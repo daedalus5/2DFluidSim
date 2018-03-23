@@ -9,6 +9,7 @@ KaminoSolver::KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDu
 	addAttr("p");				// p density
 
 	initialize_velocity();
+	precomputeLaplacian();
 }
 
 KaminoSolver::~KaminoSolver()
@@ -24,7 +25,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 	this->timeStep = timeStep;
 	advection();
 	// bodyForce();
-	projection();
+	//projection();
 # ifdef DEBUGBUILD
 	/*for (unsigned gridX = 0; gridX != nx; ++gridX)
 	{
@@ -66,8 +67,8 @@ fReal KaminoSolver::FBM(const fReal x, const fReal y) {
 	}
 	fReal a = 1 - persistance;  // normalization
 
-	return a * total / 2.0f;  // normalized, pseudorandom number between -1 and 1
-
+	//return a * total / 2.0f;  // normalized, pseudorandom number between -1 and 1
+	return a * total / 4.0f;  // normalized, pseudorandom number between -1 and 1
 }
 
 fReal KaminoSolver::interpNoise2D(const fReal x, const fReal y) const {
@@ -110,8 +111,8 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 	Eigen::Matrix<float, 3, 1> vel;
 	fReal velX, velY;
 
-	for (size_t i = 0; i < nx; ++i) {
-		for (size_t j = 0; j < ny; ++j) {
+	for (size_t j = 0; j < ny; ++j) {
+		for (size_t i = 0; i < ny; ++i) {
 			if(i == (nx - 1)){
 				velX = (attributeTable["u"]->getValueAt(i, j) + attributeTable["u"]->getValueAt(0, j)) / 2.0;
 			}
@@ -142,30 +143,15 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 
 void KaminoSolver::initialize_velocity()
 {
-	// initialize u velocities
-	fReal x = -gridLen / 2.0;
-	fReal y = 0.0;
 	fReal val = 0.0;
-
-	for (size_t i = 0; i < nx; ++i) {
-		for (size_t j = 0; j < ny; ++j) {
-			val = FBM(sin(2 * M_PI*x / (nx*gridLen)), sin(2 * M_PI*y / (ny*gridLen)));
+	// initialize u velocities
+	for (size_t j = 0; j < ny; ++j) {
+		for (size_t i = 0; i < nx; ++i) {
+			val = FBM(sin(2 * M_PI*i / nx), sin(2 * M_PI*j / ny));
 			attributeTable["u"]->setValueAt(i, j, val);
-			y += gridLen;
-		}
-		x += gridLen;
-	}
-	// initialize v velocities
-	x = 0.0;
-	y = -gridLen / 2.0;
-
-	for (size_t i = 0; i < nx; ++i) {
-		for (size_t j = 0; j < ny; ++j) {
-			val = FBM(std::sin(2.0 * M_PI *x / (nx * gridLen)), sin(2.0 * M_PI * y / (ny * gridLen)));
+			val = FBM(cos(2 * M_PI*i / nx), cos(2 * M_PI*j / ny));
 			attributeTable["v"]->setValueAt(i, j, val);
-			y += gridLen;
 		}
-		x += gridLen;
 	}
 }
 
@@ -207,30 +193,6 @@ void KaminoSolver::projection()
 	fReal scale = timeStep / (density * gridLen * gridLen);
 	fReal invGridLen = 1 / gridLen;
 
-	// construct the matrix A
-	// present construction assumes 2D fluid in every cell and toroidal BCs
-	Eigen::SparseMatrix<fReal> A(nx*ny, nx*ny);
-	A.setZero();
-
-	// construct A row-by-row
-	size_t k = 0;
-	Eigen::VectorXd ARow(nx * ny);
-	for(size_t j = 0; j < ny; ++j){
-		for(size_t i = 0; i < nx; ++i){
-			ARow.setZero();
-			ARow(j*nx + i) = 4;
-			i > (nx - 2) ? (ARow(j*nx) = -1) : (ARow(j*nx + i + 1) = -1);
-			i < 1 ? (ARow(j*nx + nx - 1) = -1) : (ARow(j*nx + i - 1) = -1);
-			j > (ny - 2) ? (ARow(i) = -1) : (ARow((j + 1)*nx + i) = -1);
-			j < 1 ? (ARow((ny - 1)*nx + i) = -1) : (ARow((j - 1)*nx + i) = -1);
-			for(int l = 0; l < nx * ny; ++l){
-				A.coeffRef(k, l) = ARow(l);
-			}
-			k++;
-		}
-	}
-	A *= scale;
-
 	// construct the vector b
 	Eigen::VectorXd b(nx * ny);
 	b.setZero();
@@ -252,11 +214,11 @@ void KaminoSolver::projection()
 	// solving Ax = b
 	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower|Eigen::Upper> cg;
 	cg.setTolerance(pow(10, -1));
-	cg.compute(A);
+	cg.compute(Laplacian * scale);
 	p = cg.solve(b);
 
-	std::cout << "#iterations:     " << cg.iterations() << std::endl;
-	std::cout << "estimated error: " << cg.error()      << std::endl;
+	//std::cout << "#iterations:     " << cg.iterations() << std::endl;
+	//std::cout << "estimated error: " << cg.error()      << std::endl;
 
 	// Populate updated pressure values
     for(size_t j = 0; j < ny; ++j){
@@ -294,6 +256,31 @@ void KaminoSolver::projection()
     }
 
     this->swapAttrBuffers();
+}
+
+void KaminoSolver::precomputeLaplacian()
+{
+	// present construction assumes 2D fluid in every cell and toroidal BCs
+	Laplacian = Eigen::SparseMatrix<fReal>(nx*ny, nx*ny);
+	Laplacian.setZero();
+
+	// construct A row-by-row
+	size_t k = 0;
+	Eigen::VectorXd ARow(nx * ny);
+	for(size_t j = 0; j < ny; ++j){
+		for(size_t i = 0; i < nx; ++i){
+			ARow.setZero();
+			ARow(j*nx + i) = 4;
+			i > (nx - 2) ? (ARow(j*nx) = -1) : (ARow(j*nx + i + 1) = -1);
+			i < 1 ? (ARow(j*nx + nx - 1) = -1) : (ARow(j*nx + i - 1) = -1);
+			j > (ny - 2) ? (ARow(i) = -1) : (ARow((j + 1)*nx + i) = -1);
+			j < 1 ? (ARow((ny - 1)*nx + i) = -1) : (ARow((j - 1)*nx + i) = -1);
+			for(int l = 0; l < nx * ny; ++l){
+				Laplacian.coeffRef(k, l) = ARow(l);
+			}
+			k++;
+		}
+	}
 }
 
 void KaminoSolver::swapAttrBuffers()

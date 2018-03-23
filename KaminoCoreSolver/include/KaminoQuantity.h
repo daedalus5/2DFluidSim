@@ -94,6 +94,8 @@ private:
 	size_t ny;
 	/* Grid size */
 	fReal gridLen;
+	/* Laplacian Matrix */
+	Eigen::SparseMatrix<fReal> Laplacian;
 
 	/* So that it remembers all these attributes within */
 	std::map<std::string, KaminoQuantity*> attributeTable;
@@ -127,6 +129,8 @@ public:
 	void stepForward(fReal timeStep);
 
 	void addAttr(std::string name, fReal xOffset = 0.0, fReal yOffset = 0.0);
+
+	void precomputeLaplacian();
 	
 	KaminoQuantity* getAttributeNamed(std::string name);
 	KaminoQuantity* operator[](std::string name);
