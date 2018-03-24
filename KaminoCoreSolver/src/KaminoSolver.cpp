@@ -187,7 +187,7 @@ void KaminoSolver::projection()
 	Eigen::VectorXd p(nx * ny);
 	
 	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower | Eigen::Upper> cg;
-	cg.setTolerance(pow(10, -1));
+	//cg.setTolerance(pow(10, -1));
 	cg.compute(Laplacian);
 	p = cg.solve(b);
 
@@ -302,9 +302,9 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < ny; ++j) {
 		for (size_t i = 0; i < nx; ++i) {
 			val = FBM(sin(2 * M_PI*i / nx), sin(2 * M_PI*j / ny));
-			attributeTable["u"]->setValueAt(i, j, val);
-			//val = FBM(cos(2 * M_PI*i / nx), cos(2 * M_PI*j / ny));
-			attributeTable["v"]->setValueAt(i, j, 0.0);
+			attributeTable["u"]->setValueAt(i, j, 10.0 * val);
+			val = FBM(cos(2 * M_PI*i / nx), cos(2 * M_PI*j / ny));
+			attributeTable["v"]->setValueAt(i, j, 10.0 * val);
 		}
 	}
 }
@@ -385,7 +385,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 				velY = (attributeTable["v"]->getValueAt(i, j) + attributeTable["v"]->getValueAt(i, j + 1)) / 2.0;
 			}
 			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
-			mapToSphere(pos);
+			//mapToSphere(pos);
 			vel = Eigen::Matrix<float, 3, 1>(velX, velY, 0.0);
 			pressure = attributeTable["p"]->getValueAt(i, j);
 			int idx = parts->addParticle();
