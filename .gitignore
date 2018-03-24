@@ -3,8 +3,8 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-Makefile
-2DFluidSim
+./Makefile
+./2DFluidSim
 
 # User-specific files
 *.suo

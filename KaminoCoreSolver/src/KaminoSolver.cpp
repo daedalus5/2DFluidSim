@@ -35,7 +35,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 	this->timeStep = timeStep;
 	advection();
 	// bodyForce();
-	// projection();
+	projection();
 # ifdef DEBUGBUILD
 	/*for (unsigned gridX = 0; gridX != nx; ++gridX)
 	{
@@ -171,7 +171,7 @@ void KaminoSolver::projection()
 			// oot : one over two
 			size_t ipoot = (i + 1) % nx;
 			size_t imoot = i;
-			size_t jpoot = (j + 1) & ny;
+			size_t jpoot = (j + 1) % ny;
 			size_t jmoot = j;
 
 			fReal uPlus = attributeTable["u"]->getValueAt(ipoot, j);
@@ -301,9 +301,9 @@ void KaminoSolver::initialize_velocity()
 	fReal val = 0.0;
 	for (size_t j = 0; j < ny; ++j) {
 		for (size_t i = 0; i < nx; ++i) {
-			val = FBM(sin(2 * M_PI*i / nx), sin(2 * M_PI*j / ny));
+			val = FBM(sin(2 * M_PI * i / nx), sin(2 * M_PI * j / ny));
 			attributeTable["u"]->setValueAt(i, j, 10.0 * val);
-			val = FBM(cos(2 * M_PI*i / nx), cos(2 * M_PI*j / ny));
+			val = FBM(cos(2 * M_PI * i / nx), cos(2 * M_PI * j / ny));
 			attributeTable["v"]->setValueAt(i, j, 10.0 * val);
 		}
 	}
