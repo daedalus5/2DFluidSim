@@ -17,9 +17,9 @@
     <ClInclude Include="include\KaminoQuantity.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="src\KaminoQuantity.cpp" />
     <ClCompile Include="src\KaminoSolver.cpp" />
-    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8137E345-F77E-4CFE-9233-EBAFE607315A}</ProjectGuid>

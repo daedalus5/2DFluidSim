@@ -43,6 +43,7 @@ private:
 
 	/* Grid size */
 	fReal gridLen;
+	fReal invGridLen;
 
 	/* Is this staggered? */
 	fReal xOffset;
@@ -57,7 +58,7 @@ private:
 	size_t getWarpedYIndex(fReal y);
 
 	/* Get index */
-	size_t getIndex(size_t x, size_t y);
+	inline size_t getIndex(size_t x, size_t y);
 
 public:
 	/* Constructor */
@@ -81,8 +82,8 @@ public:
 	/* Lerped Sampler using world coordinates */
 	fReal sampleAt(fReal x, fReal y);
 	/* Given the index, show its origin in world coordinates*/
-	fReal getXCoordinateAt(size_t x);
-	fReal getYCoordinateAt(size_t y);
+	fReal getXCoordAtIndex(size_t x);
+	fReal getYCoordAtIndex(size_t y);
 };
 
 // The solver class.
@@ -126,6 +127,9 @@ private:
 
 	/*map to spherical coordinates*/
 	void mapToSphere(Eigen::Matrix<float, 3, 1>& pos) const;
+
+	/* Duplicate of quantity's get index */
+	inline size_t getIndex(size_t x, size_t y);
 
 public:
 	KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDuration = 1.0 / 30.0);

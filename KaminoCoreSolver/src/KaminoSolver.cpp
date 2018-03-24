@@ -35,7 +35,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 	this->timeStep = timeStep;
 	advection();
 	// bodyForce();
-	projection();
+	// projection();
 # ifdef DEBUGBUILD
 	/*for (unsigned gridX = 0; gridX != nx; ++gridX)
 	{
@@ -57,8 +57,8 @@ void KaminoSolver::advection()
 		{
 			for (size_t gridY = 0; gridY < this->ny; ++gridY)
 			{
-				fReal gX = attr->getXCoordinateAt(gridX);
-				fReal gY = attr->getYCoordinateAt(gridY);
+				fReal gX = attr->getXCoordAtIndex(gridX);
+				fReal gY = attr->getYCoordAtIndex(gridY);
 
 				fReal uG = (*this)["u"]->sampleAt(gX, gY);
 				fReal vG = (*this)["v"]->sampleAt(gX, gY);
@@ -80,7 +80,7 @@ void KaminoSolver::advection()
 	this->swapAttrBuffers();
 }
 
-void KaminoSolver::projection()
+/*void KaminoSolver::projection()
 {
 	// fReal density = 1000;	// rest fluid density
 	// fReal scale = timeStep / (density * gridLen * gridLen);
@@ -153,6 +153,77 @@ void KaminoSolver::projection()
     }
 
     this->swapAttrBuffers();
+}*/
+
+void KaminoSolver::projection()
+{
+	const fReal density = 1000.0;
+	fReal rhsScaleB = -gridLen * density / timeStep;
+	fReal scaleP = 1.0 / rhsScaleB;
+
+	Eigen::VectorXd b(nx * ny);
+	b.setZero();
+
+	for (size_t j = 0; j < ny; ++j)
+	{
+		for (size_t i = 0; i < nx; ++i)
+		{
+			// oot : one over two
+			size_t ipoot = (i + 1) % nx;
+			size_t imoot = i;
+			size_t jpoot = (j + 1) & ny;
+			size_t jmoot = j;
+
+			fReal uPlus = attributeTable["u"]->getValueAt(ipoot, j);
+			fReal uMinus = attributeTable["u"]->getValueAt(imoot, j);
+			fReal vPlus = attributeTable["v"]->getValueAt(i, jpoot);
+			fReal vMinus = attributeTable["v"]->getValueAt(i, jmoot);
+
+			b(getIndex(i, j)) = (uPlus - uMinus + vPlus - vMinus);
+		}
+	}
+	b = b * rhsScaleB;
+
+	Eigen::VectorXd p(nx * ny);
+	
+	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower | Eigen::Upper> cg;
+	cg.setTolerance(pow(10, -1));
+	cg.compute(Laplacian);
+	p = cg.solve(b);
+
+	//std::cout << "#iterations:     " << cg.iterations() << std::endl;
+	//std::cout << "estimated error: " << cg.error()      << std::endl;
+
+	// Populate updated pressure values
+	for (size_t j = 0; j < ny; ++j) 
+	{
+		for (size_t i = 0; i < nx; ++i) 
+		{
+			attributeTable["p"]->writeValueTo(i, j, p(getIndex(i, j)));
+		}
+	}
+	attributeTable["p"]->swapBuffer();
+
+	for (size_t j = 0; j < ny; ++j)
+	{
+		for (size_t i = 0; i < nx; ++i)
+		{
+			size_t iRhs = i;
+			size_t iLhs = (i == 0 ? nx - 1 : i - 1);
+			size_t jUpper = j;
+			size_t jLower = (j == 0 ? ny - 1 : j - 1);
+
+			fReal uBeforeUpdate = attributeTable["u"]->getValueAt(i, j);
+			fReal deltaU = scaleP * (attributeTable["p"]->getValueAt(iRhs, j) - attributeTable["p"]->getValueAt(iLhs, j));
+			attributeTable["u"]->writeValueTo(i, j, uBeforeUpdate + deltaU);
+			
+			fReal vBeforeUpdate = attributeTable["v"]->getValueAt(i, j);
+			fReal deltaV = scaleP * (attributeTable["p"]->getValueAt(i, jUpper) - attributeTable["p"]->getValueAt(i, jLower));
+			attributeTable["v"]->writeValueTo(i, j, vBeforeUpdate + deltaV);
+		}
+	}
+
+	this->swapAttrBuffers();
 }
 
 
@@ -160,7 +231,7 @@ void KaminoSolver::projection()
 // INITIALIZATION >>>>>>>>>>
 
 
-void KaminoSolver::precomputeLaplacian()
+/*void KaminoSolver::precomputeLaplacian()
 {
 	// present construction assumes 2D fluid in every cell and toroidal BCs
 	Laplacian = Eigen::SparseMatrix<fReal>(nx*ny, nx*ny);
@@ -177,6 +248,41 @@ void KaminoSolver::precomputeLaplacian()
 			j > (ny - 2) ? (Laplacian.coeffRef(k, i) = -1) : (Laplacian.coeffRef(k, (j + 1)*nx + i) = -1);
 			j < 1 ? (Laplacian.coeffRef(k, (ny - 1)*nx + i) = -1) : (Laplacian.coeffRef(k, (j - 1)*nx + i) = -1);
 			k++;
+		}
+	}
+}*/
+
+size_t KaminoSolver::getIndex(size_t x, size_t y)
+{
+# ifdef DEBUGBUILD
+	if (x >= this->nx || y >= this->ny)
+	{
+		std::cerr << "Index out of bound at x: " << x << " y: " << y << std::endl;
+	}
+# endif
+	return y * nx + x;
+}
+
+void KaminoSolver::precomputeLaplacian()
+{
+	Laplacian = Eigen::SparseMatrix<fReal>(nx*ny, nx*ny);
+	Laplacian.setZero();
+
+	for (size_t j = 0; j < ny; ++j)
+	{
+		for (size_t i = 0; i < nx; ++i)
+		{
+			size_t rowNumber = getIndex(i, j);
+			size_t ip1 = (i + 1) % nx;
+			size_t im1 = (i == 0 ? nx - 1 : i - 1);
+			size_t jp1 = (j + 1) % ny;
+			size_t jm1 = (j == 0 ? ny - 1 : j - 1);
+
+			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = 4;
+			Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = -1;
+			Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1;
+			Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = -1;
+			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1;
 		}
 	}
 }
