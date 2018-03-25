@@ -1,7 +1,7 @@
 #include "include/KaminoQuantity.h"
 
-const size_t nx = 100;          // number of grid cells in u direction
-const size_t ny = 100;          // number of grid cells in v direction
+const size_t nx = 50;          // number of grid cells in u direction
+const size_t ny = 50;          // number of grid cells in v direction
 const fReal gridLen = 0.1;      // grid spacing (square in uv plane)
 /* practical condition: dt <= 5*dx / u_max */
 /* dt should be less than DT as well */

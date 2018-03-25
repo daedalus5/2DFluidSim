@@ -10,7 +10,7 @@ KaminoSolver::KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDu
 {
 	addAttr("u", 0.5, 0.0);		// u velocity
 	addAttr("v", 0.0, 0.5);		// v velocity
-	addAttr("p");				// p density
+	addAttr("p");				// p pressure
 
 	initialize_velocity();
 	initialize_pressure();
@@ -36,16 +36,6 @@ void KaminoSolver::stepForward(fReal timeStep)
 	advection();
 	// bodyForce();
 	projection();
-# ifdef DEBUGBUILD
-	/*for (unsigned gridX = 0; gridX != nx; ++gridX)
-	{
-		for (unsigned gridY = 0; gridY != ny; ++gridY)
-		{
-			std::cout << attributeTable["u"]->getValueAt(gridX, gridY) << '\t';
-		}
-		std::cout << '\n';
-	}*/
-# endif
 }
 
 void KaminoSolver::advection()
@@ -164,6 +154,10 @@ void KaminoSolver::projection()
 	Eigen::VectorXd b(nx * ny);
 	b.setZero();
 
+	KaminoQuantity* u = attributeTable["u"];
+	KaminoQuantity* v = attributeTable["v"];
+	KaminoQuantity* p = attributeTable["p"];
+
 	for (size_t j = 0; j < ny; ++j)
 	{
 		for (size_t i = 0; i < nx; ++i)
@@ -174,22 +168,22 @@ void KaminoSolver::projection()
 			size_t jpoot = (j + 1) % ny;
 			size_t jmoot = j;
 
-			fReal uPlus = attributeTable["u"]->getValueAt(ipoot, j);
-			fReal uMinus = attributeTable["u"]->getValueAt(imoot, j);
-			fReal vPlus = attributeTable["v"]->getValueAt(i, jpoot);
-			fReal vMinus = attributeTable["v"]->getValueAt(i, jmoot);
+			fReal uPlus = u->getValueAt(ipoot, j);
+			fReal uMinus = u->getValueAt(imoot, j);
+			fReal vPlus = v->getValueAt(i, jpoot);
+			fReal vMinus = v->getValueAt(i, jmoot);
 
 			b(getIndex(i, j)) = (uPlus - uMinus + vPlus - vMinus);
 		}
 	}
 	b = b * rhsScaleB;
 
-	Eigen::VectorXd p(nx * ny);
+	Eigen::VectorXd pVector(nx * ny);
 	
 	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower | Eigen::Upper> cg;
 	//cg.setTolerance(pow(10, -1));
 	cg.compute(Laplacian);
-	p = cg.solve(b);
+	pVector = cg.solve(b);
 
 	//std::cout << "#iterations:     " << cg.iterations() << std::endl;
 	//std::cout << "estimated error: " << cg.error()      << std::endl;
@@ -199,10 +193,10 @@ void KaminoSolver::projection()
 	{
 		for (size_t i = 0; i < nx; ++i) 
 		{
-			attributeTable["p"]->writeValueTo(i, j, p(getIndex(i, j)));
+			p->writeValueTo(i, j, pVector(getIndex(i, j)));
 		}
 	}
-	attributeTable["p"]->swapBuffer();
+	p->swapBuffer();
 
 	for (size_t j = 0; j < ny; ++j)
 	{
@@ -213,13 +207,13 @@ void KaminoSolver::projection()
 			size_t jUpper = j;
 			size_t jLower = (j == 0 ? ny - 1 : j - 1);
 
-			fReal uBeforeUpdate = attributeTable["u"]->getValueAt(i, j);
-			fReal deltaU = scaleP * (attributeTable["p"]->getValueAt(iRhs, j) - attributeTable["p"]->getValueAt(iLhs, j));
-			attributeTable["u"]->writeValueTo(i, j, uBeforeUpdate + deltaU);
+			fReal uBeforeUpdate = u->getValueAt(i, j);
+			fReal deltaU = scaleP * (p->getValueAt(iRhs, j) - p->getValueAt(iLhs, j));
+			u->writeValueTo(i, j, uBeforeUpdate + deltaU);
 			
-			fReal vBeforeUpdate = attributeTable["v"]->getValueAt(i, j);
-			fReal deltaV = scaleP * (attributeTable["p"]->getValueAt(i, jUpper) - attributeTable["p"]->getValueAt(i, jLower));
-			attributeTable["v"]->writeValueTo(i, j, vBeforeUpdate + deltaV);
+			fReal vBeforeUpdate = v->getValueAt(i, j);
+			fReal deltaV = scaleP * (p->getValueAt(i, jUpper) - p->getValueAt(i, jLower));
+			v->writeValueTo(i, j, vBeforeUpdate + deltaV);
 		}
 	}
 
@@ -252,6 +246,7 @@ void KaminoSolver::projection()
 	}
 }*/
 
+/* Duplicate of getIndex() in KaminoQuantity */
 size_t KaminoSolver::getIndex(size_t x, size_t y)
 {
 # ifdef DEBUGBUILD
@@ -263,6 +258,7 @@ size_t KaminoSolver::getIndex(size_t x, size_t y)
 	return y * nx + x;
 }
 
+/* Compute Laplacian done right...probably */
 void KaminoSolver::precomputeLaplacian()
 {
 	Laplacian = Eigen::SparseMatrix<fReal>(nx*ny, nx*ny);
@@ -301,9 +297,9 @@ void KaminoSolver::initialize_velocity()
 	fReal val = 0.0;
 	for (size_t j = 0; j < ny; ++j) {
 		for (size_t i = 0; i < nx; ++i) {
-			val = FBM(sin(2 * M_PI * i / nx), sin(2 * M_PI * j / ny));
+			val = FBM(sin(2 * M_PI * static_cast<fReal>(i) / nx), sin(2 * M_PI * static_cast<fReal>(j) / ny));
 			attributeTable["u"]->setValueAt(i, j, 10.0 * val);
-			val = FBM(cos(2 * M_PI * i / nx), cos(2 * M_PI * j / ny));
+			val = FBM(cos(2 * M_PI * static_cast<fReal>(i) / nx), cos(2 * M_PI * static_cast<fReal>(j) / ny));
 			attributeTable["v"]->setValueAt(i, j, 10.0 * val);
 		}
 	}
