@@ -82,12 +82,14 @@ void KaminoSolver::advection()
 
 void KaminoSolver::projection()
 {
-	// fReal density = 1000;	// rest fluid density
-	// fReal scale = timeStep / (density * gridLen * gridLen);
+	fReal density = 1000;	// rest fluid density
+	fReal scale = timeStep / (density * gridLen * gridLen);
+	std::cout << scale << std::endl;
 	// fReal invGridLen = 1 / gridLen;
-	fReal density = 1.0;
-	fReal scale = 1.0;
 	fReal invGridLen = 1.0;
+	// fReal density = 1.0;
+	// fReal scale = 1.0;
+	// fReal invGridLen = 1.0;
 
 	// construct the vector b
 	Eigen::VectorXd b(nx * ny);
@@ -112,7 +114,6 @@ void KaminoSolver::projection()
 	cg.setTolerance(pow(10, -1));
 	cg.compute(Laplacian * scale);
 	p = cg.solve(b);
-	p *= 0.1;
 
 	//std::cout << "#iterations:     " << cg.iterations() << std::endl;
 	//std::cout << "estimated error: " << cg.error()      << std::endl;
@@ -129,11 +130,13 @@ void KaminoSolver::projection()
     	for(size_t i = 0; i < nx; ++i){
     		if(i == 0){
     			attributeTable["u"]->writeValueTo(i, j, attributeTable["u"]->getValueAt(i, j) -
-    			scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(nx - 1, j)));
+    			//scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(nx - 1, j)));
+    			scale * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(nx - 1, j)));
     		}
     		else{
     			attributeTable["u"]->writeValueTo(i, j, attributeTable["u"]->getValueAt(i, j) -
-    			scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(i - 1, j)));
+    			//scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(i - 1, j)));
+    			scale * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(i - 1, j)));
     		}
     	}
     }
@@ -143,11 +146,13 @@ void KaminoSolver::projection()
     	for(size_t i = 0; i < nx; ++i){
     		if(j == 0){
     			attributeTable["v"]->writeValueTo(i, j, attributeTable["v"]->getValueAt(i, j) -
-    			scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, ny - 1)));
+    			//scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, ny - 1)));
+    			scale * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, ny - 1)));
     		}
     		else{
     			attributeTable["v"]->writeValueTo(i, j, attributeTable["v"]->getValueAt(i, j) -
-    			scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, j - 1)));
+    			//scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, j - 1)));
+    			scale * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, j - 1)));
     		}
     	}
     }
