@@ -10,11 +10,13 @@ KaminoSolver::KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDu
 {
 	addAttr("u", 0.5, 0.0);		// u velocity
 	addAttr("v", 0.0, 0.5);		// v velocity
-	addAttr("p");				// p density
+	addAttr("p");				// p pressure
+	addAttr("test");			// test scalar field
 
 	initialize_velocity();
 	initialize_pressure();
 	precomputeLaplacian();
+	initialize_test();
 }
 
 KaminoSolver::~KaminoSolver()
@@ -36,16 +38,6 @@ void KaminoSolver::stepForward(fReal timeStep)
 	advection();
 	// bodyForce();
 	projection();
-# ifdef DEBUGBUILD
-	/*for (unsigned gridX = 0; gridX != nx; ++gridX)
-	{
-		for (unsigned gridY = 0; gridY != ny; ++gridY)
-		{
-			std::cout << attributeTable["u"]->getValueAt(gridX, gridY) << '\t';
-		}
-		std::cout << '\n';
-	}*/
-# endif
 }
 
 void KaminoSolver::advection()
@@ -57,8 +49,8 @@ void KaminoSolver::advection()
 		{
 			for (size_t gridY = 0; gridY < this->ny; ++gridY)
 			{
-				fReal gX = attr->getXCoordinateAt(gridX);
-				fReal gY = attr->getYCoordinateAt(gridY);
+				fReal gX = attr->getXCoordAtIndex(gridX);
+				fReal gY = attr->getYCoordAtIndex(gridY);
 
 				fReal uG = (*this)["u"]->sampleAt(gX, gY);
 				fReal vG = (*this)["v"]->sampleAt(gX, gY);
@@ -82,106 +74,117 @@ void KaminoSolver::advection()
 
 void KaminoSolver::projection()
 {
-	fReal density = 1000;	// rest fluid density
-	fReal scale = timeStep / (density * gridLen * gridLen);
-	std::cout << scale << std::endl;
-	// fReal invGridLen = 1 / gridLen;
-	fReal invGridLen = 1.0;
-	// fReal density = 1.0;
-	// fReal scale = 1.0;
-	// fReal invGridLen = 1.0;
+	const fReal density = 1000.0;
+	fReal rhsScaleB = -gridLen * density / timeStep;
+	fReal scaleP = 1.0 / rhsScaleB;
 
-	// construct the vector b
 	Eigen::VectorXd b(nx * ny);
 	b.setZero();
-	for(size_t j = 0; j < ny; ++j){
-		for(size_t i = 0; i < nx; ++i){
-			fReal uPlus, uMinus, vPlus, vMinus;
-			i > (nx - 2) ? (uPlus = attributeTable["u"]->getValueAt(0, j)) : (uPlus = attributeTable["u"]->getValueAt(i + 1, j));
-			uMinus = attributeTable["u"]->getValueAt(i, j); 
-			j > (ny - 2) ? (vPlus = attributeTable["v"]->getValueAt(i, 0)) : (vPlus = attributeTable["v"]->getValueAt(i, j + 1));
-			vMinus = attributeTable["v"]->getValueAt(i, j);
-			b(j*nx + i) = -1 * ((uPlus - uMinus) * invGridLen + (vPlus - vMinus) * invGridLen);
+
+	KaminoQuantity* u = attributeTable["u"];
+	KaminoQuantity* v = attributeTable["v"];
+	KaminoQuantity* p = attributeTable["p"];
+
+	for (size_t j = 0; j < ny; ++j)
+	{
+		for (size_t i = 0; i < nx; ++i)
+		{
+			// oot : one over two
+			size_t ipoot = (i + 1) % nx;
+			size_t imoot = i;
+			size_t jpoot = (j + 1) % ny;
+			size_t jmoot = j;
+
+			fReal uPlus = u->getValueAt(ipoot, j);
+			fReal uMinus = u->getValueAt(imoot, j);
+			fReal vPlus = v->getValueAt(i, jpoot);
+			fReal vMinus = v->getValueAt(i, jmoot);
+
+			b(getIndex(i, j)) = (uPlus - uMinus + vPlus - vMinus);
 		}
 	}
+	b = b * rhsScaleB;
 
-	// pressure vector
-	Eigen::VectorXd p(nx * ny);
-	p.setZero();
-
-	// solving Ax = b
-	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower|Eigen::Upper> cg;
-	cg.setTolerance(pow(10, -1));
-	cg.compute(Laplacian * scale);
-	p = cg.solve(b);
+	Eigen::VectorXd pVector(nx * ny);
+	
+	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower | Eigen::Upper> cg;
+	//cg.setTolerance(pow(10, -1));
+	cg.compute(Laplacian);
+	pVector = cg.solve(b);
 
 	//std::cout << "#iterations:     " << cg.iterations() << std::endl;
 	//std::cout << "estimated error: " << cg.error()      << std::endl;
 
 	// Populate updated pressure values
-    for(size_t j = 0; j < ny; ++j){
-    	for(size_t i = 0; i < nx; ++i){
-    		attributeTable["p"]->writeValueTo(i, j, p(j*nx + i));
-    	}	
-    }
+	for (size_t j = 0; j < ny; ++j) 
+	{
+		for (size_t i = 0; i < nx; ++i) 
+		{
+			p->writeValueTo(i, j, pVector(getIndex(i, j)));
+		}
+	}
+	p->swapBuffer();
 
-    // Populate updated u values
-    for(size_t j = 0; j < ny; ++j){
-    	for(size_t i = 0; i < nx; ++i){
-    		if(i == 0){
-    			attributeTable["u"]->writeValueTo(i, j, attributeTable["u"]->getValueAt(i, j) -
-    			//scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(nx - 1, j)));
-    			scale * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(nx - 1, j)));
-    		}
-    		else{
-    			attributeTable["u"]->writeValueTo(i, j, attributeTable["u"]->getValueAt(i, j) -
-    			//scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(i - 1, j)));
-    			scale * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["p"]->getNextValueAt(i - 1, j)));
-    		}
-    	}
-    }
+	for (size_t j = 0; j < ny; ++j)
+	{
+		for (size_t i = 0; i < nx; ++i)
+		{
+			size_t iRhs = i;
+			size_t iLhs = (i == 0 ? nx - 1 : i - 1);
+			size_t jUpper = j;
+			size_t jLower = (j == 0 ? ny - 1 : j - 1);
 
-    // Populate updated v values
-    for(size_t j = 0; j < ny; ++j){
-    	for(size_t i = 0; i < nx; ++i){
-    		if(j == 0){
-    			attributeTable["v"]->writeValueTo(i, j, attributeTable["v"]->getValueAt(i, j) -
-    			//scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, ny - 1)));
-    			scale * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, ny - 1)));
-    		}
-    		else{
-    			attributeTable["v"]->writeValueTo(i, j, attributeTable["v"]->getValueAt(i, j) -
-    			//scale * gridLen * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, j - 1)));
-    			scale * (attributeTable["p"]->getNextValueAt(i, j) - attributeTable["v"]->getNextValueAt(i, j - 1)));
-    		}
-    	}
-    }
+			fReal uBeforeUpdate = u->getValueAt(i, j);
+			fReal deltaU = scaleP * (p->getValueAt(iRhs, j) - p->getValueAt(iLhs, j));
+			u->writeValueTo(i, j, uBeforeUpdate + deltaU);
+			
+			fReal vBeforeUpdate = v->getValueAt(i, j);
+			fReal deltaV = scaleP * (p->getValueAt(i, jUpper) - p->getValueAt(i, jLower));
+			v->writeValueTo(i, j, vBeforeUpdate + deltaV);
+		}
+	}
 
-    this->swapAttrBuffers();
+	this->swapAttrBuffers();
+	p->swapBuffer();
 }
 
 
 // <<<<<<<<<<
 // INITIALIZATION >>>>>>>>>>
 
+/* Duplicate of getIndex() in KaminoQuantity */
+size_t KaminoSolver::getIndex(size_t x, size_t y)
+{
+# ifdef DEBUGBUILD
+	if (x >= this->nx || y >= this->ny)
+	{
+		std::cerr << "Index out of bound at x: " << x << " y: " << y << std::endl;
+	}
+# endif
+	return y * nx + x;
+}
 
+/* Compute Laplacian done right...probably */
 void KaminoSolver::precomputeLaplacian()
 {
-	// present construction assumes 2D fluid in every cell and toroidal BCs
 	Laplacian = Eigen::SparseMatrix<fReal>(nx*ny, nx*ny);
 	Laplacian.setZero();
 
-	// construct Laplacian row-by-row
-	size_t k = 0;
+	for (size_t j = 0; j < ny; ++j)
+	{
+		for (size_t i = 0; i < nx; ++i)
+		{
+			size_t rowNumber = getIndex(i, j);
+			size_t ip1 = (i + 1) % nx;
+			size_t im1 = (i == 0 ? nx - 1 : i - 1);
+			size_t jp1 = (j + 1) % ny;
+			size_t jm1 = (j == 0 ? ny - 1 : j - 1);
 
-	for(size_t j = 0; j < ny; ++j){
-		for(size_t i = 0; i < nx; ++i){
-			Laplacian.coeffRef(k, j*nx + i) = 4;
-			i > (nx - 2) ? (Laplacian.coeffRef(k, j*nx) = -1) : (Laplacian.coeffRef(k, j*nx + i + 1) = -1);
-			i < 1 ? (Laplacian.coeffRef(k, j*nx + nx - 1) = -1) : (Laplacian.coeffRef(k, j*nx + i - 1) = -1);
-			j > (ny - 2) ? (Laplacian.coeffRef(k, i) = -1) : (Laplacian.coeffRef(k, (j + 1)*nx + i) = -1);
-			j < 1 ? (Laplacian.coeffRef(k, (ny - 1)*nx + i) = -1) : (Laplacian.coeffRef(k, (j - 1)*nx + i) = -1);
-			k++;
+			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = 4;
+			Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = -1;
+			Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1;
+			Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = -1;
+			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1;
 		}
 	}
 }
@@ -200,9 +203,9 @@ void KaminoSolver::initialize_velocity()
 	fReal val = 0.0;
 	for (size_t j = 0; j < ny; ++j) {
 		for (size_t i = 0; i < nx; ++i) {
-			val = FBM(sin(2 * M_PI*i / nx), sin(2 * M_PI*j / ny));
+			val = FBM(sin(2 * M_PI * i / nx), sin(2 * M_PI * j / ny));
 			attributeTable["u"]->setValueAt(i, j, val);
-			//val = FBM(cos(2 * M_PI*i / nx), cos(2 * M_PI*j / ny));
+			val = FBM(cos(2 * M_PI * i / nx), cos(2 * M_PI * j / ny));
 			attributeTable["v"]->setValueAt(i, j, 0.0);
 		}
 	}
@@ -210,7 +213,7 @@ void KaminoSolver::initialize_velocity()
 
 fReal KaminoSolver::FBM(const fReal x, const fReal y) {
 	fReal total = 0.0f;
-	fReal resolution = 100.0;
+	fReal resolution = 1.0;
 	fReal persistance = 0.5;
 	int octaves = 4;
 
@@ -248,6 +251,36 @@ fReal KaminoSolver::rand(const Eigen::Matrix<fReal, 2, 1> vecA) const {
 	return val - std::floor(val);
 }
 
+void KaminoSolver::initialize_test()
+{
+	for(size_t i = 0; i < nx; ++i){
+		for(size_t j = 0; j < ny; ++j){
+			attributeTable["test"]->setValueAt(i, j, 0.0);
+		}
+	}
+
+	KaminoQuantity* test = attributeTable["test"];
+	size_t midX = nx / 2;
+	size_t midY = ny / 2;
+	size_t kernelSize = 11;
+	Eigen::Matrix<fReal, 11, 11> Gaussian;
+	Gaussian << 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+				1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+				1, 2, 3, 3, 3, 3, 3, 3, 3, 2, 1,
+				1, 2, 3, 5, 5, 5, 5, 5, 3, 2, 1,
+				1, 2, 3, 5, 8, 8, 8, 5, 3, 2, 1,
+				1, 2, 3, 5, 8, 13, 8, 5, 3, 2, 1,
+				1, 2, 3, 5, 8, 8, 8, 5, 3, 2, 1,
+				1, 2, 3, 5, 5, 5, 5, 5, 3, 2, 1,
+				1, 2, 3, 3, 3, 3, 3, 3, 3, 2, 1,
+				1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+				1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1;
+	for(size_t i = 0; i < kernelSize; ++i){
+		for(size_t j = 0; j < kernelSize; ++j){
+			test->setValueAt(i, j, 10*Gaussian(i,j));
+		}
+	}
+}
 
 // <<<<<<<<<<
 // OUTPUT >>>>>>>>>>
@@ -259,39 +292,49 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 	std::string file = s + std::to_string(frame) + ".bgeo";
 
 	Partio::ParticlesDataMutable* parts = Partio::create();
-	Partio::ParticleAttribute pH, vH, psH;
+	Partio::ParticleAttribute pH, vH, psH, test;
 	pH = parts->addAttribute("position", Partio::VECTOR, 3);
 	vH = parts->addAttribute("v", Partio::VECTOR, 3);
 	psH = parts->addAttribute("pressure", Partio::VECTOR, 1);
+	test = parts->addAttribute("test", Partio::VECTOR, 1);
 
 	Eigen::Matrix<float, 3, 1> pos;
 	Eigen::Matrix<float, 3, 1> vel;
-	fReal pressure;
+	fReal pressure, testVal;
 	fReal velX, velY;
+
+	KaminoQuantity* u = attributeTable["u"];
+	KaminoQuantity* v = attributeTable["v"];
+	fReal uRight, uLeft, vUp, vDown;
+
+	size_t upi, vpi;
 
 	for (size_t j = 0; j < ny; ++j) {
 		for (size_t i = 0; i < ny; ++i) {
-			if(i == (nx - 1)){
-				velX = (attributeTable["u"]->getValueAt(i, j) + attributeTable["u"]->getValueAt(0, j)) / 2.0;
-			}
-			else{
-				velX = (attributeTable["u"]->getValueAt(i, j) + attributeTable["u"]->getValueAt(i + 1, j)) / 2.0;
-			}
-			if(j == (ny - 1)){
-				velY = (attributeTable["v"]->getValueAt(i, j) + attributeTable["v"]->getValueAt(i, 0)) / 2.0;
-			}
-			else{
-				velY = (attributeTable["v"]->getValueAt(i, j) + attributeTable["v"]->getValueAt(i, j + 1)) / 2.0;
-			}
+			uLeft = u->getValueAt(i, j);
+			i == (nx - 1) ? upi = 0 : upi = i + 1;
+			vDown = v->getValueAt(i, j);
+			j == (ny - 1) ? vpi = 0 : vpi = j + 1;
+			uRight = u->getValueAt(upi, j);
+			vUp = u->getValueAt(i, vpi);
+
+			velX = (uLeft + uRight) / 2.0;
+			velY = (vUp + vDown) / 2.0;
+
 			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
-			mapToSphere(pos);
+			//mapToSphere(pos);
 			vel = Eigen::Matrix<float, 3, 1>(velX, velY, 0.0);
 			pressure = attributeTable["p"]->getValueAt(i, j);
+			testVal = attributeTable["test"]->getValueAt(i, j);
+			
 			int idx = parts->addParticle();
 			float* p = parts->dataWrite<float>(pH, idx);
 			float* v = parts->dataWrite<float>(vH, idx);
 			float* ps = parts->dataWrite<float>(psH, idx);
+			float* ts = parts->dataWrite<float>(test, idx);
 			ps[0] = pressure;
+			ts[0] = testVal;
+
 			for (int k = 0; k < 3; ++k) {
 				p[k] = pos(k, 0);
 				v[k] = vel(k, 0);

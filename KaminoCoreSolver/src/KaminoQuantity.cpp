@@ -1,7 +1,7 @@
 # include "../include/KaminoQuantity.h"
 
 KaminoQuantity::KaminoQuantity(std::string attributeName, size_t nx, size_t ny, fReal gridLen, fReal xOffset, fReal yOffset)
-	: nx(nx), ny(ny), gridLen(gridLen), attrName(attributeName), xOffset(xOffset), yOffset(yOffset)
+	: nx(nx), ny(ny), gridLen(gridLen), invGridLen(1.0 / gridLen), attrName(attributeName), xOffset(xOffset), yOffset(yOffset)
 {
 	thisStep = new fReal[nx * ny];
 	nextStep = new fReal[nx * ny];
@@ -23,11 +23,6 @@ void KaminoQuantity::swapBuffer()
 fReal KaminoQuantity::getValueAt(size_t x, size_t y)
 {
 	return this->accessValueAt(x, y);
-}
-
-fReal KaminoQuantity::getNextValueAt(size_t x, size_t y)
-{
-	return this->nextStep[getIndex(x, y)];
 }
 
 void KaminoQuantity::setValueAt(size_t x, size_t y, fReal val)
@@ -56,14 +51,16 @@ size_t KaminoQuantity::getIndex(size_t x, size_t y)
 	return y * nx + x;
 }
 
-fReal KaminoQuantity::getXCoordinateAt(size_t x)
+fReal KaminoQuantity::getXCoordAtIndex(size_t x)
 {
-	return x * this->gridLen - xOffset;
+	fReal xFloat = static_cast<fReal>(x) - xOffset;
+	return xFloat * this->gridLen;
 }
 
-fReal KaminoQuantity::getYCoordinateAt(size_t y)
+fReal KaminoQuantity::getYCoordAtIndex(size_t y)
 {
-	return y * this->gridLen - yOffset;
+	fReal yFloat = static_cast<fReal>(y) - yOffset;
+	return yFloat * this->gridLen;
 }
 
 /*
@@ -71,9 +68,6 @@ Bilinear interpolated for now.
 */
 fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 {
-	x /= gridLen;
-	y /= gridLen;
-
 	size_t lowerX = getWarpedXIndex(x);
 	size_t lowerY = getWarpedYIndex(y);
 	size_t upperX = (lowerX + 1) % nx;
@@ -96,6 +90,7 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 
 size_t KaminoQuantity::getWarpedXIndex(fReal x)
 {
+	x = x * invGridLen;
 	x += xOffset;
 	int loops = static_cast<int>(std::floor(x / static_cast<fReal>(this->nx)));
 	int flooredX = static_cast<int>(std::floor(x));
@@ -106,6 +101,7 @@ size_t KaminoQuantity::getWarpedXIndex(fReal x)
 
 size_t KaminoQuantity::getWarpedYIndex(fReal y)
 {
+	y = y * invGridLen;
 	y += yOffset;
 	int loops = static_cast<int>(std::floor(y / static_cast<fReal>(this->ny)));
 	int flooredY = static_cast<int>(std::floor(y));
