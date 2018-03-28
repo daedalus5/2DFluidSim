@@ -28,6 +28,7 @@ Type KaminoLerp(const Type &fromEndPoint, const Type &toEndPoint, double factor)
 	return (1.0 - factor) * fromEndPoint + factor * toEndPoint;
 }
 
+enum gridType { FLUIDGRID, SOLIDGRID, AIRGRID };
 
 // The attribute base class.
 class KaminoQuantity
@@ -88,6 +89,8 @@ public:
 class KaminoSolver
 {
 private:
+	/* Grid types */
+	char* gridTypes;
 	/* Grid dimensions */
 	size_t nx;
 	size_t ny;
@@ -118,6 +121,8 @@ private:
 	void initialize_pressure();
 	/* initialize test case */
 	void initialize_test();
+	/* which grids are solid? */
+	void initialize_boundary();
 	/* FBM noise function for velocity distribution */
 	fReal FBM(const fReal x, const fReal y);
 	/* 2D noise interpolation function for smooth FBM noise */

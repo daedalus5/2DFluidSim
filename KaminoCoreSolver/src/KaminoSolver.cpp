@@ -17,6 +17,11 @@ KaminoSolver::KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDu
 	initialize_pressure();
 	precomputeLaplacian();
 	initialize_test();
+
+	this->gridTypes = new char[nx * ny];
+	memset(reinterpret_cast<void*>(this->gridTypes), FLUIDGRID, nx * ny);
+
+	initialize_boundary();
 }
 
 KaminoSolver::~KaminoSolver()
@@ -25,6 +30,7 @@ KaminoSolver::~KaminoSolver()
 	{
 		delete attr.second;
 	}
+	delete[] this->gridTypes;
 }
 
 
@@ -279,6 +285,15 @@ void KaminoSolver::initialize_test()
 		for(size_t j = 0; j < kernelSize; ++j){
 			test->setValueAt(i, j, 10*Gaussian(i,j));
 		}
+	}
+}
+
+void KaminoSolver::initialize_boundary()
+{
+	for (size_t gridX = 0; gridX != this->nx; ++gridX)
+	{
+		this->gridTypes[getIndex(gridX, 0)] = SOLIDGRID;
+		this->gridTypes[getIndex(gridX, this->ny - 1)] = SOLIDGRID;
 	}
 }
 
