@@ -174,14 +174,20 @@ void KaminoSolver::projection()
 			size_t iRhs = i;
 			size_t iLhs = (i == 0 ? nx - 1 : i - 1);
 			size_t jUpper = j;
-			size_t jLower = (j == 0 ? ny - 1 : j - 1);
+			size_t jLower = (j == 0 ? -1 : j - 1);
 
 			fReal uBeforeUpdate = u->getValueAt(i, j);
-			fReal deltaU = scaleP * (p->getValueAt(iRhs, j) - p->getValueAt(iLhs, j));
+			fReal deltaU = 0.0;
+			if(getGridTypeAt(iRhs, j) == FLUIDGRID && getGridTypeAt(iLhs, j) == FLUIDGRID){
+				deltaU = scaleP * (p->getValueAt(iRhs, j) - p->getValueAt(iLhs, j));
+			}
 			u->writeValueTo(i, j, uBeforeUpdate + deltaU);
-			
+
 			fReal vBeforeUpdate = v->getValueAt(i, j);
-			fReal deltaV = scaleP * (p->getValueAt(i, jUpper) - p->getValueAt(i, jLower));
+			fReal deltaV = 0.0;
+			if(jLower != -1 && getGridTypeAt(i, jUpper) == FLUIDGRID && getGridTypeAt(i, jLower) == FLUIDGRID){
+				deltaV = scaleP * (p->getValueAt(i, jUpper) - p->getValueAt(i, jLower));
+			}
 			v->writeValueTo(i, j, vBeforeUpdate + deltaV);
 		}
 	}
@@ -221,17 +227,30 @@ void KaminoSolver::precomputeLaplacian()
 	{
 		for (size_t i = 0; i < nx; ++i)
 		{
+			size_t numNeighbors = 0;
 			size_t rowNumber = getIndex(i, j);
 			size_t ip1 = (i + 1) % nx;
 			size_t im1 = (i == 0 ? nx - 1 : i - 1);
-			size_t jp1 = (j + 1) % ny;
-			size_t jm1 = (j == 0 ? ny - 1 : j - 1);
+			size_t jp1 = (j == ny - 1 ? -1 : j + 1);
+			size_t jm1 = j - 1;
 
-			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = 4;
-			Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = -1;
-			Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1;
-			Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = -1;
-			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1;
+			if(getGridTypeAt(ip1, j) == FLUIDGRID){
+				Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = -1;
+				numNeighbors++;
+			}
+			if(getGridTypeAt(im1, j) == FLUIDGRID){
+				Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = -1;
+				numNeighbors++;				
+			}
+			if(j != -1 && getGridTypeAt(i, jp1) == FLUIDGRID){
+				Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1;
+				numNeighbors++;			
+			}
+			if(j != -1 && getGridTypeAt(i, jm1) == FLUIDGRID){
+				Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1;
+				numNeighbors++;				
+			}
+			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = numNeighbors;
 		}
 	}
 }
