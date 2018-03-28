@@ -236,11 +236,11 @@ void KaminoSolver::precomputeLaplacian()
 				Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = -1;
 				numNeighbors++;				
 			}
-			if(j != -1 && getGridTypeAt(i, jp1) == FLUIDGRID){
+			if(jp1 != -1 && getGridTypeAt(i, jp1) == FLUIDGRID){
 				Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1;
 				numNeighbors++;			
 			}
-			if(j != -1 && getGridTypeAt(i, jm1) == FLUIDGRID){
+			if(jm1 != -1 && getGridTypeAt(i, jm1) == FLUIDGRID){
 				Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1;
 				numNeighbors++;				
 			}
@@ -261,10 +261,18 @@ void KaminoSolver::initialize_pressure()
 void KaminoSolver::initialize_velocity()
 {
 	fReal val = 0.0;
-	for (size_t j = 0; j < ny; ++j) {
-		for (size_t i = 0; i < nx; ++i) {
+	size_t sizeX = attributeTable["u"]->getNx();
+	size_t sizeY = attributeTable["u"]->getNy();
+	for (size_t j = 0; j < sizeY; ++j) {
+		for (size_t i = 0; i < sizeX; ++i) {
 			val = FBM(sin(2 * M_PI * i / nx), sin(2 * M_PI * j / ny));
 			attributeTable["u"]->setValueAt(i, j, val);
+		}
+	}
+	sizeX = attributeTable["v"]->getNx();
+	sizeY = attributeTable["v"]->getNy();
+	for (size_t j = 0; j < sizeY; ++j) {
+		for (size_t i = 0; i < sizeX; ++i) {
 			val = FBM(cos(2 * M_PI * i / nx), cos(2 * M_PI * j / ny));
 			attributeTable["v"]->setValueAt(i, j, 0.0);
 		}

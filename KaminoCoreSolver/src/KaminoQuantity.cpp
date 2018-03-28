@@ -13,6 +13,16 @@ KaminoQuantity::~KaminoQuantity()
 	delete[] nextStep;
 }
 
+size_t KaminoQuantity::getNx()
+{
+	return this->nx;
+}
+
+size_t KaminoQuantity::getNy()
+{
+	return this->ny;
+}
+
 void KaminoQuantity::swapBuffer()
 {
 	fReal* tempPtr = this->thisStep;
