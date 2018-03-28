@@ -203,12 +203,6 @@ void KaminoSolver::projection()
 /* Duplicate of getIndex() in KaminoQuantity */
 size_t KaminoSolver::getIndex(size_t x, size_t y)
 {
-# ifdef DEBUGBUILD
-	if (x >= this->nx || y >= this->ny)
-	{
-		std::cerr << "Index out of bound at x: " << x << " y: " << y << std::endl;
-	}
-# endif
 	return y * nx + x;
 }
 
@@ -437,7 +431,11 @@ void KaminoSolver::mapToSphere(Eigen::Matrix<float, 3, 1>& pos) const
 
 void KaminoSolver::addAttr(std::string name, fReal xOffset, fReal yOffset)
 {
-	KaminoQuantity* ptr = new KaminoQuantity(name, this->nx, this->ny, this->gridLen, xOffset, yOffset);
+	size_t attrNx = this->nx;
+	size_t attrNy = this->ny;
+	if (name == "v")
+		attrNy += 1;
+	KaminoQuantity* ptr = new KaminoQuantity(name, attrNx, attrNy, this->gridLen, xOffset, yOffset);
 	this->attributeTable.emplace(std::pair<std::string, KaminoQuantity*>(name, ptr));
 }
 
