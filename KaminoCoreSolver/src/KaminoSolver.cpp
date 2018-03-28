@@ -18,7 +18,7 @@ KaminoSolver::KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDu
 	precomputeLaplacian();
 	initialize_test();
 
-	this->gridTypes = new char[nx * ny];
+	this->gridTypes = new gridType[nx * ny];
 	memset(reinterpret_cast<void*>(this->gridTypes), FLUIDGRID, nx * ny);
 
 	initialize_boundary();
@@ -168,6 +168,11 @@ size_t KaminoSolver::getIndex(size_t x, size_t y)
 	}
 # endif
 	return y * nx + x;
+}
+
+gridType KaminoSolver::getGridTypeAt(size_t x, size_t y)
+{
+	return gridTypes[getIndex(x, y)];
 }
 
 /* Compute Laplacian done right...probably */

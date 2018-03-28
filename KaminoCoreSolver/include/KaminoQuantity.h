@@ -90,7 +90,7 @@ class KaminoSolver
 {
 private:
 	/* Grid types */
-	char* gridTypes;
+	gridType* gridTypes;
 	/* Grid dimensions */
 	size_t nx;
 	size_t ny;
@@ -106,6 +106,8 @@ private:
 	fReal frameDuration;
 	fReal timeStep;
 	fReal timeElapsed;
+
+	gridType getGridTypeAt(size_t x, size_t y);
 
 	// TODO
 	void advection();
