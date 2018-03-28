@@ -144,8 +144,8 @@ void KaminoSolver::projection()
 		}
 	}
 
-	this->swapAttrBuffers();
-	p->swapBuffer();
+	u->swapBuffer();
+	v->swapBuffer();
 }
 
 
@@ -322,7 +322,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			velY = (vUp + vDown) / 2.0;
 
 			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
-			//mapToSphere(pos);
+			mapToSphere(pos);
 			vel = Eigen::Matrix<float, 3, 1>(velX, velY, 0.0);
 			pressure = attributeTable["p"]->getValueAt(i, j);
 			testVal = attributeTable["test"]->getValueAt(i, j);
