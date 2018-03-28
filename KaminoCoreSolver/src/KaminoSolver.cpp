@@ -13,13 +13,13 @@ KaminoSolver::KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDu
 	addAttr("p");				// p pressure
 	addAttr("test");			// test scalar field
 
+	this->gridTypes = new gridType[nx * ny];
+	memset(reinterpret_cast<void*>(this->gridTypes), FLUIDGRID, nx * ny);
+
 	initialize_velocity();
 	initialize_pressure();
 	precomputeLaplacian();
 	initialize_test();
-
-	this->gridTypes = new gridType[nx * ny];
-	memset(reinterpret_cast<void*>(this->gridTypes), FLUIDGRID, nx * ny);
 
 	initialize_boundary();
 }
