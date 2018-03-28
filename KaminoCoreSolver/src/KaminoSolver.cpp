@@ -95,16 +95,52 @@ void KaminoSolver::projection()
 	{
 		for (size_t i = 0; i < nx; ++i)
 		{
+			// the (unscaled) divergence at grid i, j
+			fReal bij = 0.0;
 			// oot : one over two
-			size_t ipoot = (i + 1) % nx;
-			size_t imoot = i;
-			size_t jpoot = (j + 1) % ny;
-			size_t jmoot = j;
+			// a grid's adjacent neighbours along x axis will always be valid
+			fReal uPlus, uMinus, vPlus, vMinus;
 
-			fReal uPlus = u->getValueAt(ipoot, j);
-			fReal uMinus = u->getValueAt(imoot, j);
-			fReal vPlus = v->getValueAt(i, jpoot);
-			fReal vMinus = v->getValueAt(i, jmoot);
+			size_t ipoot = (i + 1) % nx;
+			if (getGridTypeAt(ipoot, j) == FLUIDGRID)
+			{
+				uPlus = u->getValueAt(ipoot, j);
+			}
+			else
+			{
+				uPlus = 0.0;
+			}
+
+			size_t imoot = i;
+			if (getGridTypeAt(imoot, j) == FLUIDGRID)
+			{
+				uMinus = u->getValueAt(imoot, j);
+			}
+			else
+			{
+				uMinus = 0.0;
+			}
+			
+			// but that's not the case for y axis
+			size_t jpoot = j + 1;
+			if (j != ny && getGridTypeAt(i, jpoot) == FLUIDGRID)
+			{
+				vPlus = v->getValueAt(i, jpoot);
+			}
+			else
+			{
+				vPlus = 0.0;
+			}
+
+			size_t jmoot = j;
+			if (getGridTypeAt(i, jmoot) == FLUIDGRID)
+			{
+				vMinus = v->getValueAt(i, jmoot);
+			}
+			else
+			{
+				vMinus = 0.0;
+			}
 
 			b(getIndex(i, j)) = (uPlus - uMinus + vPlus - vMinus);
 		}
