@@ -70,6 +70,10 @@ public:
 	/* Swap the buffer */
 	void swapBuffer();
 
+	/* Get nx */
+	size_t getNx();
+	/* Get ny */
+	size_t getNy();
 	/* Get the current step */
 	fReal getValueAt(size_t x, size_t y);
 	/* Set the current step */
@@ -134,6 +138,8 @@ private:
 
 	/*map to spherical coordinates*/
 	void mapToSphere(Eigen::Matrix<float, 3, 1>& pos) const;
+	/*map to cylindrical coordinates*/
+	void mapToCylinder(Eigen::Matrix<float, 3, 1>& pos) const;
 
 	/* Duplicate of quantity's get index */
 	inline size_t getIndex(size_t x, size_t y);
