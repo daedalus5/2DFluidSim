@@ -320,7 +320,7 @@ void KaminoSolver::initialize_velocity()
 	size_t sizeY = attributeTable["u"]->getNy();
 	for (size_t j = 0; j < sizeY; ++j) {
 		for (size_t i = 0; i < sizeX; ++i) {
-			val = FBM(sin(2 * M_PI * i / nx), sin(2 * M_PI * j / ny));
+			val = FBM(sin(2 * M_PI * i / sizeX), sin(2 * M_PI * j / sizeY));
 			attributeTable["u"]->setValueAt(i, j, val);
 		}
 	}
@@ -328,7 +328,7 @@ void KaminoSolver::initialize_velocity()
 	sizeY = attributeTable["v"]->getNy();
 	for (size_t j = 0; j < sizeY; ++j) {
 		for (size_t i = 0; i < sizeX; ++i) {
-			val = FBM(cos(2 * M_PI * i / nx), cos(2 * M_PI * j / ny));
+			val = FBM(cos(2 * M_PI * i / sizeX), cos(2 * M_PI * j / sizeY));
 			attributeTable["v"]->setValueAt(i, j, 0.0);
 		}
 	}
