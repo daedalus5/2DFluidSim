@@ -167,14 +167,13 @@ void KaminoSolver::projection()
 	}
 	p->swapBuffer();
 
+	const fReal usolid = 0.0;
+	const fReal vsolid = 0.0;
 	// V is nx by ny + 1
-	for (size_t j = 0; j < ny + 1; ++j)
+	for (size_t j = 0; j < ny; ++j)
 	{
 		for (size_t i = 0; i < nx; ++i)
 		{
-			const fReal usolid = 0.0;
-			const fReal vsolid = 0.0;
-
 			fReal uBeforeUpdate = u->getValueAt(i, j);
 			fReal vBeforeUpdate = v->getValueAt(i, j);
 			size_t iRhs = i;
@@ -190,7 +189,7 @@ void KaminoSolver::projection()
 				u->writeValueTo(i, j, usolid);
 			}
 			
-			if (j != ny && j != 0)
+			if (j != 0)
 			{
 				size_t jUpper = j;
 				size_t jLower = j - 1;
@@ -207,35 +206,35 @@ void KaminoSolver::projection()
 			}
 			else
 			{
-				if (j == 0)
+				size_t jUpper = j;
+				fReal pressureSummedV = p->getValueAt(i, jUpper) - 0.0;
+				if (getGridTypeAt(i, jUpper) == FLUIDGRID)
 				{
-					size_t jUpper = j;
-					fReal pressureSummedV = p->getValueAt(i, jUpper);
-					if (getGridTypeAt(i, jUpper) == FLUIDGRID)
-					{
-						fReal deltaV = scaleP * pressureSummedV;
-						v->writeValueTo(i, j, vBeforeUpdate + deltaV);
-					}
-					else
-					{
-						v->writeValueTo(i, j, vsolid);
-					}
+					fReal deltaV = scaleP * pressureSummedV;
+					v->writeValueTo(i, j, vBeforeUpdate + deltaV);
 				}
-				if (j == ny)
+				else
 				{
-					size_t jLower = j - 1;
-					fReal pressureSummedV = p->getValueAt(i, jLower);
-					if (getGridTypeAt(i, jLower) == FLUIDGRID)
-					{
-						fReal deltaV = scaleP * pressureSummedV;
-						v->writeValueTo(i, j, vBeforeUpdate + deltaV);
-					}
-					else
-					{
-						v->writeValueTo(i, j, vsolid);
-					}
+					v->writeValueTo(i, j, vsolid);
 				}
 			}
+		}
+	}
+	// j = ny case
+	for (size_t i = 0; i < nx; ++i)
+	{
+		size_t j = ny;
+		size_t jLower = j - 1;
+		fReal vBeforeUpdate = v->getValueAt(i, j);
+		fReal pressureSummedV = 0.0 - p->getValueAt(i, jLower);
+		if (getGridTypeAt(i, jLower) == FLUIDGRID)
+		{
+			fReal deltaV = scaleP * pressureSummedV;
+			v->writeValueTo(i, j, vBeforeUpdate + deltaV);
+		}
+		else
+		{
+			v->writeValueTo(i, j, vsolid);
 		}
 	}
 
