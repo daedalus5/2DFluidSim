@@ -167,28 +167,75 @@ void KaminoSolver::projection()
 	}
 	p->swapBuffer();
 
-	for (size_t j = 0; j < ny; ++j)
+	// V is nx by ny + 1
+	for (size_t j = 0; j < ny + 1; ++j)
 	{
 		for (size_t i = 0; i < nx; ++i)
 		{
-			size_t iRhs = i;
-			size_t iLhs = (i == 0 ? nx - 1 : i - 1);
-			size_t jUpper = j;
-			size_t jLower = (j == 0 ? -1 : j - 1);
+			const fReal usolid = 0.0;
+			const fReal vsolid = 0.0;
 
 			fReal uBeforeUpdate = u->getValueAt(i, j);
-			fReal deltaU = 0.0;
-			if(getGridTypeAt(iRhs, j) == FLUIDGRID && getGridTypeAt(iLhs, j) == FLUIDGRID){
-				deltaU = scaleP * (p->getValueAt(iRhs, j) - p->getValueAt(iLhs, j));
-			}
-			u->writeValueTo(i, j, uBeforeUpdate + deltaU);
-
 			fReal vBeforeUpdate = v->getValueAt(i, j);
-			fReal deltaV = 0.0;
-			if(jLower != -1 && getGridTypeAt(i, jUpper) == FLUIDGRID && getGridTypeAt(i, jLower) == FLUIDGRID){
-				deltaV = scaleP * (p->getValueAt(i, jUpper) - p->getValueAt(i, jLower));
+			size_t iRhs = i;
+			size_t iLhs = (i == 0 ? nx - 1 : i - 1);
+			if (getGridTypeAt(iRhs, j) == FLUIDGRID && getGridTypeAt(iLhs, j) == FLUIDGRID)
+			{
+				fReal pressureSummedU = p->getValueAt(iRhs, j) - p->getValueAt(iLhs, j);
+				fReal deltaU = scaleP * pressureSummedU;
+				u->writeValueTo(i, j, uBeforeUpdate + deltaU);
 			}
-			v->writeValueTo(i, j, vBeforeUpdate + deltaV);
+			else
+			{
+				u->writeValueTo(i, j, usolid);
+			}
+			
+			if (j != ny && j != 0)
+			{
+				size_t jUpper = j;
+				size_t jLower = j - 1;
+				fReal pressureSummedV = p->getValueAt(i, jUpper) - p->getValueAt(i, jLower);
+				if (getGridTypeAt(i, jLower) == FLUIDGRID && getGridTypeAt(i, jUpper) == FLUIDGRID)
+				{
+					fReal deltaV = scaleP * pressureSummedV;
+					v->writeValueTo(i, j, vBeforeUpdate + deltaV);
+				}
+				else
+				{
+					v->writeValueTo(i, j, vsolid);
+				}
+			}
+			else
+			{
+				if (j == 0)
+				{
+					size_t jUpper = j;
+					fReal pressureSummedV = p->getValueAt(i, jUpper);
+					if (getGridTypeAt(i, jUpper) == FLUIDGRID)
+					{
+						fReal deltaV = scaleP * pressureSummedV;
+						v->writeValueTo(i, j, vBeforeUpdate + deltaV);
+					}
+					else
+					{
+						v->writeValueTo(i, j, vsolid);
+					}
+				}
+				if (j == ny)
+				{
+					size_t jLower = j - 1;
+					fReal pressureSummedV = p->getValueAt(i, jLower);
+					if (getGridTypeAt(i, jLower) == FLUIDGRID)
+					{
+						fReal deltaV = scaleP * pressureSummedV;
+						v->writeValueTo(i, j, vBeforeUpdate + deltaV);
+					}
+					else
+					{
+						v->writeValueTo(i, j, vsolid);
+					}
+				}
+			}
 		}
 	}
 
