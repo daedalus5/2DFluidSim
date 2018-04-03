@@ -5,6 +5,7 @@
 
 ./Makefile
 Makefile
+Kamino.VC.db
 ./2DFluidSim
 
 # User-specific files

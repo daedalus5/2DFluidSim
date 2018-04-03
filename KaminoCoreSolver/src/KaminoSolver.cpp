@@ -464,6 +464,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			velY = (vUp + vDown) / 2.0;
 
 			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
+
 			mapToSphere(pos);
 			//mapToCylinder(pos);
 			vel = Eigen::Matrix<float, 3, 1>(velX, velY, 0.0);
@@ -475,6 +476,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			float* v = parts->dataWrite<float>(vH, idx);
 			float* ps = parts->dataWrite<float>(psH, idx);
 			float* ts = parts->dataWrite<float>(test, idx);
+
 			ps[0] = pressure / 5000.0;
 			ts[0] = testVal / 13.0;
 
