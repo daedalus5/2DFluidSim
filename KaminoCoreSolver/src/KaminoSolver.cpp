@@ -232,7 +232,7 @@ void KaminoSolver::projection()
 	{
 		size_t j = nTheta;
 		size_t jLower = j - 1;
-		fReal invSin = 1 / sin(nTheta * gridLen)
+		fReal invSin = 1 / sin(nTheta * gridLen);
 		fReal vBeforeUpdate = v->getValueAt(i, j);
 		fReal pressureSummedV = 0.0 - p->getValueAt(i, jLower);
 		if (getGridTypeAt(i, jLower) == FLUIDGRID)
