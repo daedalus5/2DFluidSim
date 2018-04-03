@@ -1,10 +1,10 @@
 # include "../include/KaminoQuantity.h"
 
-KaminoQuantity::KaminoQuantity(std::string attributeName, size_t nx, size_t ny, fReal gridLen, fReal xOffset, fReal yOffset)
-	: nx(nx), ny(ny), gridLen(gridLen), invGridLen(1.0 / gridLen), attrName(attributeName), xOffset(xOffset), yOffset(yOffset)
+KaminoQuantity::KaminoQuantity(std::string attributeName, size_t nPhi, size_t nTheta, fReal gridLen, fReal xOffset, fReal yOffset)
+	: nPhi(nPhi), nTheta(nTheta), gridLen(gridLen), invGridLen(1.0 / gridLen), attrName(attributeName), xOffset(xOffset), yOffset(yOffset)
 {
-	thisStep = new fReal[nx * ny];
-	nextStep = new fReal[nx * ny];
+	thisStep = new fReal[nPhi * nTheta];
+	nextStep = new fReal[nPhi * nTheta];
 }
 
 KaminoQuantity::~KaminoQuantity()
@@ -13,14 +13,14 @@ KaminoQuantity::~KaminoQuantity()
 	delete[] nextStep;
 }
 
-size_t KaminoQuantity::getNx()
+size_t KaminoQuantity::getNPhi()
 {
-	return this->nx;
+	return this->nPhi;
 }
 
-size_t KaminoQuantity::getNy()
+size_t KaminoQuantity::getNTheta()
 {
-	return this->ny;
+	return this->nTheta;
 }
 
 void KaminoQuantity::swapBuffer()
@@ -53,12 +53,12 @@ void KaminoQuantity::writeValueTo(size_t x, size_t y, fReal val)
 size_t KaminoQuantity::getIndex(size_t x, size_t y)
 {
 # ifdef DEBUGBUILD
-	if (x >= this->nx || y >= this->ny)
+	if (x >= this->nPhi || y >= this->nTheta)
 	{
 		std::cerr << "Index out of bound at x: " << x << " y: " << y << std::endl;
 	}
 # endif
-	return y * nx + x;
+	return y * nPhi + x;
 }
 
 fReal KaminoQuantity::getXCoordAtIndex(size_t x)
@@ -80,8 +80,8 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 {
 	size_t lowerX = getWarpedXIndex(x);
 	size_t lowerY = getWarpedYIndex(y);
-	size_t upperX = (lowerX + 1) % nx;
-	size_t upperY = (lowerY + 1) % ny;
+	size_t upperX = (lowerX + 1) % nPhi;
+	size_t upperY = (lowerY + 1) % nTheta;
 
 	fReal lowerLeft = getValueAt(lowerX, lowerY);
 	fReal upperLeft = getValueAt(lowerX, upperY);
@@ -102,9 +102,9 @@ size_t KaminoQuantity::getWarpedXIndex(fReal x)
 {
 	x = x * invGridLen;
 	x += xOffset;
-	int loops = static_cast<int>(std::floor(x / static_cast<fReal>(this->nx)));
+	int loops = static_cast<int>(std::floor(x / static_cast<fReal>(this->nPhi)));
 	int flooredX = static_cast<int>(std::floor(x));
-	int warpedX = flooredX - loops * static_cast<int>(nx);
+	int warpedX = flooredX - loops * static_cast<int>(nPhi);
 
 	return static_cast<size_t>(warpedX);
 }
@@ -113,9 +113,9 @@ size_t KaminoQuantity::getWarpedYIndex(fReal y)
 {
 	y = y * invGridLen;
 	y += yOffset;
-	int loops = static_cast<int>(std::floor(y / static_cast<fReal>(this->ny)));
+	int loops = static_cast<int>(std::floor(y / static_cast<fReal>(this->nTheta)));
 	int flooredY = static_cast<int>(std::floor(y));
-	int warpedY = flooredY - loops * static_cast<int>(ny);
+	int warpedY = flooredY - loops * static_cast<int>(nTheta);
 
 	return static_cast<size_t>(warpedY);
 }

@@ -39,8 +39,8 @@ private:
 
 	/* Grid dimensions */
 	/* These are only assigned by the Grid and not mutable */
-	size_t nx;
-	size_t ny;
+	size_t nPhi;
+	size_t nTheta;
 
 	/* Grid size */
 	fReal gridLen;
@@ -71,9 +71,9 @@ public:
 	void swapBuffer();
 
 	/* Get nx */
-	size_t getNx();
+	size_t getNPhi();
 	/* Get ny */
-	size_t getNy();
+	size_t getNTheta();
 	/* Get the current step */
 	fReal getValueAt(size_t x, size_t y);
 	/* Set the current step */
@@ -96,8 +96,10 @@ private:
 	/* Grid types */
 	gridType* gridTypes;
 	/* Grid dimensions */
-	size_t nx;
-	size_t ny;
+	size_t nPhi;
+	size_t nTheta;
+	/* Radius of sphere */
+	fReal radius;
 	/* Grid size */
 	fReal gridLen;
 	/* Laplacian Matrix */
@@ -113,8 +115,8 @@ private:
 
 	gridType getGridTypeAt(size_t x, size_t y);
 
-	// TODO
 	void advection();
+	void geometric();
 	void projection();
 	void bodyForce();
 
@@ -145,7 +147,7 @@ private:
 	inline size_t getIndex(size_t x, size_t y);
 
 public:
-	KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDuration = 1.0 / 30.0);
+	KaminoSolver(size_t nx, size_t ny, fReal radius, fReal gridLength, fReal frameDuration = 1.0 / 30.0);
 	~KaminoSolver();
 
 	void stepForward(fReal timeStep);
