@@ -4,8 +4,8 @@
 // CONSTRUCTOR / DESTRUCTOR >>>>>>>>>>
 
 
-KaminoSolver::KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDuration) :
-	nx(nx), ny(ny), gridLen(gridLength), frameDuration(frameDuration),
+KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridLength, fReal frameDuration) :
+	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), frameDuration(frameDuration),
 	timeStep(0.0), timeElapsed(0.0)
 {
 	addAttr("u", 0.5, 0.0);		// u velocity
@@ -13,8 +13,8 @@ KaminoSolver::KaminoSolver(size_t nx, size_t ny, fReal gridLength, fReal frameDu
 	addAttr("p");				// p pressure
 	addAttr("test");			// test scalar field
 
-	this->gridTypes = new gridType[nx * ny];
-	memset(reinterpret_cast<void*>(this->gridTypes), FLUIDGRID, nx * ny);
+	this->gridTypes = new gridType[nPhi * nTheta];
+	memset(reinterpret_cast<void*>(this->gridTypes), FLUIDGRID, nPhi * nTheta);
 
 	initialize_velocity();
 	initialize_pressure();
@@ -42,6 +42,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 {
 	this->timeStep = timeStep;
 	advection();
+	// geometric();
 	// bodyForce();
 	projection();
 }
@@ -51,9 +52,9 @@ void KaminoSolver::advection()
 	for (auto quantity : this->attributeTable)
 	{
 		KaminoQuantity* attr = quantity.second;
-		for (size_t gridX = 0; gridX < this->nx; ++gridX)
+		for (size_t gridX = 0; gridX < this->nPhi; ++gridX)
 		{
-			for (size_t gridY = 0; gridY < this->ny; ++gridY)
+			for (size_t gridY = 0; gridY < this->nTheta; ++gridY)
 			{
 				fReal gX = attr->getXCoordAtIndex(gridX);
 				fReal gY = attr->getYCoordAtIndex(gridY);
@@ -78,22 +79,27 @@ void KaminoSolver::advection()
 	this->swapAttrBuffers();
 }
 
+void KaminoSolver::geometric()
+{
+
+}
+
 void KaminoSolver::projection()
 {
 	const fReal density = 1000.0;
-	fReal rhsScaleB = -gridLen * density / timeStep;
+	fReal rhsScaleB = -gridLen * radius * density / timeStep;
 	fReal scaleP = 1.0 / rhsScaleB;
 
-	Eigen::VectorXd b(nx * ny);
+	Eigen::VectorXd b(nPhi * nTheta);
 	b.setZero();
 
 	KaminoQuantity* u = attributeTable["u"];
 	KaminoQuantity* v = attributeTable["v"];
 	KaminoQuantity* p = attributeTable["p"];
 
-	for (size_t j = 0; j < ny; ++j)
+	for (size_t j = 0; j < nTheta; ++j)
 	{
-		for (size_t i = 0; i < nx; ++i)
+		for (size_t i = 0; i < nPhi; ++i)
 		{
 			// the (unscaled) divergence at grid i, j
 			fReal bij = 0.0;
@@ -101,7 +107,7 @@ void KaminoSolver::projection()
 			// a grid's adjacent neighbours along x axis will always be valid
 			fReal uPlus, uMinus, vPlus, vMinus;
 
-			size_t ipoot = (i + 1) % nx;
+			size_t ipoot = (i + 1) % nPhi;
 			if (getGridTypeAt(ipoot, j) == FLUIDGRID)
 			{
 				uPlus = u->getValueAt(ipoot, j);
@@ -123,7 +129,7 @@ void KaminoSolver::projection()
 			
 			// but that's not the case for y axis
 			size_t jpoot = j + 1;
-			if (j != ny && getGridTypeAt(i, jpoot) == FLUIDGRID)
+			if (j != nTheta && getGridTypeAt(i, jpoot) == FLUIDGRID)
 			{
 				vPlus = v->getValueAt(i, jpoot);
 			}
@@ -147,7 +153,7 @@ void KaminoSolver::projection()
 	}
 	b = b * rhsScaleB;
 
-	Eigen::VectorXd pVector(nx * ny);
+	Eigen::VectorXd pVector(nPhi * nTheta);
 	
 	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower | Eigen::Upper> cg;
 	//cg.setTolerance(pow(10, -1));
@@ -158,9 +164,9 @@ void KaminoSolver::projection()
 	//std::cout << "estimated error: " << cg.error()      << std::endl;
 
 	// Populate updated pressure values
-	for (size_t j = 0; j < ny; ++j) 
+	for (size_t j = 0; j < nTheta; ++j) 
 	{
-		for (size_t i = 0; i < nx; ++i) 
+		for (size_t i = 0; i < nPhi; ++i) 
 		{
 			p->writeValueTo(i, j, pVector(getIndex(i, j)));
 		}
@@ -169,15 +175,16 @@ void KaminoSolver::projection()
 
 	const fReal usolid = 0.0;
 	const fReal vsolid = 0.0;
-	// V is nx by ny + 1
-	for (size_t j = 0; j < ny; ++j)
+	// V is nPhi by nTheta + 1
+	for (size_t j = 0; j < nTheta; ++j)
 	{
-		for (size_t i = 0; i < nx; ++i)
+		for (size_t i = 0; i < nPhi; ++i)
 		{
+			fReal invSin = 1 / sin(j * gridLen);
 			fReal uBeforeUpdate = u->getValueAt(i, j);
 			fReal vBeforeUpdate = v->getValueAt(i, j);
 			size_t iRhs = i;
-			size_t iLhs = (i == 0 ? nx - 1 : i - 1);
+			size_t iLhs = (i == 0 ? nPhi - 1 : i - 1);
 			if (getGridTypeAt(iRhs, j) == FLUIDGRID && getGridTypeAt(iLhs, j) == FLUIDGRID)
 			{
 				fReal pressureSummedU = p->getValueAt(iRhs, j) - p->getValueAt(iLhs, j);
@@ -196,7 +203,7 @@ void KaminoSolver::projection()
 				fReal pressureSummedV = p->getValueAt(i, jUpper) - p->getValueAt(i, jLower);
 				if (getGridTypeAt(i, jLower) == FLUIDGRID && getGridTypeAt(i, jUpper) == FLUIDGRID)
 				{
-					fReal deltaV = scaleP * pressureSummedV;
+					fReal deltaV = scaleP * invSin * pressureSummedV;
 					v->writeValueTo(i, j, vBeforeUpdate + deltaV);
 				}
 				else
@@ -210,7 +217,7 @@ void KaminoSolver::projection()
 				fReal pressureSummedV = p->getValueAt(i, jUpper) - 0.0;
 				if (getGridTypeAt(i, jUpper) == FLUIDGRID)
 				{
-					fReal deltaV = scaleP * pressureSummedV;
+					fReal deltaV = scaleP * invSin * pressureSummedV;
 					v->writeValueTo(i, j, vBeforeUpdate + deltaV);
 				}
 				else
@@ -220,16 +227,17 @@ void KaminoSolver::projection()
 			}
 		}
 	}
-	// j = ny case
-	for (size_t i = 0; i < nx; ++i)
+	// j = nTheta case
+	for (size_t i = 0; i < nPhi; ++i)
 	{
-		size_t j = ny;
+		size_t j = nTheta;
 		size_t jLower = j - 1;
+		fReal invSin = 1 / sin(nTheta * gridLen);
 		fReal vBeforeUpdate = v->getValueAt(i, j);
 		fReal pressureSummedV = 0.0 - p->getValueAt(i, jLower);
 		if (getGridTypeAt(i, jLower) == FLUIDGRID)
 		{
-			fReal deltaV = scaleP * pressureSummedV;
+			fReal deltaV = scaleP * invSin * pressureSummedV;
 			v->writeValueTo(i, j, vBeforeUpdate + deltaV);
 		}
 		else
@@ -249,7 +257,7 @@ void KaminoSolver::projection()
 /* Duplicate of getIndex() in KaminoQuantity */
 size_t KaminoSolver::getIndex(size_t x, size_t y)
 {
-	return y * nx + x;
+	return y * nPhi + x;
 }
 
 gridType KaminoSolver::getGridTypeAt(size_t x, size_t y)
@@ -260,34 +268,36 @@ gridType KaminoSolver::getGridTypeAt(size_t x, size_t y)
 /* Compute Laplacian done right...probably */
 void KaminoSolver::precomputeLaplacian()
 {
-	Laplacian = Eigen::SparseMatrix<fReal>(nx*ny, nx*ny);
+	Laplacian = Eigen::SparseMatrix<fReal>(nPhi*nTheta, nPhi*nTheta);
 	Laplacian.setZero();
 
-	for (size_t j = 0; j < ny; ++j)
+	for (size_t j = 0; j < nTheta; ++j)
 	{
-		for (size_t i = 0; i < nx; ++i)
+		for (size_t i = 0; i < nPhi; ++i)
 		{
-			size_t numNeighbors = 0;
+			size_t numPhiNeighbors = 0;
+			size_t numThetaNeighbors = 0;
 			size_t rowNumber = getIndex(i, j);
-			size_t ip1 = (i + 1) % nx;
-			size_t im1 = (i == 0 ? nx - 1 : i - 1);
+			size_t ip1 = (i + 1) % nPhi;
+			size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
+			fReal invSin = 1 / sin(j * gridLen);
 
 			if(getGridTypeAt(ip1, j) == FLUIDGRID){
 				Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = -1;
-				numNeighbors++;
+				numPhiNeighbors++;
 			}
 			if(getGridTypeAt(im1, j) == FLUIDGRID){
 				Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = -1;
-				numNeighbors++;				
+				numPhiNeighbors++;				
 			}
 
-			if (j != ny - 1)
+			if (j != nTheta - 1)
 			{
 				size_t jp1 = j + 1;
 				if (getGridTypeAt(i, jp1) == FLUIDGRID)
 				{
-					Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1;
-					numNeighbors++;
+					Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * invSin;
+					numThetaNeighbors++;
 				}
 			}
 			if (j != 0)
@@ -295,19 +305,19 @@ void KaminoSolver::precomputeLaplacian()
 				size_t jm1 = j - 1;
 				if (getGridTypeAt(i, jm1) == FLUIDGRID)
 				{
-					Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1;
-					numNeighbors++;
+					Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * invSin;
+					numThetaNeighbors++;
 				}
 			}
-			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = numNeighbors;
+			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = numPhiNeighbors + numThetaNeighbors * invSin;
 		}
 	}
 }
 
 void KaminoSolver::initialize_pressure()
 {
-	for(size_t i = 0; i < nx; ++i){
-		for(size_t j = 0; j < ny; ++j){
+	for(size_t i = 0; i < nPhi; ++i){
+		for(size_t j = 0; j < nTheta; ++j){
 			attributeTable["p"]->setValueAt(i, j, 0.0);
 		}
 	}
@@ -316,16 +326,16 @@ void KaminoSolver::initialize_pressure()
 void KaminoSolver::initialize_velocity()
 {
 	fReal val = 0.0;
-	size_t sizeX = attributeTable["u"]->getNx();
-	size_t sizeY = attributeTable["u"]->getNy();
+	size_t sizeX = attributeTable["u"]->getNPhi();
+	size_t sizeY = attributeTable["u"]->getNTheta();
 	for (size_t j = 0; j < sizeY; ++j) {
 		for (size_t i = 0; i < sizeX; ++i) {
 			val = FBM(sin(2 * M_PI * i / sizeX), sin(2 * M_PI * j / sizeY));
 			attributeTable["u"]->setValueAt(i, j, val);
 		}
 	}
-	sizeX = attributeTable["v"]->getNx();
-	sizeY = attributeTable["v"]->getNy();
+	sizeX = attributeTable["v"]->getNPhi();
+	sizeY = attributeTable["v"]->getNTheta();
 	for (size_t j = 0; j < sizeY; ++j) {
 		for (size_t i = 0; i < sizeX; ++i) {
 			val = FBM(cos(2 * M_PI * i / sizeX), cos(2 * M_PI * j / sizeY));
@@ -376,15 +386,15 @@ fReal KaminoSolver::rand(const Eigen::Matrix<fReal, 2, 1> vecA) const {
 
 void KaminoSolver::initialize_test()
 {
-	for(size_t i = 0; i < nx; ++i){
-		for(size_t j = 0; j < ny; ++j){
+	for(size_t i = 0; i < nPhi; ++i){
+		for(size_t j = 0; j < nTheta; ++j){
 			attributeTable["test"]->setValueAt(i, j, 0.0);
 		}
 	}
 
 	KaminoQuantity* test = attributeTable["test"];
-	size_t midX = nx / 2;
-	size_t midY = ny / 2;
+	size_t midX = nPhi / 2;
+	size_t midY = nTheta / 2;
 	size_t kernelSize = 11;
 	Eigen::Matrix<fReal, 11, 11> Gaussian;
 	Gaussian << 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -400,17 +410,17 @@ void KaminoSolver::initialize_test()
 				1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1;
 	for(size_t i = 0; i < kernelSize; ++i){
 		for(size_t j = 0; j < kernelSize; ++j){
-			test->setValueAt(i, j, 10*Gaussian(i,j));
+			test->setValueAt(i + midX, j + midY, Gaussian(i,j));
 		}
 	}
 }
 
 void KaminoSolver::initialize_boundary()
 {
-	for (size_t gridX = 0; gridX != this->nx; ++gridX)
+	for (size_t gridX = 0; gridX != this->nPhi; ++gridX)
 	{
 		this->gridTypes[getIndex(gridX, 0)] = SOLIDGRID;
-		this->gridTypes[getIndex(gridX, this->ny - 1)] = SOLIDGRID;
+		this->gridTypes[getIndex(gridX, this->nTheta - 1)] = SOLIDGRID;
 	}
 }
 
@@ -441,12 +451,12 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 
 	size_t upi, vpi;
 
-	for (size_t j = 0; j < ny; ++j) {
-		for (size_t i = 0; i < ny; ++i) {
+	for (size_t j = 0; j < nTheta; ++j) {
+		for (size_t i = 0; i < nTheta; ++i) {
 			uLeft = u->getValueAt(i, j);
-			i == (nx - 1) ? upi = 0 : upi = i + 1;
+			i == (nPhi - 1) ? upi = 0 : upi = i + 1;
 			vDown = v->getValueAt(i, j);
-			j == (ny - 1) ? vpi = 0 : vpi = j + 1;
+			j == (nTheta - 1) ? vpi = 0 : vpi = j + 1;
 			uRight = u->getValueAt(upi, j);
 			vUp = u->getValueAt(i, vpi);
 
@@ -454,7 +464,8 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			velY = (vUp + vDown) / 2.0;
 
 			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
-			//mapToSphere(pos);
+
+			mapToSphere(pos);
 			//mapToCylinder(pos);
 			vel = Eigen::Matrix<float, 3, 1>(velX, velY, 0.0);
 			pressure = attributeTable["p"]->getValueAt(i, j);
@@ -465,8 +476,9 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			float* v = parts->dataWrite<float>(vH, idx);
 			float* ps = parts->dataWrite<float>(psH, idx);
 			float* ts = parts->dataWrite<float>(test, idx);
-			ps[0] = pressure;
-			ts[0] = testVal / 13.0 * 256.0;
+
+			ps[0] = pressure / 5000.0;
+			ts[0] = testVal / 13.0;
 
 			for (int k = 0; k < 3; ++k) {
 				p[k] = pos(k, 0);
@@ -481,9 +493,8 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 
 void KaminoSolver::mapToSphere(Eigen::Matrix<float, 3, 1>& pos) const
 {
-	float radius = 5.0;
-	float theta = M_PI*pos[1] / (ny * gridLen);
-	float phi = 2*M_PI*pos[0] / (nx * gridLen);
+	float theta = pos[1];
+	float phi = pos[0];
 	pos[0] = radius * sin(theta) * cos(phi);
 	pos[1] = radius * cos(theta);
 	pos[2] = radius * sin(theta) * sin(phi);
@@ -492,7 +503,7 @@ void KaminoSolver::mapToSphere(Eigen::Matrix<float, 3, 1>& pos) const
 void KaminoSolver::mapToCylinder(Eigen::Matrix<float, 3, 1>& pos) const
 {
 	float radius = 5.0;
-	float phi = 2*M_PI*pos[0] / (nx * gridLen);
+	float phi = 2*M_PI*pos[0] / (nPhi * gridLen);
 	float z = pos[1];
 	pos[0] = radius * cos(phi);
 	pos[1] = radius * sin(phi);
@@ -505,11 +516,11 @@ void KaminoSolver::mapToCylinder(Eigen::Matrix<float, 3, 1>& pos) const
 
 void KaminoSolver::addAttr(std::string name, fReal xOffset, fReal yOffset)
 {
-	size_t attrNx = this->nx;
-	size_t attrNy = this->ny;
+	size_t attrnPhi = this->nPhi;
+	size_t attrnTheta = this->nTheta;
 	if (name == "v")
-		attrNy += 1;
-	KaminoQuantity* ptr = new KaminoQuantity(name, attrNx, attrNy, this->gridLen, xOffset, yOffset);
+		attrnTheta += 1;
+	KaminoQuantity* ptr = new KaminoQuantity(name, attrnPhi, attrnTheta, this->gridLen, xOffset, yOffset);
 	this->attributeTable.emplace(std::pair<std::string, KaminoQuantity*>(name, ptr));
 }
 
