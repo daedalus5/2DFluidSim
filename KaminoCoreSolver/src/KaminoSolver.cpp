@@ -1,5 +1,5 @@
 # include "../include/KaminoQuantity.h"
-
+# include <boost/math/tools/roots.hpp>
 
 // CONSTRUCTOR / DESTRUCTOR >>>>>>>>>>
 
@@ -42,7 +42,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 {
 	this->timeStep = timeStep;
 	advection();
-	// geometric();
+	geometric();
 	// bodyForce();
 	projection();
 }
@@ -79,56 +79,78 @@ void KaminoSolver::advection()
 	this->swapAttrBuffers();
 }
 
-// struct cubic {
-// 	fReal G_val;
-// 	fReal u_prev;
-// 	fReal operator()(fReal u) {
-// 		return G_val*G_val * pow(u, 3) + (G_val * u_prev - 1) * u - u_prev;
-// 	}
-// };
+template <class T>
+struct cubicFunctor
+{
+	T G_val;
+	T u_prev;
+	T operator()(T u)
+	{
+		return G_val * G_val * pow(u, 3.0) + (G_val * u_prev + 1.0) * u - u_prev;
+	}
+};
 
-// template <class T>
-// T cbrt_noderiv(T x)
-// {
-//   // return cube root of x using bracket_and_solve (no derivatives).
-//   using namespace std;                          // Help ADL of std functions.
-//   using namespace boost::math::tools;           // For bracket_and_solve_root.
+template <class T>
+T cbrt_noderiv(T x, cubicFunctor<T> functor)
+{
+	// return cube root of x using bracket_and_solve (no derivatives).
+	using namespace std;                          // Help ADL of std functions.
+	using namespace boost::math::tools;           // For bracket_and_solve_root.
 
-//   int exponent;
-//   frexp(x, &exponent);                          // Get exponent of z (ignore mantissa).
-//   T guess = ldexp(1., exponent/3);              // Rough guess is to divide the exponent by three.
-//   T factor = 2;                                 // How big steps to take when searching.
-
-//   const boost::uintmax_t maxit = 20;            // Limit to maximum iterations.
-//   boost::uintmax_t it = maxit;                  // Initally our chosen max iterations, but updated with actual.
-//   bool is_rising = true;                        // So if result if guess^3 is too low, then try increasing guess.
-//   int digits = std::numeric_limits<T>::digits;  // Maximum possible binary digits accuracy for type T.
-//   // Some fraction of digits is used to control how accurate to try to make the result.
-//   int get_digits = digits - 3;                  // We have to have a non-zero interval at each step, so
-//                                                 // maximum accuracy is digits - 1.  But we also have to
-//                                                 // allow for inaccuracy in f(x), otherwise the last few
-//                                                 // iterations just thrash around.
-//   eps_tolerance<T> tol(get_digits);             // Set the tolerance.
-//   std::pair<T, T> r = bracket_and_solve_root(cbrt_functor_noderiv<T>(x), guess, factor, is_rising, tol, it);
-//   return r.first + (r.second - r.first)/2;      // Midway between brackets is our result, if necessary we could
-//                                                 // return the result as an interval here.
-// }
+	int exponent;
+	frexp(x, &exponent);                          // Get exponent of z (ignore mantissa).
+	T guess = ldexp(1.0, exponent / 3.0);         // Rough guess is to divide the exponent by three.
+	T factor = 2.0;                               // How big steps to take when searching.
+	
+	const boost::uintmax_t maxit = 20.0;          // Limit to maximum iterations.
+	boost::uintmax_t it = maxit;                  // Initally our chosen max iterations, but updated with actual.
+	bool is_rising = true;                        // So if result if guess^3 is too low, then try increasing guess.
+	int digits = std::numeric_limits<T>::digits;  // Maximum possible binary digits accuracy for type T.
+												  // Some fraction of digits is used to control how accurate to try to make the result.
+	int get_digits = digits - 3.0;                // We have to have a non-zero interval at each step, so
+                                                  // maximum accuracy is digits - 1.  But we also have to
+                                                  // allow for inaccuracy in f(x), otherwise the last few
+                                                  // iterations just thrash around.
+	eps_tolerance<T> tol(get_digits);             // Set the tolerance.
+	std::pair<T, T> r = bracket_and_solve_root(functor, guess, factor, is_rising, tol, it);
+	return r.first + (r.second - r.first) / 2.0;  // Midway between brackets is our result, if necessary we could
+												  // return the result as an interval here.
+}
 
 void KaminoSolver::geometric()
 {
 	KaminoQuantity* u = attributeTable["u"];
 	KaminoQuantity* v = attributeTable["v"];
 
-	for(size_t j = 1; j < nTheta; ++j){
-		for(size_t i = 0; i < nPhi; ++i){
-			fReal G = timeStep * cos(j * gridLen) / (radius * sin(j * gridLen));;
-			fReal uNext;
-			fReal vNext;
-			cubic c;
-			c.G_val = G;
-			c.u_prev = u->getValueAt(i, j);
+	// Poles unshifted
+	for (size_t phiI = 0; phiI < nPhi; ++phiI)
+	{
+		size_t northPole = 0;
+		size_t southPole = nTheta - 1;
 
-			// hard code poles
+		u->writeValueTo(phiI, northPole, u->getValueAt(phiI, northPole));
+		u->writeValueTo(phiI, southPole, u->getValueAt(phiI, southPole));
+		v->writeValueTo(phiI, northPole, v->getValueAt(phiI, northPole));
+		v->writeValueTo(phiI, southPole, v->getValueAt(phiI, southPole));
+	}
+
+	for (size_t thetaJ = 1; thetaJ < nTheta - 1; ++thetaJ)
+	{
+		for (size_t phiI = 0; phiI < nPhi; ++phiI)
+		{
+			fReal G = timeStep * std::cos(thetaJ * gridLen) / (radius * sin(thetaJ * gridLen));
+			
+			cubicFunctor<fReal> c;
+			c.G_val = G;
+			fReal uPrev = u->getValueAt(phiI, thetaJ);
+			c.u_prev = uPrev;
+			fReal uNext = cbrt_noderiv<fReal>(uPrev, c);
+
+			fReal vPrev = v->getValueAt(phiI, thetaJ);
+			fReal vNext = vPrev + G * uNext * uNext;
+
+			u->writeValueTo(phiI, thetaJ, uNext);
+			v->writeValueTo(phiI, thetaJ, vNext);
 		}
 	}
 
