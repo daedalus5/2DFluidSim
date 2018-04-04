@@ -84,37 +84,36 @@ struct cubicFunctor
 {
 	T G_val;
 	T u_prev;
-	T operator()(T u)
+	std::pair<T, T> operator()(T u)
 	{
-		return G_val * G_val * pow(u, 3.0) + (G_val * u_prev + 1.0) * u - u_prev;
+		T u_Squared = u * u;
+		T u_Cubic = u_Squared * u;
+		T G_Squared = G_val * G_val;
+		T G_valup1 = G_val * u_prev + 1.0;
+		T fx = G_Squared * u_Cubic + G_valup1 * u - u_prev;
+		T dx = 3.0 * G_Squared * u_Squared + G_valup1;
+
+		return std::pair<T, T>(fx, dx);
 	}
 };
 
 template <class T>
 T cbrt_noderiv(T x, cubicFunctor<T> functor)
 {
-	// return cube root of x using bracket_and_solve (no derivatives).
-	using namespace std;                          // Help ADL of std functions.
-	using namespace boost::math::tools;           // For bracket_and_solve_root.
-
+	// return cube root of x using 1st derivative and Newton_Raphson.
+	using namespace boost::math::tools;
 	int exponent;
-	frexp(x, &exponent);                          // Get exponent of z (ignore mantissa).
-	T guess = ldexp(1.0, exponent / 3.0);         // Rough guess is to divide the exponent by three.
-	T factor = 2.0;                               // How big steps to take when searching.
-	
-	const boost::uintmax_t maxit = 20.0;          // Limit to maximum iterations.
-	boost::uintmax_t it = maxit;                  // Initally our chosen max iterations, but updated with actual.
-	bool is_rising = true;                        // So if result if guess^3 is too low, then try increasing guess.
-	int digits = std::numeric_limits<T>::digits;  // Maximum possible binary digits accuracy for type T.
-												  // Some fraction of digits is used to control how accurate to try to make the result.
-	int get_digits = digits - 3.0;                // We have to have a non-zero interval at each step, so
-                                                  // maximum accuracy is digits - 1.  But we also have to
-                                                  // allow for inaccuracy in f(x), otherwise the last few
-                                                  // iterations just thrash around.
-	eps_tolerance<T> tol(get_digits);             // Set the tolerance.
-	std::pair<T, T> r = bracket_and_solve_root(functor, guess, factor, is_rising, tol, it);
-	return r.first + (r.second - r.first) / 2.0;  // Midway between brackets is our result, if necessary we could
-												  // return the result as an interval here.
+	frexp(x, &exponent);                                // Get exponent of z (ignore mantissa).
+	T guess = ldexp(1., exponent / 3);                    // Rough guess is to divide the exponent by three.
+	T min = ldexp(0.5, exponent / 3);                     // Minimum possible value is half our guess.
+	T max = ldexp(2., exponent / 3);                      // Maximum possible value is twice our guess.
+	const int digits = std::numeric_limits<T>::digits;  // Maximum possible binary digits accuracy for type T.
+	int get_digits = static_cast<int>(digits * 0.6);    // Accuracy doubles with each step, so stop when we have
+														// just over half the digits correct.
+	const boost::uintmax_t maxit = 20;
+	boost::uintmax_t it = maxit;
+	T result = newton_raphson_iterate(functor, guess, min, max, get_digits, it);
+	return result;
 }
 
 void KaminoSolver::geometric()
