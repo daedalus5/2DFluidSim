@@ -79,9 +79,61 @@ void KaminoSolver::advection()
 	this->swapAttrBuffers();
 }
 
+// struct cubic {
+// 	fReal G_val;
+// 	fReal u_prev;
+// 	fReal operator()(fReal u) {
+// 		return G_val*G_val * pow(u, 3) + (G_val * u_prev - 1) * u - u_prev;
+// 	}
+// };
+
+// template <class T>
+// T cbrt_noderiv(T x)
+// {
+//   // return cube root of x using bracket_and_solve (no derivatives).
+//   using namespace std;                          // Help ADL of std functions.
+//   using namespace boost::math::tools;           // For bracket_and_solve_root.
+
+//   int exponent;
+//   frexp(x, &exponent);                          // Get exponent of z (ignore mantissa).
+//   T guess = ldexp(1., exponent/3);              // Rough guess is to divide the exponent by three.
+//   T factor = 2;                                 // How big steps to take when searching.
+
+//   const boost::uintmax_t maxit = 20;            // Limit to maximum iterations.
+//   boost::uintmax_t it = maxit;                  // Initally our chosen max iterations, but updated with actual.
+//   bool is_rising = true;                        // So if result if guess^3 is too low, then try increasing guess.
+//   int digits = std::numeric_limits<T>::digits;  // Maximum possible binary digits accuracy for type T.
+//   // Some fraction of digits is used to control how accurate to try to make the result.
+//   int get_digits = digits - 3;                  // We have to have a non-zero interval at each step, so
+//                                                 // maximum accuracy is digits - 1.  But we also have to
+//                                                 // allow for inaccuracy in f(x), otherwise the last few
+//                                                 // iterations just thrash around.
+//   eps_tolerance<T> tol(get_digits);             // Set the tolerance.
+//   std::pair<T, T> r = bracket_and_solve_root(cbrt_functor_noderiv<T>(x), guess, factor, is_rising, tol, it);
+//   return r.first + (r.second - r.first)/2;      // Midway between brackets is our result, if necessary we could
+//                                                 // return the result as an interval here.
+// }
+
 void KaminoSolver::geometric()
 {
+	KaminoQuantity* u = attributeTable["u"];
+	KaminoQuantity* v = attributeTable["v"];
 
+	for(size_t j = 1; j < nTheta; ++j){
+		for(size_t i = 0; i < nPhi; ++i){
+			fReal G = timeStep * cos(j * gridLen) / (radius * sin(j * gridLen));;
+			fReal uNext;
+			fReal vNext;
+			cubic c;
+			c.G_val = G;
+			c.u_prev = u->getValueAt(i, j);
+
+			// hard code poles
+		}
+	}
+
+	u->swapBuffer();
+	v->swapBuffer();
 }
 
 void KaminoSolver::projection()
@@ -180,7 +232,6 @@ void KaminoSolver::projection()
 	{
 		for (size_t i = 0; i < nPhi; ++i)
 		{
-			fReal invSin = 1 / sin(j * gridLen);
 			fReal uBeforeUpdate = u->getValueAt(i, j);
 			fReal vBeforeUpdate = v->getValueAt(i, j);
 			size_t iRhs = i;
@@ -198,6 +249,7 @@ void KaminoSolver::projection()
 			
 			if (j != 0)
 			{
+				fReal invSin = 1 / sin(j * gridLen);
 				size_t jUpper = j;
 				size_t jLower = j - 1;
 				fReal pressureSummedV = p->getValueAt(i, jUpper) - p->getValueAt(i, jLower);
@@ -217,7 +269,7 @@ void KaminoSolver::projection()
 				fReal pressureSummedV = p->getValueAt(i, jUpper) - 0.0;
 				if (getGridTypeAt(i, jUpper) == FLUIDGRID)
 				{
-					fReal deltaV = scaleP * invSin * pressureSummedV;
+					fReal deltaV = scaleP * pressureSummedV;
 					v->writeValueTo(i, j, vBeforeUpdate + deltaV);
 				}
 				else
@@ -232,12 +284,11 @@ void KaminoSolver::projection()
 	{
 		size_t j = nTheta;
 		size_t jLower = j - 1;
-		fReal invSin = 1 / sin(nTheta * gridLen);
 		fReal vBeforeUpdate = v->getValueAt(i, j);
 		fReal pressureSummedV = 0.0 - p->getValueAt(i, jLower);
 		if (getGridTypeAt(i, jLower) == FLUIDGRID)
 		{
-			fReal deltaV = scaleP * invSin * pressureSummedV;
+			fReal deltaV = scaleP * pressureSummedV;
 			v->writeValueTo(i, j, vBeforeUpdate + deltaV);
 		}
 		else
@@ -280,7 +331,6 @@ void KaminoSolver::precomputeLaplacian()
 			size_t rowNumber = getIndex(i, j);
 			size_t ip1 = (i + 1) % nPhi;
 			size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
-			fReal invSin = 1 / sin(j * gridLen);
 
 			if(getGridTypeAt(ip1, j) == FLUIDGRID){
 				Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = -1;
@@ -289,6 +339,14 @@ void KaminoSolver::precomputeLaplacian()
 			if(getGridTypeAt(im1, j) == FLUIDGRID){
 				Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = -1;
 				numPhiNeighbors++;				
+			}
+
+			fReal invSin;
+			if(j == 0 || j == 2*M_PI){
+				invSin = 1.0;
+			}
+			else{
+				invSin = 1 / sin(j * gridLen);
 			}
 
 			if (j != nTheta - 1)
@@ -452,7 +510,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 	size_t upi, vpi;
 
 	for (size_t j = 0; j < nTheta; ++j) {
-		for (size_t i = 0; i < nTheta; ++i) {
+		for (size_t i = 0; i < nPhi; ++i) {
 			uLeft = u->getValueAt(i, j);
 			i == (nPhi - 1) ? upi = 0 : upi = i + 1;
 			vDown = v->getValueAt(i, j);
@@ -464,10 +522,10 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			velY = (vUp + vDown) / 2.0;
 
 			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
+			vel = Eigen::Matrix<float, 3, 1>(0.0, velY, velX);
+			mapVToSphere(pos, vel);
+			mapPToSphere(pos);
 
-			mapToSphere(pos);
-			//mapToCylinder(pos);
-			vel = Eigen::Matrix<float, 3, 1>(velX, velY, 0.0);
 			pressure = attributeTable["p"]->getValueAt(i, j);
 			testVal = attributeTable["test"]->getValueAt(i, j);
 			
@@ -491,13 +549,26 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 # endif
 }
 
-void KaminoSolver::mapToSphere(Eigen::Matrix<float, 3, 1>& pos) const
+void KaminoSolver::mapPToSphere(Eigen::Matrix<float, 3, 1>& pos) const
 {
 	float theta = pos[1];
 	float phi = pos[0];
 	pos[0] = radius * sin(theta) * cos(phi);
-	pos[1] = radius * cos(theta);
 	pos[2] = radius * sin(theta) * sin(phi);
+	pos[1] = radius * cos(theta);
+}
+
+void KaminoSolver::mapVToSphere(Eigen::Matrix<float, 3, 1>& pos, Eigen::Matrix<float, 3, 1>& vel) const
+{
+	float theta = pos[1];
+	float phi = pos[0];
+
+	float u_theta = vel[1];
+	float u_phi = vel[2];
+
+	vel[0] = cos(theta) * cos(phi) * u_theta - sin(phi) * u_phi;
+	vel[2] = cos(theta) * sin(phi) * u_theta + cos(phi) * u_phi;
+	vel[1] = -sin(theta) * u_theta;
 }
 
 void KaminoSolver::mapToCylinder(Eigen::Matrix<float, 3, 1>& pos) const

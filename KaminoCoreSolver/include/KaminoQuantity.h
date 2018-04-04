@@ -12,6 +12,7 @@
 # include <cmath>
 # include <Eigen/IterativeLinearSolvers>
 # include <unsupported/Eigen/IterativeSolvers>
+# include <boost/math/tools/roots.hpp>
 
 # define M_PI           3.14159265358979323846  /* pi */
 
@@ -139,7 +140,8 @@ private:
 	fReal rand(const Eigen::Matrix<fReal, 2, 1> vecA) const;
 
 	/*map to spherical coordinates*/
-	void mapToSphere(Eigen::Matrix<float, 3, 1>& pos) const;
+	void mapPToSphere(Eigen::Matrix<float, 3, 1>& pos) const;
+	void mapVToSphere(Eigen::Matrix<float, 3, 1>& pos, Eigen::Matrix<float, 3, 1>& vel) const;
 	/*map to cylindrical coordinates*/
 	void mapToCylinder(Eigen::Matrix<float, 3, 1>& pos) const;
 
