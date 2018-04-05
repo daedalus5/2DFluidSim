@@ -421,54 +421,108 @@ void KaminoSolver::precomputeLaplacian()
 	Laplacian = Eigen::SparseMatrix<fReal>(nPhi*nTheta, nPhi*nTheta);
 	Laplacian.setZero();
 
-	for (size_t j = 0; j < nTheta; ++j)
-	{
-		for (size_t i = 0; i < nPhi; ++i)
-		{
+	// south pole / j = 0
+
+	for(size_t i = 0; i < nPhi; ++i){
+		size_t numPhiNeighbors = 0;
+		size_t numThetaNeighbors = 0;
+		size_t rowNumber = getIndex(i, 0);
+		fReal invSin = 1 / sin(gridLen / 2.0);
+		// right of cell
+		size_t ip1 = (i + 1) % nPhi;
+		if(getGridTypeAt(ip1, 0) == FLUIDGRID){
+			Laplacian.coeffRef(rowNumber, getIndex(ip1, 0)) = -1;
+			numPhiNeighbors++;
+		}
+		// left of cell
+		size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
+		if(getGridTypeAt(im1, 0) == FLUIDGRID){
+			Laplacian.coeffRef(rowNumber, getIndex(im1, 0)) = -1;
+			numPhiNeighbors++;
+		}
+		// above cell
+		size_t jp1 = 1;	
+		if (getGridTypeAt(i, jp1) == FLUIDGRID){
+			Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * invSin;
+			numThetaNeighbors++;
+		}
+		// below cell
+		size_t jm1 = (i + nPhi / 2) % nPhi;
+		if (getGridTypeAt(i, jm1) == FLUIDGRID){
+			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * invSin;
+			numThetaNeighbors++;
+		}
+		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors + numThetaNeighbors * invSin;
+	}
+
+	// interior of sphere
+
+	for(size_t j = 1; j < nTheta - 1; ++j){
+		for(size_t i = 0; i < nPhi; ++i){
 			size_t numPhiNeighbors = 0;
 			size_t numThetaNeighbors = 0;
 			size_t rowNumber = getIndex(i, j);
+			fReal invSin = 1 / sin(j*gridLen + gridLen / 2.0);
+			// right of cell
 			size_t ip1 = (i + 1) % nPhi;
-			size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
-
 			if(getGridTypeAt(ip1, j) == FLUIDGRID){
 				Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = -1;
 				numPhiNeighbors++;
 			}
+			// left of cell
+			size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
 			if(getGridTypeAt(im1, j) == FLUIDGRID){
 				Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = -1;
-				numPhiNeighbors++;				
-			}
-
-			fReal invSin;
-			if(j == 0 || j == 2*M_PI){
-				invSin = 1.0;
-			}
-			else{
-				invSin = 1 / sin(j * gridLen);
-			}
-
-			if (j != nTheta - 1)
-			{
-				size_t jp1 = j + 1;
-				if (getGridTypeAt(i, jp1) == FLUIDGRID)
-				{
-					Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * invSin;
-					numThetaNeighbors++;
-				}
-			}
-			if (j != 0)
-			{
-				size_t jm1 = j - 1;
-				if (getGridTypeAt(i, jm1) == FLUIDGRID)
-				{
-					Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * invSin;
-					numThetaNeighbors++;
-				}
-			}
-			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = numPhiNeighbors + numThetaNeighbors * invSin;
+				numPhiNeighbors++;
+			}	
+			// above cell
+			size_t jp1 = j + 1;
+			if(getGridTypeAt(i, jp1) == FLUIDGRID){
+				Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1;
+				numPhiNeighbors++;
+			}	
+			// below cell
+			size_t jm1 = j - 1;
+			if(getGridTypeAt(i, jm1) == FLUIDGRID){
+				Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1;
+				numPhiNeighbors++;
+			}	
 		}
 	}
+
+	// north pole / j = nTheta - 1
+
+	for(size_t i = 0; i < nPhi; ++i){
+		size_t numPhiNeighbors = 0;
+		size_t numThetaNeighbors = 0;
+		size_t rowNumber = getIndex(i, nTheta - 1);
+		fReal invSin = 1 / sin(2*M_PI - gridLen / 2.0);
+		// right of cell
+		size_t ip1 = (i + 1) % nPhi;
+		if(getGridTypeAt(ip1, nTheta - 1) == FLUIDGRID){
+			Laplacian.coeffRef(rowNumber, getIndex(ip1, nTheta - 1)) = -1;
+			numPhiNeighbors++;
+		}
+		// left of cell
+		size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
+		if(getGridTypeAt(im1, nTheta - 1) == FLUIDGRID){
+			Laplacian.coeffRef(rowNumber, getIndex(im1, nTheta - 1)) = -1;
+			numPhiNeighbors++;
+		}
+		// above cell
+		size_t jp1 = (i + nPhi / 2) % nPhi;	
+		if (getGridTypeAt(i, jp1) == FLUIDGRID){
+			Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * invSin;
+			numThetaNeighbors++;
+		}
+		// below cell
+		size_t jm1 = nTheta - 2;
+		if (getGridTypeAt(i, jm1) == FLUIDGRID){
+			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * invSin;
+			numThetaNeighbors++;
+		}
+		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors + numThetaNeighbors * invSin;
+	}	
 }
 
 void KaminoSolver::initialize_pressure()
