@@ -107,7 +107,8 @@ private:
 	Eigen::SparseMatrix<fReal> Laplacian;
 
 	/* So that it remembers all these attributes within */
-	std::map<std::string, KaminoQuantity*> attributeTable;
+	std::map<std::string, KaminoQuantity*> centeredAttr;
+	std::map<std::string, KaminoQuantity*> staggeredAttr;
 
 	/* Something about time steps */
 	fReal frameDuration;
@@ -154,7 +155,8 @@ public:
 
 	void stepForward(fReal timeStep);
 
-	void addAttr(std::string name, fReal xOffset = 0.0, fReal yOffset = 0.0);
+	void addCenteredAttr(std::string name, fReal xOffset = 0.0, fReal yOffset = 0.0);
+	void addStaggeredAttr(std::string name, fReal xOffset = 0.0, fReal yOffset = 0.0);
 
 	void precomputeLaplacian();
 	

@@ -8,10 +8,10 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), frameDuration(frameDuration),
 	timeStep(0.0), timeElapsed(0.0)
 {
-	addAttr("u", 0.5, 0.0);		// u velocity
-	addAttr("v", 0.0, 0.5);		// v velocity
-	addAttr("p");				// p pressure
-	addAttr("test");			// test scalar field
+	addStaggeredAttr("u", 0.5, 0.0);		// u velocity
+	addStaggeredAttr("v", 0.0, 0.5);		// v velocity
+	addCenteredAttr("p");				// p pressure
+	addCenteredAttr("test");			// test scalar field
 
 	this->gridTypes = new gridType[nPhi * nTheta];
 	memset(reinterpret_cast<void*>(this->gridTypes), FLUIDGRID, nPhi * nTheta);
@@ -26,7 +26,11 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 
 KaminoSolver::~KaminoSolver()
 {
-	for (auto& attr : this->attributeTable)
+	for (auto& attr : this->centeredAttr)
+	{
+		delete attr.second;
+	}
+	for (auto& attr : this->staggeredAttr)
 	{
 		delete attr.second;
 	}
@@ -49,7 +53,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 
 void KaminoSolver::advection()
 {
-	for (auto quantity : this->attributeTable)
+	for (auto quantity : this->centeredAttr)
 	{
 		KaminoQuantity* attr = quantity.second;
 		for (size_t gridX = 0; gridX < this->nPhi; ++gridX)
@@ -147,8 +151,8 @@ fReal solveCubicABCf(fReal A, fReal B, fReal C)
 
 void KaminoSolver::geometric()
 {
-	KaminoQuantity* u = attributeTable["u"];
-	KaminoQuantity* v = attributeTable["v"];
+	KaminoQuantity* u = staggeredAttr["u"];
+	KaminoQuantity* v = staggeredAttr["v"];
 
 	// Poles unshifted
 	for (size_t phiI = 0; phiI < nPhi; ++phiI)
@@ -195,9 +199,9 @@ void KaminoSolver::projection()
 	Eigen::VectorXd b(nPhi * nTheta);
 	b.setZero();
 
-	KaminoQuantity* u = attributeTable["u"];
-	KaminoQuantity* v = attributeTable["v"];
-	KaminoQuantity* p = attributeTable["p"];
+	KaminoQuantity* u = staggeredAttr["u"];
+	KaminoQuantity* v = staggeredAttr["v"];
+	KaminoQuantity* p = centeredAttr["p"];
 
 	for (size_t j = 0; j < nTheta; ++j)
 	{
@@ -426,7 +430,7 @@ void KaminoSolver::initialize_pressure()
 {
 	for(size_t i = 0; i < nPhi; ++i){
 		for(size_t j = 0; j < nTheta; ++j){
-			attributeTable["p"]->setValueAt(i, j, 0.0);
+			centeredAttr["p"]->setValueAt(i, j, 0.0);
 		}
 	}
 }
@@ -434,20 +438,20 @@ void KaminoSolver::initialize_pressure()
 void KaminoSolver::initialize_velocity()
 {
 	fReal val = 0.0;
-	size_t sizePhi = attributeTable["u"]->getNPhi();
-	size_t sizeTheta = attributeTable["u"]->getNTheta();
+	size_t sizePhi = staggeredAttr["u"]->getNPhi();
+	size_t sizeTheta = staggeredAttr["u"]->getNTheta();
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(sin(i * gridLen), sin(j * gridLen));
-			attributeTable["u"]->setValueAt(i, j, val);
+			staggeredAttr["u"]->setValueAt(i, j, val);
 		}
 	}
-	sizePhi = attributeTable["v"]->getNPhi();
-	sizeTheta = attributeTable["v"]->getNTheta();
+	sizePhi = staggeredAttr["v"]->getNPhi();
+	sizeTheta = staggeredAttr["v"]->getNTheta();
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(cos(i * gridLen), cos(j * gridLen));
-			attributeTable["v"]->setValueAt(i, j, 0.0);
+			staggeredAttr["v"]->setValueAt(i, j, 0.0);
 		}
 	}
 }
@@ -496,11 +500,11 @@ void KaminoSolver::initialize_test()
 {
 	for(size_t i = 0; i < nPhi; ++i){
 		for(size_t j = 0; j < nTheta; ++j){
-			attributeTable["test"]->setValueAt(i, j, 0.0);
+			centeredAttr["test"]->setValueAt(i, j, 0.0);
 		}
 	}
 
-	KaminoQuantity* test = attributeTable["test"];
+	KaminoQuantity* test = centeredAttr["test"];
 	size_t midX = nPhi / 2;
 	size_t midY = nTheta / 2;
 	size_t kernelSize = 11;
@@ -635,14 +639,26 @@ void KaminoSolver::mapToCylinder(Eigen::Matrix<float, 3, 1>& pos) const
 // ACCESS >>>>>>>>>>
 
 
-void KaminoSolver::addAttr(std::string name, fReal xOffset, fReal yOffset)
+void KaminoSolver::addCenteredAttr(std::string name, fReal xOffset, fReal yOffset)
 {
 	size_t attrnPhi = this->nPhi;
 	size_t attrnTheta = this->nTheta;
-	if (name == "v")
-		attrnTheta += 1;
+	
 	KaminoQuantity* ptr = new KaminoQuantity(name, attrnPhi, attrnTheta, this->gridLen, xOffset, yOffset);
-	this->attributeTable.emplace(std::pair<std::string, KaminoQuantity*>(name, ptr));
+	this->centeredAttr.emplace(std::pair<std::string, KaminoQuantity*>(name, ptr));
+}
+
+void KaminoSolver::addStaggeredAttr(std::string name, fReal xOffset, fReal yOffset)
+{
+	size_t attrnPhi = this->nPhi;
+	size_t attrnTheta = this->nTheta;
+	// Is the staggered attribute along the y boundary?
+	if (yOffset == 0.5)
+	{
+		attrnTheta += 1;
+	}
+	KaminoQuantity* ptr = new KaminoQuantity(name, attrnPhi, attrnTheta, this->gridLen, xOffset, yOffset);
+	this->staggeredAttr.emplace(std::pair<std::string, KaminoQuantity*>(name, ptr));
 }
 
 KaminoQuantity* KaminoSolver::getAttributeNamed(std::string name)
@@ -652,12 +668,23 @@ KaminoQuantity* KaminoSolver::getAttributeNamed(std::string name)
 
 KaminoQuantity* KaminoSolver::operator[](std::string name)
 {
-	return this->attributeTable.at(name);
+	if (centeredAttr.find(name) == centeredAttr.end())
+	{
+		return staggeredAttr.at(name);
+	}
+	else
+	{
+		return centeredAttr.at(name);
+	}
 }
 
 void KaminoSolver::swapAttrBuffers()
 {
-	for (auto quantity : this->attributeTable)
+	for (auto quantity : this->centeredAttr)
+	{
+		quantity.second->swapBuffer();
+	}
+	for (auto quantity : this->staggeredAttr)
 	{
 		quantity.second->swapBuffer();
 	}
