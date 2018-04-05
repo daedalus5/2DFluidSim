@@ -83,14 +83,17 @@ template <class T>
 struct cubicFunctor
 {
 	T G_val;
-	T u_prev;
+	T u_Prev;
+	T v_Prev;
+	cubicFunctor(T G, T u, T v) : G_val(G), u_Prev(u), v_Prev(v)
+	{}
 	std::pair<T, T> operator()(T u)
 	{
 		T u_Squared = u * u;
 		T u_Cubic = u_Squared * u;
 		T G_Squared = G_val * G_val;
-		T G_valup1 = G_val * u_prev + 1.0;
-		T fx = G_Squared * u_Cubic + G_valup1 * u - u_prev;
+		T G_valup1 = G_val * v_Prev + 1.0;
+		T fx = G_Squared * u_Cubic + G_valup1 * u - u_Prev;
 		T dx = 3.0 * G_Squared * u_Squared + G_valup1;
 
 		return std::pair<T, T>(fx, dx);
@@ -112,8 +115,34 @@ T cbrt_noderiv(T x, cubicFunctor<T> functor)
 														// just over half the digits correct.
 	const boost::uintmax_t maxit = 20;
 	boost::uintmax_t it = maxit;
-	T result = newton_raphson_iterate(functor, guess, min, max, get_digits, it);
+	T result = newton_raphson_iterate(functor, guess, min, max, get_digits);
 	return result;
+}
+
+const fReal twoothreepow1o3 = std::pow(2.0 / 3.0, 1.0 / 3.0);
+const fReal term1Under = std::pow(2.0, 1.0 / 3.0) * std::pow(3.0, 2.0 / 3.0);
+
+fReal solveCubicABCf(fReal A, fReal B, fReal C)
+{
+	fReal A2 = A * A;
+	fReal A3 = A2 * A;
+	fReal A4 = A2 * A2;
+	fReal C2 = C * C;
+	fReal B3 = B * B * B;
+	fReal delta = 81.0 * A4 * C2 + 12.0 * A3 * B3;
+	if (delta < 0.0 || std::abs(A) < 1e-6)
+	{
+		return -C;
+		//std::cerr << "Minus" << std::endl;
+	}
+	fReal termB = std::sqrt(delta) - 9.0 * A2 * C;
+	termB = std::cbrt(termB);
+	fReal term1 = termB / (term1Under * A);
+
+	fReal term2 = twoothreepow1o3 * B;
+	term2 = term2 / termB;
+
+	return term1 - term2;
 }
 
 void KaminoSolver::geometric()
@@ -138,14 +167,14 @@ void KaminoSolver::geometric()
 		for (size_t phiI = 0; phiI < nPhi; ++phiI)
 		{
 			fReal G = timeStep * std::cos(thetaJ * gridLen) / (radius * sin(thetaJ * gridLen));
-			
-			cubicFunctor<fReal> c;
-			c.G_val = G;
-			fReal uPrev = u->getValueAt(phiI, thetaJ);
-			c.u_prev = uPrev;
-			fReal uNext = cbrt_noderiv<fReal>(uPrev, c);
 
+			fReal A = G * G;
+			fReal uPrev = u->getValueAt(phiI, thetaJ);
 			fReal vPrev = v->getValueAt(phiI, thetaJ);
+			fReal B = G * vPrev + 1.0;
+			fReal C = -uPrev;
+			
+			fReal uNext = solveCubicABCf(A, B, C);
 			fReal vNext = vPrev + G * uNext * uNext;
 
 			u->writeValueTo(phiI, thetaJ, uNext);
