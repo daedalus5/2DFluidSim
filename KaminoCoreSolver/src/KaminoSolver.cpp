@@ -81,6 +81,35 @@ void KaminoSolver::advection()
 			}
 		}
 	}
+
+	for (auto quantity : this->staggeredAttr)
+	{
+		KaminoQuantity* attr = quantity.second;
+		for (size_t gridX = 0; gridX < this->nPhi; ++gridX)
+		{
+			for (size_t gridY = 0; gridY < this->nTheta; ++gridY)
+			{
+				fReal gX = attr->getXCoordAtIndex(gridX);
+				fReal gY = attr->getYCoordAtIndex(gridY);
+
+				fReal uG = (*this)["u"]->sampleAt(gX, gY);
+				fReal vG = (*this)["v"]->sampleAt(gX, gY);
+
+				fReal midX = gX - 0.5 * timeStep * uG;
+				fReal midY = gY - 0.5 * timeStep * vG;
+
+				fReal uMid = (*this)["u"]->sampleAt(midX, midY);
+				fReal vMid = (*this)["v"]->sampleAt(midX, midY);
+
+				fReal pX = gX - timeStep * uMid;
+				fReal pY = gY - timeStep * vMid;
+
+				fReal advectedVal = attr->sampleAt(pX, pY);
+				attr->writeValueTo(gridX, gridY, advectedVal);
+			}
+		}
+	}
+
 	this->swapAttrBuffers();
 }
 
@@ -544,20 +573,23 @@ void KaminoSolver::initialize_pressure()
 void KaminoSolver::initialize_velocity()
 {
 	fReal val = 0.0;
-	size_t sizePhi = staggeredAttr["u"]->getNPhi();
-	size_t sizeTheta = staggeredAttr["u"]->getNTheta();
+	KaminoQuantity* u = this->staggeredAttr["u"];
+	KaminoQuantity* v = this->staggeredAttr["v"];
+
+	size_t sizePhi = u->getNPhi();
+	size_t sizeTheta = u->getNTheta();
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(sin(i * gridLen), sin(j * gridLen));
-			staggeredAttr["u"]->setValueAt(i, j, val);
+			u->setValueAt(i, j, val);
 		}
 	}
-	sizePhi = staggeredAttr["v"]->getNPhi();
-	sizeTheta = staggeredAttr["v"]->getNTheta();
+	sizePhi = v->getNPhi();
+	sizeTheta = v->getNTheta();
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(cos(i * gridLen), cos(j * gridLen));
-			staggeredAttr["v"]->setValueAt(i, j, 0.0);
+			v->setValueAt(i, j, 0.0);
 		}
 	}
 }
