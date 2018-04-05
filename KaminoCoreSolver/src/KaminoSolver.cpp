@@ -1,5 +1,6 @@
 # include "../include/KaminoQuantity.h"
 # include <boost/math/tools/roots.hpp>
+# include "CubicSolver.h"
 
 // CONSTRUCTOR / DESTRUCTOR >>>>>>>>>>
 
@@ -46,7 +47,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 {
 	this->timeStep = timeStep;
 	advection();
-	// geometric();
+	geometric();
 	// bodyForce();
 	projection();
 }
@@ -170,15 +171,30 @@ void KaminoSolver::geometric()
 	{
 		for (size_t phiI = 0; phiI < nPhi; ++phiI)
 		{
-			fReal G = timeStep * std::cos(thetaJ * gridLen) / (radius * sin(thetaJ * gridLen));
-
-			fReal A = G * G;
+			fReal thetaAtJ = thetaJ * gridLen;
 			fReal uPrev = u->getValueAt(phiI, thetaJ);
 			fReal vPrev = v->getValueAt(phiI, thetaJ);
-			fReal B = G * vPrev + 1.0;
-			fReal C = -uPrev;
-			
-			fReal uNext = solveCubicABCf(A, B, C);
+
+			fReal G = 0.0;
+			fReal uNext = 0.0;
+			if (std::abs(thetaAtJ - M_PI / 2.0) < 1e-8)
+			{
+				G = 0.0;
+				uNext = uPrev;
+			}
+			else
+			{
+				G = timeStep * std::cos(thetaJ * gridLen) / (radius * sin(thetaJ * gridLen));
+				fReal cof = G * G;
+				fReal A = 0.0;
+				fReal B = (G * vPrev + 1.0) / cof;
+				fReal C = -uPrev / cof;
+
+				fReal solution[3];
+				SolveP3(solution, A, B, C);
+
+				uNext = solution[0];
+			}
 			fReal vNext = vPrev + G * uNext * uNext;
 
 			u->writeValueTo(phiI, thetaJ, uNext);
