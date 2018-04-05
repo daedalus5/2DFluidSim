@@ -42,7 +42,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 {
 	this->timeStep = timeStep;
 	advection();
-	geometric();
+	// geometric();
 	// bodyForce();
 	projection();
 }
@@ -434,19 +434,19 @@ void KaminoSolver::initialize_pressure()
 void KaminoSolver::initialize_velocity()
 {
 	fReal val = 0.0;
-	size_t sizeX = attributeTable["u"]->getNPhi();
-	size_t sizeY = attributeTable["u"]->getNTheta();
-	for (size_t j = 0; j < sizeY; ++j) {
-		for (size_t i = 0; i < sizeX; ++i) {
-			val = FBM(sin(2 * M_PI * i / sizeX), sin(2 * M_PI * j / sizeY));
+	size_t sizePhi = attributeTable["u"]->getNPhi();
+	size_t sizeTheta = attributeTable["u"]->getNTheta();
+	for (size_t j = 0; j < sizeTheta; ++j) {
+		for (size_t i = 0; i < sizePhi; ++i) {
+			val = FBM(sin(i * gridLen), sin(j * gridLen));
 			attributeTable["u"]->setValueAt(i, j, val);
 		}
 	}
-	sizeX = attributeTable["v"]->getNPhi();
-	sizeY = attributeTable["v"]->getNTheta();
-	for (size_t j = 0; j < sizeY; ++j) {
-		for (size_t i = 0; i < sizeX; ++i) {
-			val = FBM(cos(2 * M_PI * i / sizeX), cos(2 * M_PI * j / sizeY));
+	sizePhi = attributeTable["v"]->getNPhi();
+	sizeTheta = attributeTable["v"]->getNTheta();
+	for (size_t j = 0; j < sizeTheta; ++j) {
+		for (size_t i = 0; i < sizePhi; ++i) {
+			val = FBM(cos(i * gridLen), cos(j * gridLen));
 			attributeTable["v"]->setValueAt(i, j, 0.0);
 		}
 	}
@@ -586,7 +586,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			float* ts = parts->dataWrite<float>(test, idx);
 
 			ps[0] = pressure / 5000.0;
-			ts[0] = testVal / 13.0;
+			ts[0] = testVal / 1.0;
 
 			for (int k = 0; k < 3; ++k) {
 				p[k] = pos(k, 0);

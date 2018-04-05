@@ -7,6 +7,7 @@
 Makefile
 Kamino.VC.db
 ./2DFluidSim
+2DFluidSim
 
 # User-specific files
 *.suo
