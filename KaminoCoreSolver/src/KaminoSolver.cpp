@@ -1,6 +1,6 @@
 # include "../include/KaminoQuantity.h"
 # include <boost/math/tools/roots.hpp>
-# include "CubicSolver.h"
+# include "../include/CubicSolver.h"
 
 // CONSTRUCTOR / DESTRUCTOR >>>>>>>>>>
 
@@ -573,8 +573,8 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 	fReal pressure, testVal;
 	fReal velX, velY;
 
-	KaminoQuantity* u = attributeTable["u"];
-	KaminoQuantity* v = attributeTable["v"];
+	KaminoQuantity* u = staggeredAttr["u"];
+	KaminoQuantity* v = staggeredAttr["v"];
 	fReal uRight, uLeft, vUp, vDown;
 
 	size_t upi, vpi;
@@ -596,8 +596,8 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			mapVToSphere(pos, vel);
 			mapPToSphere(pos);
 
-			pressure = attributeTable["p"]->getValueAt(i, j);
-			testVal = attributeTable["test"]->getValueAt(i, j);
+			pressure = centeredAttr["p"]->getValueAt(i, j);
+			testVal = centeredAttr["test"]->getValueAt(i, j);
 			
 			int idx = parts->addParticle();
 			float* p = parts->dataWrite<float>(pH, idx);
