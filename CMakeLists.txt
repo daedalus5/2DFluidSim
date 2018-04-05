@@ -9,6 +9,8 @@ endif()
 
 add_cispba_executable(2DFluidSim KaminoCoreSolver/main.cpp
                         KaminoCoreSolver/include/KaminoQuantity.h
+			KaminoCoreSolver/include/CubicSolver.h
+			KaminoCoreSolver/src/CubicSolver.cpp
                         KaminoCoreSolver/src/KaminoQuantity.cpp
                         KaminoCoreSolver/src/KaminoSolver.cpp)
         
