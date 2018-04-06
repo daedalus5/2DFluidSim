@@ -55,8 +55,8 @@ private:
 	fReal* nextStep;
 
 	/* Wrap things up */
-	size_t getWarpedXIndex(fReal x);
-	size_t getWarpedYIndex(fReal y);
+	size_t getLoopPhiIndex(fReal phi);
+	size_t getRefThetaIndex(fReal theta);
 
 	/* Get index */
 	inline size_t getIndex(size_t x, size_t y);
@@ -85,8 +85,8 @@ public:
 	/* Lerped Sampler using world coordinates */
 	fReal sampleAt(fReal x, fReal y);
 	/* Given the index, show its origin in world coordinates*/
-	fReal getXCoordAtIndex(size_t x);
-	fReal getYCoordAtIndex(size_t y);
+	fReal getPhiCoordAtIndex(size_t phi);
+	fReal getThetaCoordAtIndex(size_t theta);
 
 	fReal getPhiOffset();
 	fReal getThetaOffset();
