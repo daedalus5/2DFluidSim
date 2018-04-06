@@ -322,112 +322,124 @@ void KaminoSolver::projection()
 
 	// south pole / j = 0
 
-	// for(size_t i = 0; j < nPhi; ++i){
-	// 	fReal uBeforeUpdate = u->getValueAt(i, 0);
-	// 	fReal vBeforeUpdate = v->getValueAt(i, 0);
-	// 	size_t iRhs = i;
-	// 	size_t iLhs = (i == 0 ? nPhi - 1 : i - 1);
-	// 	if (getGridTypeAt(iRhs, 0) == FLUIDGRID && getGridTypeAt(iLhs, 0) == FLUIDGRID)
-	// 	{
-	// 		fReal pressureSummedU = p->getValueAt(iRhs, 0) - p->getValueAt(iLhs, 0);
-	// 		fReal deltaU = scaleP * pressureSummedU;
-	// 		u->writeValueTo(i, 0, uBeforeUpdate + deltaU);
-	// 	}
-	// 	else
-	// 	{
-	// 		u->writeValueTo(i, 0, usolid);
-	// 	}
-	// 	size_t jUp = 0;
-	// 	size_t jDown = 0;
+	fReal averageSouthV = 0.0;
 
-	// }
-
-
-	// 		else
-	// 		{
-	// 			size_t jUpper = j;
-	// 			fReal pressureSummedV = p->getValueAt(i, jUpper) - 0.0;
-	// 			if (getGridTypeAt(i, jUpper) == FLUIDGRID)
-	// 			{
-	// 				fReal deltaV = scaleP * pressureSummedV;
-	// 				v->writeValueTo(i, j, vBeforeUpdate + deltaV);
-	// 			}
-	// 			else
-	// 			{
-	// 				v->writeValueTo(i, j, vsolid);
-	// 			}
-	// 		}
-	// interior of sphere
-
-	// north pole / j = nTheta
-
-	for (size_t j = 0; j < nTheta; ++j)
-	{
-		for (size_t i = 0; i < nPhi; ++i)
+	for(size_t i = 0; i < nPhi; ++i){
+		fReal uBeforeUpdate = u->getValueAt(i, 0);
+		fReal vBeforeUpdate = v->getValueAt(i, 0);
+		fReal invSin = 1 / sin(gridLen / 2.0);
+		size_t iRhs = i;
+		size_t iLhs = (i == 0 ? nPhi - 1 : i - 1);
+		if (getGridTypeAt(iRhs, 0) == FLUIDGRID && getGridTypeAt(iLhs, 0) == FLUIDGRID)
 		{
+			fReal pressureSummedU = p->getValueAt(iRhs, 0) - p->getValueAt(iLhs, 0);
+			fReal deltaU = scaleP * invSin * pressureSummedU;
+			u->writeValueTo(i, 0, uBeforeUpdate + deltaU);
+		}
+		else
+		{
+			u->writeValueTo(i, 0, usolid);
+		}
+		size_t iOpposite = (i + nPhi / 2) % nPhi;
+		if (getGridTypeAt(i, 0) == FLUIDGRID && getGridTypeAt(iOpposite, 0) == FLUIDGRID)
+		{
+			fReal pressureSummedV = p->getValueAt(i, 0) - p->getValueAt(iOpposite, 0);
+			fReal deltaV = scaleP * pressureSummedV;
+			averageSouthV += uBeforeUpdate + deltaU;
+			//v->writeValueTo(i, 0, vBeforeUpdate + deltaV);
+		}
+		else
+		{
+			averageSouthV += vSolid;
+			//v->writeValueTo(i, 0, vsolid);
+		}
+	}
+
+	// interior of sphere grid
+
+	for(size_t j = 1; j < nTheta; ++j){
+		for(size_t i = 0; i < nPhi; ++i){
 			fReal uBeforeUpdate = u->getValueAt(i, j);
 			fReal vBeforeUpdate = v->getValueAt(i, j);
+			fReal invSin = 1 / sin(j*gridLen + gridLen / 2.0);
 			size_t iRhs = i;
 			size_t iLhs = (i == 0 ? nPhi - 1 : i - 1);
 			if (getGridTypeAt(iRhs, j) == FLUIDGRID && getGridTypeAt(iLhs, j) == FLUIDGRID)
 			{
 				fReal pressureSummedU = p->getValueAt(iRhs, j) - p->getValueAt(iLhs, j);
-				fReal deltaU = scaleP * pressureSummedU;
+				fReal deltaU = scaleP * invSin * pressureSummedU;
 				u->writeValueTo(i, j, uBeforeUpdate + deltaU);
 			}
 			else
 			{
 				u->writeValueTo(i, j, usolid);
 			}
-			
-			if (j != 0)
+			size_t jUpper = j;
+			size_t jLower = j - 1;
+			if (getGridTypeAt(i, jUpper) == FLUIDGRID && getGridTypeAt(i, jLower) == FLUIDGRID)
 			{
-				fReal invSin = 1 / sin(j * gridLen);
-				size_t jUpper = j;
-				size_t jLower = j - 1;
 				fReal pressureSummedV = p->getValueAt(i, jUpper) - p->getValueAt(i, jLower);
-				if (getGridTypeAt(i, jLower) == FLUIDGRID && getGridTypeAt(i, jUpper) == FLUIDGRID)
-				{
-					fReal deltaV = scaleP * invSin * pressureSummedV;
-					v->writeValueTo(i, j, vBeforeUpdate + deltaV);
-				}
-				else
-				{
-					v->writeValueTo(i, j, vsolid);
-				}
+				fReal deltaV = scaleP * pressureSummedV;
+				v->writeValueTo(i, j, vBeforeUpdate + deltaV);
 			}
 			else
 			{
-				size_t jUpper = j;
-				fReal pressureSummedV = p->getValueAt(i, jUpper) - 0.0;
-				if (getGridTypeAt(i, jUpper) == FLUIDGRID)
-				{
-					fReal deltaV = scaleP * pressureSummedV;
-					v->writeValueTo(i, j, vBeforeUpdate + deltaV);
-				}
-				else
-				{
-					v->writeValueTo(i, j, vsolid);
-				}
+				v->writeValueTo(i, j, vsolid);
 			}
 		}
 	}
-	// j = nTheta case
-	for (size_t i = 0; i < nPhi; ++i)
-	{
-		size_t j = nTheta;
-		size_t jLower = j - 1;
-		fReal vBeforeUpdate = v->getValueAt(i, j);
-		fReal pressureSummedV = 0.0 - p->getValueAt(i, jLower);
-		if (getGridTypeAt(i, jLower) == FLUIDGRID)
+
+	// north pole / j = nTheta
+
+	fReal averageNorthV = 0.0;
+
+	for(size_t i = 0; i < nPhi; ++i){
+		fReal uBeforeUpdate = u->getValueAt(i, nTheta);
+		fReal vBeforeUpdate = v->getValueAt(i, nTheta);
+		fReal invSin = 1 / sin(2*M_PI - gridLen / 2.0);
+		size_t iRhs = i;
+		size_t iLhs = (i == 0 ? nPhi - 1 : i - 1);
+		if (getGridTypeAt(iRhs, nTheta - 1) == FLUIDGRID && getGridTypeAt(iLhs, nTheta - 1) == FLUIDGRID)
 		{
-			fReal deltaV = scaleP * pressureSummedV;
-			v->writeValueTo(i, j, vBeforeUpdate + deltaV);
+			fReal pressureSummedU = p->getValueAt(iRhs, nTheta - 1) - p->getValueAt(iLhs, nTheta - 1);
+			fReal deltaU = scaleP * invSin * pressureSummedU;
+			u->writeValueTo(i, nTheta - 1, uBeforeUpdate + deltaU);
 		}
 		else
 		{
-			v->writeValueTo(i, j, vsolid);
+			u->writeValueTo(i, nTheta - 1, usolid);
 		}
+		size_t iOpposite = (i + nPhi / 2) % nPhi;
+		if (getGridTypeAt(i, nTheta - 1) == FLUIDGRID && getGridTypeAt(iOpposite, nTheta - 1) == FLUIDGRID)
+		{
+			fReal pressureSummedV = p->getValueAt(i, nTheta - 1) - p->getValueAt(iOpposite, nTheta - 1);
+			fReal deltaV = scaleP * pressureSummedV;
+			//v->writeValueTo(i, nTheta, vBeforeUpdate + deltaV);
+			averageNorthV += vBeforeUpdate + deltaV;
+		}
+		else
+		{
+			//v->writeValueTo(i, nTheta, vsolid);
+			averageNorthV += vSolid;
+		}
+	}
+
+	/* average polar v velocities */
+
+	// south pole
+
+	averageSouthV /= nPhi;
+
+	for(size_t i = 0; i < nPhi; ++i){
+		v->writeValueTo(i, 0, averageSouthV);
+	}
+
+	// north pole
+
+	averageNorthV /= nPhi;
+
+	for(size_t i = 0; i < nPhi; ++i){
+		v->writeValueTo(i, nTheta, averageNorthV);
 	}
 
 	u->swapBuffer();
@@ -465,29 +477,29 @@ void KaminoSolver::precomputeLaplacian()
 		// right of cell
 		size_t ip1 = (i + 1) % nPhi;
 		if(getGridTypeAt(ip1, 0) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(ip1, 0)) = -1;
+			Laplacian.coeffRef(rowNumber, getIndex(ip1, 0)) = -1 * invSin;
 			numPhiNeighbors++;
 		}
 		// left of cell
 		size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
 		if(getGridTypeAt(im1, 0) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(im1, 0)) = -1;
+			Laplacian.coeffRef(rowNumber, getIndex(im1, 0)) = -1 * invSin;
 			numPhiNeighbors++;
 		}
 		// above cell
 		size_t jp1 = 1;	
 		if (getGridTypeAt(i, jp1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * invSin;
+			Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1;
 			numThetaNeighbors++;
 		}
 		// below cell
 		size_t iOpposite = (i + nPhi / 2) % nPhi;
 		size_t jm1 = 0;
 		if (getGridTypeAt(iOpposite, jm1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(iOpposite, jm1)) = -1 * invSin;
+			Laplacian.coeffRef(rowNumber, getIndex(iOpposite, jm1)) = -1;
 			numThetaNeighbors++;
 		}
-		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors + numThetaNeighbors * invSin;
+		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors * invSin + numThetaNeighbors;
 	}
 
 	// interior of sphere
@@ -501,13 +513,13 @@ void KaminoSolver::precomputeLaplacian()
 			// right of cell
 			size_t ip1 = (i + 1) % nPhi;
 			if(getGridTypeAt(ip1, j) == FLUIDGRID){
-				Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = -1;
+				Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = -1 * invSin;
 				numPhiNeighbors++;
 			}
 			// left of cell
 			size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
 			if(getGridTypeAt(im1, j) == FLUIDGRID){
-				Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = -1;
+				Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = -1 * invSin;
 				numPhiNeighbors++;
 			}	
 			// above cell
@@ -523,6 +535,7 @@ void KaminoSolver::precomputeLaplacian()
 				numPhiNeighbors++;
 			}	
 		}
+		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors * invSin + numThetaNeighbors;
 	}
 
 	// north pole / j = nTheta - 1
@@ -535,29 +548,29 @@ void KaminoSolver::precomputeLaplacian()
 		// right of cell
 		size_t ip1 = (i + 1) % nPhi;
 		if(getGridTypeAt(ip1, nTheta - 1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(ip1, nTheta - 1)) = -1;
+			Laplacian.coeffRef(rowNumber, getIndex(ip1, nTheta - 1)) = -1 * invSin;
 			numPhiNeighbors++;
 		}
 		// left of cell
 		size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
 		if(getGridTypeAt(im1, nTheta - 1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(im1, nTheta - 1)) = -1;
+			Laplacian.coeffRef(rowNumber, getIndex(im1, nTheta - 1)) = -1 * invSin;
 			numPhiNeighbors++;
 		}
 		// above cell
 		size_t iOpposite = (i + nPhi / 2) % nPhi;
 		size_t jp1 = nTheta - 1;	
 		if (getGridTypeAt(iOpposite, jp1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(iOpposite, jp1)) = -1 * invSin;
+			Laplacian.coeffRef(rowNumber, getIndex(iOpposite, jp1)) = -1;
 			numThetaNeighbors++;
 		}
 		// below cell
 		size_t jm1 = nTheta - 2;
 		if (getGridTypeAt(i, jm1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * invSin;
+			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1;
 			numThetaNeighbors++;
 		}
-		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors + numThetaNeighbors * invSin;
+		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors * invSin + numThetaNeighbors;
 	}	
 }
 
