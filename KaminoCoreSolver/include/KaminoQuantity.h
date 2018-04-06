@@ -12,7 +12,6 @@
 # include <cmath>
 # include <Eigen/IterativeLinearSolvers>
 # include <unsupported/Eigen/IterativeSolvers>
-# include <boost/math/tools/roots.hpp>
 
 # define M_PI           3.14159265358979323846  /* pi */
 
