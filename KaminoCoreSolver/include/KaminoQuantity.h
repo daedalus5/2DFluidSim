@@ -88,6 +88,9 @@ public:
 	/* Given the index, show its origin in world coordinates*/
 	fReal getXCoordAtIndex(size_t x);
 	fReal getYCoordAtIndex(size_t y);
+
+	fReal getPhiOffset();
+	fReal getThetaOffset();
 };
 
 // The solver class.
@@ -117,7 +120,12 @@ private:
 
 	gridType getGridTypeAt(size_t x, size_t y);
 
-	void advection();
+	// We only have to treat uTheta differently
+	void advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gridTheta);
+
+	void advectionScalar();
+	void advectionSpeed();
+
 	void geometric();
 	void projection();
 	void bodyForce();
@@ -155,8 +163,8 @@ public:
 
 	void stepForward(fReal timeStep);
 
-	void addCenteredAttr(std::string name, fReal xOffset = 0.0, fReal yOffset = 0.0);
-	void addStaggeredAttr(std::string name, fReal xOffset = 0.0, fReal yOffset = 0.0);
+	void addCenteredAttr(std::string name, fReal xOffset = 0.5, fReal yOffset = 0.5);
+	void addStaggeredAttr(std::string name, fReal xOffset, fReal yOffset);
 
 	void precomputeLaplacian();
 	

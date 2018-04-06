@@ -119,3 +119,13 @@ size_t KaminoQuantity::getWarpedYIndex(fReal y)
 
 	return static_cast<size_t>(warpedY);
 }
+
+fReal KaminoQuantity::getThetaOffset()
+{
+	return this->xOffset;
+}
+
+fReal KaminoQuantity::getPhiOffset()
+{
+	return this->yOffset;
+}

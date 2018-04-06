@@ -9,10 +9,10 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), frameDuration(frameDuration),
 	timeStep(0.0), timeElapsed(0.0)
 {
-	addStaggeredAttr("u", 0.5, 0.0);		// u velocity
-	addStaggeredAttr("v", 0.0, 0.5);		// v velocity
-	addCenteredAttr("p");				// p pressure
-	addCenteredAttr("test");			// test scalar field
+	addStaggeredAttr("u", 0.0, 0.5);		// u velocity
+	addStaggeredAttr("v", 0.5, 0.0);		// v velocity
+	addCenteredAttr("p", 0.5, 0.5);				// p pressure
+	addCenteredAttr("test", 0.5, 0.5);			// test scalar field
 
 	this->gridTypes = new gridType[nPhi * nTheta];
 	memset(reinterpret_cast<void*>(this->gridTypes), FLUIDGRID, nPhi * nTheta);
@@ -46,71 +46,90 @@ KaminoSolver::~KaminoSolver()
 void KaminoSolver::stepForward(fReal timeStep)
 {
 	this->timeStep = timeStep;
-	advection();
+	advectionScalar();
+	advectionSpeed();
+	this->swapAttrBuffers();
+
 	geometric();
 	// bodyForce();
-	projection();
+	// projection();
 }
 
-void KaminoSolver::advection()
+void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridTheta, size_t gridPhi)
+{
+	KaminoQuantity* uPhi = (*this)["u"];
+	KaminoQuantity* uTheta = (*this)["v"];
+
+	fReal gTheta = (gridTheta + attr->getThetaOffset()) * gridLen;
+	fReal latRadius = this->radius * std::sin(gTheta);
+
+	fReal gPhi = (gridPhi + attr->getPhiOffset()) * gridLen;
+
+	fReal guPhi = uPhi->sampleAt(gPhi, gTheta);
+	fReal guTheta = uTheta->sampleAt(gPhi, gTheta);
+
+	fReal cofPhi = timeStep / latRadius;
+	fReal cofTheta = timeStep / radius;
+
+	fReal deltaPhi = guPhi * cofPhi;
+	fReal deltaTheta = guTheta * cofTheta;
+
+	fReal midPhi = gPhi - 0.5 * deltaPhi;
+	fReal midTheta = gTheta - 0.5 * deltaTheta;
+
+	fReal muPhi = uPhi->sampleAt(midPhi, midTheta);
+	fReal muTheta = uTheta->sampleAt(midPhi, midTheta);
+
+	deltaPhi = muPhi * cofPhi;
+	deltaTheta = muTheta * cofTheta;
+
+	fReal pPhi = gPhi - deltaPhi;
+	fReal pTheta = gTheta - deltaTheta;
+
+	fReal advectedVal = attr->sampleAt(pPhi, pTheta);
+	attr->writeValueTo(gridPhi, gridTheta, advectedVal);
+}
+
+void KaminoSolver::advectionScalar()
 {
 	for (auto quantity : this->centeredAttr)
 	{
-		KaminoQuantity* attr = quantity.second;
-		for (size_t gridX = 0; gridX < this->nPhi; ++gridX)
+		KaminoQuantity* cenAttr = quantity.second;
+		for (size_t gridTheta = 0; gridTheta < cenAttr->getNTheta(); ++gridTheta)
 		{
-			for (size_t gridY = 0; gridY < this->nTheta; ++gridY)
+			for (size_t gridPhi = 0; gridPhi < cenAttr->getNPhi(); ++gridTheta)
 			{
-				fReal gX = attr->getXCoordAtIndex(gridX);
-				fReal gY = attr->getYCoordAtIndex(gridY);
-
-				fReal uG = (*this)["u"]->sampleAt(gX, gY);
-				fReal vG = (*this)["v"]->sampleAt(gX, gY);
-
-				fReal midX = gX - 0.5 * timeStep * uG;
-				fReal midY = gY - 0.5 * timeStep * vG;
-
-				fReal uMid = (*this)["u"]->sampleAt(midX, midY);
-				fReal vMid = (*this)["v"]->sampleAt(midX, midY);
-
-				fReal pX = gX - timeStep * uMid;
-				fReal pY = gY - timeStep * vMid;
-				
-				fReal advectedVal = attr->sampleAt(pX, pY);
-				attr->writeValueTo(gridX, gridY, advectedVal);
+				advectAttrAt(cenAttr, gridPhi, gridTheta);
 			}
 		}
 	}
+}
 
-	for (auto quantity : this->staggeredAttr)
+void KaminoSolver::advectionSpeed()
+{
+	//Advect as is for uPhi
+	KaminoQuantity* uPhi = (*this)["u"];
+	for (size_t gridTheta = 0; gridTheta < uPhi->getNTheta(); ++gridTheta)
 	{
-		KaminoQuantity* attr = quantity.second;
-		for (size_t gridX = 0; gridX < this->nPhi; ++gridX)
+		for (size_t gridPhi = 0; gridPhi < uPhi->getNPhi(); ++gridTheta)
 		{
-			for (size_t gridY = 0; gridY < this->nTheta; ++gridY)
-			{
-				fReal gX = attr->getXCoordAtIndex(gridX);
-				fReal gY = attr->getYCoordAtIndex(gridY);
-
-				fReal uG = (*this)["u"]->sampleAt(gX, gY);
-				fReal vG = (*this)["v"]->sampleAt(gX, gY);
-
-				fReal midX = gX - 0.5 * timeStep * uG;
-				fReal midY = gY - 0.5 * timeStep * vG;
-
-				fReal uMid = (*this)["u"]->sampleAt(midX, midY);
-				fReal vMid = (*this)["v"]->sampleAt(midX, midY);
-
-				fReal pX = gX - timeStep * uMid;
-				fReal pY = gY - timeStep * vMid;
-
-				fReal advectedVal = attr->sampleAt(pX, pY);
-				attr->writeValueTo(gridX, gridY, advectedVal);
-			}
+			advectAttrAt(uPhi, gridPhi, gridTheta);
 		}
 	}
 
-	this->swapAttrBuffers();
+	//Trend carefully for uTheta...
+	KaminoQuantity* uTheta = (*this)["v"];
+	// Apart from the poles...
+	for (size_t gridTheta = 1; gridTheta < uTheta->getNTheta() - 1; ++gridTheta)
+	{
+		for (size_t gridPhi = 0; gridPhi < uPhi->getNPhi(); ++gridPhi)
+		{
+			advectAttrAt(uTheta, gridPhi, gridTheta);
+		}
+	}
+	// First we derive velocity at the poles...
+	// At north pole...
+	// At south pole...
 }
 
 template <class T>
