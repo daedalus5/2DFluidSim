@@ -61,13 +61,13 @@ size_t KaminoQuantity::getIndex(size_t x, size_t y)
 	return y * nPhi + x;
 }
 
-fReal KaminoQuantity::getThetaCoordAtIndex(size_t x)
+fReal KaminoQuantity::getPhiCoordAtIndex(size_t x)
 {
 	fReal xFloat = static_cast<fReal>(x) + xOffset;
 	return xFloat * this->gridLen;
 }
 
-fReal KaminoQuantity::getPhiCoordAtIndex(size_t y)
+fReal KaminoQuantity::getThetaCoordAtIndex(size_t y)
 {
 	fReal yFloat = static_cast<fReal>(y) + yOffset;
 	return yFloat * this->gridLen;
