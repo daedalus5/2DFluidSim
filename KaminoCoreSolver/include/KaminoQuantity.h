@@ -14,6 +14,8 @@
 # include <unsupported/Eigen/IterativeSolvers>
 
 # define M_PI           3.14159265358979323846  /* pi */
+# define M_2PI			6.28318530717958647692  /* 2pi */
+# define M_hPI			1.57079632679489661923  /* pi / 2*/
 
 # define DEBUGBUILD
 
@@ -55,8 +57,8 @@ private:
 	fReal* nextStep;
 
 	/* Wrap things up */
-	size_t getLoopPhiIndex(fReal phi);
-	size_t getRefThetaIndex(fReal theta);
+	std::tuple<size_t, size_t, fReal> getLoopedPhiIndex(fReal phi);
+	std::tuple<size_t, size_t, fReal> getReflectedThetaIndex(fReal theta);
 
 	/* Get index */
 	inline size_t getIndex(size_t x, size_t y);

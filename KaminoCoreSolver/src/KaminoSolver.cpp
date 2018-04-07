@@ -54,6 +54,20 @@ void KaminoSolver::stepForward(fReal timeStep)
 	// projection();
 }
 
+// Phi: 0 - 2pi  Theta: 0 - pi
+void validatePhiTheta(fReal & phi, fReal & theta)
+{
+	int loops = static_cast<int>(std::floor(theta / M_2PI));
+	theta = theta - loops * M_2PI;
+	if (theta > M_PI)
+	{
+		theta = M_2PI - theta;
+		phi += M_PI;
+	}
+	loops = static_cast<int>(std::floor(phi / M_2PI));
+	phi = phi - loops * M_2PI;
+}
+
 void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridTheta, size_t gridPhi)
 {
 	KaminoQuantity* uPhi = (*this)["u"];
@@ -74,6 +88,7 @@ void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridTheta, size_t g
 
 	fReal midPhi = gPhi - 0.5 * deltaPhi;
 	fReal midTheta = gTheta - 0.5 * deltaTheta;
+	validatePhiTheta(midPhi, midTheta);
 
 	fReal muPhi = uPhi->sampleAt(midPhi, midTheta);
 	fReal muTheta = uTheta->sampleAt(midPhi, midTheta);
@@ -83,6 +98,7 @@ void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridTheta, size_t g
 
 	fReal pPhi = gPhi - deltaPhi;
 	fReal pTheta = gTheta - deltaTheta;
+	validatePhiTheta(pPhi, pTheta);
 
 	fReal advectedVal = attr->sampleAt(pPhi, pTheta);
 	attr->writeValueTo(gridPhi, gridTheta, advectedVal);
@@ -140,14 +156,12 @@ void KaminoSolver::geometric()
 	for (size_t phiI = 0; phiI < nPhi; ++phiI)
 	{
 		size_t northPole = 0;
-		size_t southPole = nTheta - 1;
+		size_t southPole = v->getNTheta() - 1;
 
-		u->writeValueTo(phiI, northPole, u->getValueAt(phiI, northPole));
-		u->writeValueTo(phiI, southPole, u->getValueAt(phiI, southPole));
 		v->writeValueTo(phiI, northPole, v->getValueAt(phiI, northPole));
 		v->writeValueTo(phiI, southPole, v->getValueAt(phiI, southPole));
 	}
-
+	/// TODO: Determine the upper and lower bounds
 	for (size_t thetaJ = 1; thetaJ < nTheta - 1; ++thetaJ)
 	{
 		for (size_t phiI = 0; phiI < nPhi; ++phiI)
