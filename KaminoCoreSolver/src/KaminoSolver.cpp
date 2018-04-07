@@ -49,7 +49,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 	advectionSpeed();
 	this->swapAttrBuffers();
 
-	geometric();
+	// geometric();
 	// bodyForce();
 	// projection();
 }
@@ -68,7 +68,7 @@ void validatePhiTheta(fReal & phi, fReal & theta)
 	phi = phi - loops * M_2PI;
 }
 
-void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridTheta, size_t gridPhi)
+void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gridTheta)
 {
 	KaminoQuantity* uPhi = (*this)["u"];
 	KaminoQuantity* uTheta = (*this)["v"];
@@ -111,7 +111,7 @@ void KaminoSolver::advectionScalar()
 		KaminoQuantity* cenAttr = quantity.second;
 		for (size_t gridTheta = 0; gridTheta < cenAttr->getNTheta(); ++gridTheta)
 		{
-			for (size_t gridPhi = 0; gridPhi < cenAttr->getNPhi(); ++gridTheta)
+			for (size_t gridPhi = 0; gridPhi < cenAttr->getNPhi(); ++gridPhi)
 			{
 				advectAttrAt(cenAttr, gridPhi, gridTheta);
 			}
@@ -125,7 +125,7 @@ void KaminoSolver::advectionSpeed()
 	KaminoQuantity* uPhi = (*this)["u"];
 	for (size_t gridTheta = 0; gridTheta < uPhi->getNTheta(); ++gridTheta)
 	{
-		for (size_t gridPhi = 0; gridPhi < uPhi->getNPhi(); ++gridTheta)
+		for (size_t gridPhi = 0; gridPhi < uPhi->getNPhi(); ++gridPhi)
 		{
 			advectAttrAt(uPhi, gridPhi, gridTheta);
 		}
@@ -841,8 +841,8 @@ void KaminoSolver::addStaggeredAttr(std::string name, fReal xOffset, fReal yOffs
 {
 	size_t attrnPhi = this->nPhi;
 	size_t attrnTheta = this->nTheta;
-	// Is the staggered attribute along the y boundary?
-	if (yOffset == 0.5)
+	// Is the staggered attribute u?
+	if (xOffset == 0.5)
 	{
 		attrnTheta += 1;
 	}
