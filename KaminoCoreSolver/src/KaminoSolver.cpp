@@ -119,6 +119,8 @@ void KaminoSolver::advectionScalar()
 	}
 }
 
+enum Coord {x, y};
+
 void KaminoSolver::advectionSpeed()
 {
 	//Advect as is for uPhi
@@ -143,8 +145,34 @@ void KaminoSolver::advectionSpeed()
 	}
 	/// TODO
 	// First we derive velocity at the poles...
+	size_t northernBelt = 0;
+	size_t southernBelt = this->nTheta - 1; // uPhi->getNTheta() - 1
+	resetPoleVelocities();
+	for (size_t gridPhi = 0; gridPhi < uPhi->getNTheta(); ++gridPhi)
+	{
+		fReal gPhi = uTheta->getPhiCoordAtIndex(gridPhi);
+		fReal uPhi = uTheta->getValueAt(gridPhi, northernBelt);
+		uPhiNorthP[x] += -uPhi * std::sin(gPhi);
+		uPhiNorthP[y] += uPhi * std::cos(gPhi);
+		uPhi = uTheta->getValueAt(gridPhi, southernBelt);
+		uPhiSouthP[x] += -uPhi * std::sin(gPhi);
+		uPhiSouthP[y] += uPhi * std::cos(gPhi);
+	}
+	//Phi of uTheta = Phi of uPhi - pi/2 at north pole
+	//Set incoming and outgoing, projection made trivial
 	// At north pole...
 	// At south pole...
+}
+
+void KaminoSolver::resetPoleVelocities()
+{
+	for (unsigned i = 0; i < 2; ++i)
+	{
+		uThetaNorthP[i] = 0.0;
+		uThetaSouthP[i] = 0.0;
+		uPhiNorthP[i] = 0.0;
+		uPhiSouthP[i] = 0.0;
+	}
 }
 
 void KaminoSolver::geometric()
@@ -816,7 +844,7 @@ void KaminoSolver::mapVToSphere(Eigen::Matrix<float, 3, 1>& pos, Eigen::Matrix<f
 
 void KaminoSolver::mapToCylinder(Eigen::Matrix<float, 3, 1>& pos) const
 {
-	float radius = 5.0;
+	//float radius = 5.0;
 	float phi = 2*M_PI*pos[0] / (nPhi * gridLen);
 	float z = pos[1];
 	pos[0] = radius * cos(phi);

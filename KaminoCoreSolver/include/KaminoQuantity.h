@@ -119,6 +119,15 @@ private:
 	fReal timeStep;
 	fReal timeElapsed;
 
+	// Velocities at poles in xyz cartesian coordinates
+	fReal uThetaNorthP[2];
+	fReal uPhiNorthP[2];
+	fReal uThetaSouthP[2];
+	fReal uPhiSouthP[2];
+
+	void resetPoleVelocities();
+
+	// Is it solid? or fluid? or even air?
 	gridType getGridTypeAt(size_t x, size_t y);
 
 	// We only have to treat uTheta differently
