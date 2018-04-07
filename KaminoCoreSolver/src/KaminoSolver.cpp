@@ -158,6 +158,7 @@ void KaminoSolver::advectionSpeed()
 		uPhiSouthP[x] += -uPhi * std::sin(gPhi);
 		uPhiSouthP[y] += uPhi * std::cos(gPhi);
 	}
+	fReal phiOfuPhi = std::atan2(uPhiNorthP[y], uPhiNorthP[x]);
 	//Phi of uTheta = Phi of uPhi - pi/2 at north pole
 	//Set incoming and outgoing, projection made trivial
 	// At north pole...
