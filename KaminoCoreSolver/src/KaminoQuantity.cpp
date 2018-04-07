@@ -61,15 +61,15 @@ size_t KaminoQuantity::getIndex(size_t x, size_t y)
 	return y * nPhi + x;
 }
 
-fReal KaminoQuantity::getXCoordAtIndex(size_t x)
+fReal KaminoQuantity::getPhiCoordAtIndex(size_t x)
 {
-	fReal xFloat = static_cast<fReal>(x) - xOffset;
+	fReal xFloat = static_cast<fReal>(x) + xOffset;
 	return xFloat * this->gridLen;
 }
 
-fReal KaminoQuantity::getYCoordAtIndex(size_t y)
+fReal KaminoQuantity::getThetaCoordAtIndex(size_t y)
 {
-	fReal yFloat = static_cast<fReal>(y) - yOffset;
+	fReal yFloat = static_cast<fReal>(y) + yOffset;
 	return yFloat * this->gridLen;
 }
 
@@ -78,10 +78,17 @@ Bilinear interpolated for now.
 */
 fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 {
-	size_t lowerX = getWarpedXIndex(x);
-	size_t lowerY = getWarpedYIndex(y);
-	size_t upperX = (lowerX + 1) % nPhi;
-	size_t upperY = (lowerY + 1) % nTheta;
+	int phiIndex = std::floor(x * invGridLen - this->xOffset);
+	int thetaIndex = std::floor(y * invGridLen - this->yOffset);
+
+	size_t lowerX = phiIndex < 0 ? this->nPhi - 1 : phiIndex;
+	size_t upperX = lowerX + 1;
+	upperX = upperX >= nPhi ? 0 : upperX;
+
+	//This wouldn't go below 0 but incase there's floating point error...
+	size_t lowerY = thetaIndex < 0 ? 0 : thetaIndex;
+	size_t upperY = lowerY + 1;
+	upperY = upperY >= nTheta ? nTheta - 1 : upperY;
 
 	fReal lowerLeft = getValueAt(lowerX, lowerY);
 	fReal upperLeft = getValueAt(lowerX, upperY);
@@ -98,24 +105,12 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 	return lerped;
 }
 
-size_t KaminoQuantity::getWarpedXIndex(fReal x)
+fReal KaminoQuantity::getThetaOffset()
 {
-	x = x * invGridLen;
-	x += xOffset;
-	int loops = static_cast<int>(std::floor(x / static_cast<fReal>(this->nPhi)));
-	int flooredX = static_cast<int>(std::floor(x));
-	int warpedX = flooredX - loops * static_cast<int>(nPhi);
-
-	return static_cast<size_t>(warpedX);
+	return this->xOffset;
 }
 
-size_t KaminoQuantity::getWarpedYIndex(fReal y)
+fReal KaminoQuantity::getPhiOffset()
 {
-	y = y * invGridLen;
-	y += yOffset;
-	int loops = static_cast<int>(std::floor(y / static_cast<fReal>(this->nTheta)));
-	int flooredY = static_cast<int>(std::floor(y));
-	int warpedY = flooredY - loops * static_cast<int>(nTheta);
-
-	return static_cast<size_t>(warpedY);
+	return this->yOffset;
 }

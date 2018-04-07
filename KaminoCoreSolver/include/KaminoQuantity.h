@@ -14,6 +14,8 @@
 # include <unsupported/Eigen/IterativeSolvers>
 
 # define M_PI           3.14159265358979323846  /* pi */
+# define M_2PI			6.28318530717958647692  /* 2pi */
+# define M_hPI			1.57079632679489661923  /* pi / 2*/
 
 # define DEBUGBUILD
 
@@ -55,8 +57,8 @@ private:
 	fReal* nextStep;
 
 	/* Wrap things up */
-	size_t getWarpedXIndex(fReal x);
-	size_t getWarpedYIndex(fReal y);
+	std::tuple<size_t, size_t, fReal> getLoopedPhiIndex(fReal phi);
+	std::tuple<size_t, size_t, fReal> getReflectedThetaIndex(fReal theta);
 
 	/* Get index */
 	inline size_t getIndex(size_t x, size_t y);
@@ -85,8 +87,11 @@ public:
 	/* Lerped Sampler using world coordinates */
 	fReal sampleAt(fReal x, fReal y);
 	/* Given the index, show its origin in world coordinates*/
-	fReal getXCoordAtIndex(size_t x);
-	fReal getYCoordAtIndex(size_t y);
+	fReal getPhiCoordAtIndex(size_t phi);
+	fReal getThetaCoordAtIndex(size_t theta);
+
+	fReal getPhiOffset();
+	fReal getThetaOffset();
 };
 
 // The solver class.
@@ -114,9 +119,23 @@ private:
 	fReal timeStep;
 	fReal timeElapsed;
 
+	// Velocities at poles in xyz cartesian coordinates
+	fReal uThetaNorthP[2];
+	fReal uPhiNorthP[2];
+	fReal uThetaSouthP[2];
+	fReal uPhiSouthP[2];
+
+	void resetPoleVelocities();
+
+	// Is it solid? or fluid? or even air?
 	gridType getGridTypeAt(size_t x, size_t y);
 
-	void advection();
+	// We only have to treat uTheta differently
+	void advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gridTheta);
+
+	void advectionScalar();
+	void advectionSpeed();
+
 	void geometric();
 	void projection();
 	void bodyForce();
@@ -154,8 +173,8 @@ public:
 
 	void stepForward(fReal timeStep);
 
-	void addCenteredAttr(std::string name, fReal xOffset = 0.0, fReal yOffset = 0.0);
-	void addStaggeredAttr(std::string name, fReal xOffset = 0.0, fReal yOffset = 0.0);
+	void addCenteredAttr(std::string name, fReal xOffset = 0.5, fReal yOffset = 0.5);
+	void addStaggeredAttr(std::string name, fReal xOffset, fReal yOffset);
 
 	void precomputeLaplacian();
 	
