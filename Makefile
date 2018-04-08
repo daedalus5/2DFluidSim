@@ -7,11 +7,11 @@
 SHELL := /bin/bash
 RM    := rm -rf
 MKDIR := mkdir -p
-BUILDROOT := /mnt/d/CIS563/ProjectKamino/Build
+BUILDROOT := /mnt/d/PBA/base/Build
 BUILDDEFAULT := Release
 RELATIVEPATH := Projects/2DFluidSim
 BUILDDIR = $(BUILDROOT)/$(BUILDDEFAULT)/$(RELATIVEPATH)
-ROOTDIR := /mnt/d/CIS563/ProjectKamino
+ROOTDIR := /mnt/d/PBA/base
 BUILDTYPES := Release MinSizeRel Debug Coverage RelWithDebInfo Quick
 OTHERGOALS := $(filter-out distclean $(BUILDTYPES),$(MAKECMDGOALS))
 
