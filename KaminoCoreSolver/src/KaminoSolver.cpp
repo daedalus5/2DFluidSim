@@ -49,9 +49,9 @@ void KaminoSolver::stepForward(fReal timeStep)
 	advectionSpeed();
 	this->swapAttrBuffers();
 
-	//geometric();
+	geometric();
 	//bodyForce();
-	//projection();
+	projection();
 }
 
 // Phi: 0 - 2pi  Theta: 0 - pi
@@ -821,7 +821,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			float* ts = parts->dataWrite<float>(test, idx);
 
 			ps[0] = pressure / 5000.0;
-			ts[0] = testVal / 1.0;
+			ts[0] = testVal / 13.0 * 255.0;
 
 			for (int k = 0; k < 3; ++k) {
 				p[k] = pos(k, 0);

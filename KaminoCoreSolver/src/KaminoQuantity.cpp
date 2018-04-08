@@ -47,10 +47,12 @@ fReal& KaminoQuantity::accessValueAt(size_t x, size_t y)
 
 void KaminoQuantity::writeValueTo(size_t x, size_t y, fReal val)
 {
+/*# ifdef DEBUGBUILD
 	if (val > 1e4)
 	{
 		std::cerr << "Explosion detected " << std::endl;
 	}
+# endif*/
 	this->nextStep[getIndex(x, y)] = val;
 }
 
