@@ -19,7 +19,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	initialize_velocity();
 	initialize_pressure();
 	precomputeLaplacian();
-	initialize_test();
+	// initialize_test();
 
 	//initialize_boundary();
 }
@@ -563,7 +563,7 @@ void KaminoSolver::precomputeLaplacian()
 		// 	Laplacian.coeffRef(rowNumber, getIndex(iOpposite, jm1)) = -1;
 		// 	numThetaNeighbors++;
 		// }
-		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors + numThetaNeighbors * sinSq;
+		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors + (numThetaNeighbors * sinSq);
 	}
 
 	// interior of sphere grid
@@ -598,7 +598,7 @@ void KaminoSolver::precomputeLaplacian()
 				Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * sinSq;
 				numPhiNeighbors++;
 			}
-			Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors + sinSq * numThetaNeighbors;	
+			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = numPhiNeighbors + (sinSq * numThetaNeighbors);	
 		}
 	}
 
@@ -634,8 +634,15 @@ void KaminoSolver::precomputeLaplacian()
 			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * sinSq;
 			numThetaNeighbors++;
 		}
-		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors + numThetaNeighbors * sinSq;
-	}	
+		Laplacian.coeffRef(rowNumber, getIndex(i, nTheta - 1)) = numPhiNeighbors + (numThetaNeighbors * sinSq);
+	}
+	// for(size_t j = 0; j < nTheta; ++j){
+	// 	fReal sum = 0.0;
+	// 	for(size_t i = 0; i < nPhi; ++i){
+	// 		sum += 
+	// 	}
+	// }
+
 }
 
 void KaminoSolver::initialize_pressure()
