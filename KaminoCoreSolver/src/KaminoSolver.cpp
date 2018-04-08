@@ -19,7 +19,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	initialize_velocity();
 	initialize_pressure();
 	precomputeLaplacian();
-	// initialize_test();
+	initialize_test();
 
 	//initialize_boundary();
 }
@@ -673,7 +673,7 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(cos(i * gridLen), cos(j * gridLen));
-			v->setValueAt(i, j, 0.0);
+			v->setValueAt(i, j, 0.2);
 		}
 	}
 }
