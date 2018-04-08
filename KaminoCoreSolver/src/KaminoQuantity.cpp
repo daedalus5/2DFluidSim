@@ -47,6 +47,10 @@ fReal& KaminoQuantity::accessValueAt(size_t x, size_t y)
 
 void KaminoQuantity::writeValueTo(size_t x, size_t y, fReal val)
 {
+	if (val > 1e4)
+	{
+		std::cerr << "Explosion detected " << std::endl;
+	}
 	this->nextStep[getIndex(x, y)] = val;
 }
 
@@ -69,8 +73,8 @@ fReal KaminoQuantity::getPhiCoordAtIndex(size_t x)
 // Might be problematic : what if phi - xOffset < 0.0 due to a float point error?
 size_t KaminoQuantity::getPhiIndexAtCoord(fReal phi)
 {
-	fReal xInt = phi * this->invGridLen;
-	return static_cast<size_t>(phi - xOffset);
+	fReal phiInt = phi * this->invGridLen;
+	return static_cast<size_t>(phiInt - xOffset);
 }
 
 fReal KaminoQuantity::getThetaCoordAtIndex(size_t y)
@@ -81,8 +85,8 @@ fReal KaminoQuantity::getThetaCoordAtIndex(size_t y)
 // Might be problematic as well : what if phi - xOffset < 0.0 due to a float point error?
 size_t KaminoQuantity::getThetaIndexAtCoord(fReal theta)
 {
-	fReal yInt = theta * this->invGridLen;
-	return static_cast<size_t>(theta - yOffset);
+	fReal thetaInt = theta * this->invGridLen;
+	return static_cast<size_t>(thetaInt - yOffset);
 }
 
 /*

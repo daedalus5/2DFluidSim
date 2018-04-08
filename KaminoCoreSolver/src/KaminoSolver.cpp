@@ -19,7 +19,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	initialize_velocity();
 	initialize_pressure();
 	precomputeLaplacian();
-	// initialize_test();
+	initialize_test();
 
 	//initialize_boundary();
 }
@@ -49,9 +49,9 @@ void KaminoSolver::stepForward(fReal timeStep)
 	advectionSpeed();
 	this->swapAttrBuffers();
 
-	geometric();
-	// bodyForce();
-	projection();
+	//geometric();
+	//bodyForce();
+	//projection();
 }
 
 // Phi: 0 - 2pi  Theta: 0 - pi
@@ -138,7 +138,7 @@ void KaminoSolver::advectionSpeed()
 	// Apart from the poles...
 	for (size_t gridTheta = 1; gridTheta < uTheta->getNTheta() - 1; ++gridTheta)
 	{
-		for (size_t gridPhi = 0; gridPhi < uPhi->getNPhi(); ++gridPhi)
+		for (size_t gridPhi = 0; gridPhi < uTheta->getNPhi(); ++gridPhi)
 		{
 			advectAttrAt(uTheta, gridPhi, gridTheta);
 		}
@@ -146,19 +146,21 @@ void KaminoSolver::advectionSpeed()
 	/// TODO
 	// First we derive velocity at the poles...
 	size_t northernBelt = 0;
-	size_t southernBelt = this->nTheta - 1; // uPhi->getNTheta() - 1
+	size_t southernBelt = this->nTheta - 1; // uTheta->getNTheta() - 2
 	resetPoleVelocities();
-	for (size_t gridPhi = 0; gridPhi < uPhi->getNTheta(); ++gridPhi)
+	for (size_t gridPhi = 0; gridPhi < this->nPhi; ++gridPhi)
 	{
-		fReal gPhi = uTheta->getPhiCoordAtIndex(gridPhi);
-		fReal uPhi = uTheta->getValueAt(gridPhi, northernBelt);
-		uPhiNorthP[x] += -uPhi * std::sin(gPhi);
-		uPhiNorthP[y] += uPhi * std::cos(gPhi);
-		uPhi = uTheta->getValueAt(gridPhi, southernBelt);
-		uPhiSouthP[x] += -uPhi * std::sin(gPhi);
-		uPhiSouthP[y] += uPhi * std::cos(gPhi);
-	}
+		fReal gPhi = uPhi->getPhiCoordAtIndex(gridPhi);
 
+		fReal uPhiVal = uPhi->getValueAt(gridPhi, northernBelt);
+		uPhiNorthP[x] += -uPhiVal * std::sin(gPhi);
+		uPhiNorthP[y] += uPhiVal * std::cos(gPhi);
+		
+		uPhiVal = uPhi->getValueAt(gridPhi, southernBelt);
+		uPhiSouthP[x] += -uPhiVal * std::sin(gPhi);
+		uPhiSouthP[y] += uPhiVal * std::cos(gPhi);
+	}
+	averageVelocities();
 	fReal phiOfuPhiN = std::atan2(uPhiNorthP[y], uPhiNorthP[x]);
 	if (phiOfuPhiN < 0.0)
 	{
@@ -179,24 +181,24 @@ void KaminoSolver::advectionSpeed()
 	size_t northernPinch = 0;
 	size_t southernPinch = uTheta->getNTheta() - 1;
 	
-	size_t beltHalved = nPhi / 2;
+	size_t beltHalved = this->nPhi / 2;
 	for (size_t i = 0; i < beltHalved; ++i)
 	{
-		size_t indexPhi = (i + northSplit) % nPhi;
+		size_t indexPhi = (i + northSplit) % this->nPhi;
 		// North: neg
 		uTheta->writeValueTo(indexPhi, northernPinch, -uAmplituteN);
 
-		indexPhi = (i + southSplit) % nPhi;
+		indexPhi = (i + southSplit) % this->nPhi;
 		// South: pos
 		uTheta->writeValueTo(indexPhi, southernPinch, uAmplituteS);
 	}
-	for (size_t i = beltHalved; i < nPhi; ++i)
+	for (size_t i = beltHalved; i < this->nPhi; ++i)
 	{
-		size_t indexPhi = (i + northSplit) % nPhi;
+		size_t indexPhi = (i + northSplit) % this->nPhi;
 		// North: pos
 		uTheta->writeValueTo(indexPhi, northernPinch, uAmplituteN);
 
-		indexPhi = (i + southSplit) % nPhi;
+		indexPhi = (i + southSplit) % this->nPhi;
 		// South: neg
 		uTheta->writeValueTo(indexPhi, southernPinch, -uAmplituteS);
 	}
@@ -206,10 +208,17 @@ void KaminoSolver::resetPoleVelocities()
 {
 	for (unsigned i = 0; i < 2; ++i)
 	{
-		//uThetaNorthP[i] = 0.0;
-		//uThetaSouthP[i] = 0.0;
 		uPhiNorthP[i] = 0.0;
 		uPhiSouthP[i] = 0.0;
+	}
+}
+
+void KaminoSolver::averageVelocities()
+{
+	for (unsigned i = 0; i < 2; ++i)
+	{
+		uPhiNorthP[i] /= this->nPhi;
+		uPhiSouthP[i] /= this->nPhi;
 	}
 }
 
@@ -673,7 +682,7 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(cos(i * gridLen), cos(j * gridLen));
-			v->setValueAt(i, j, 0.0);
+			v->setValueAt(i, j, val);
 		}
 	}
 }

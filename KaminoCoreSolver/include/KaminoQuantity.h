@@ -125,6 +125,7 @@ private:
 	fReal uPhiSouthP[2];
 
 	void resetPoleVelocities();
+	void averageVelocities();
 
 	// Is it solid? or fluid? or even air?
 	gridType getGridTypeAt(size_t x, size_t y);
