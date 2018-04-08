@@ -73,8 +73,8 @@ void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gri
 	KaminoQuantity* uPhi = (*this)["u"];
 	KaminoQuantity* uTheta = (*this)["v"];
 
-	fReal gTheta = attr->getThetaCoordAtIndex(gridTheta);
 	fReal gPhi = attr->getPhiCoordAtIndex(gridPhi);
+	fReal gTheta = attr->getThetaCoordAtIndex(gridTheta);
 
 	fReal guPhi = uPhi->sampleAt(gPhi, gTheta);
 	fReal guTheta = uTheta->sampleAt(gPhi, gTheta);
