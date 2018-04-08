@@ -56,10 +56,6 @@ private:
 	fReal* thisStep;
 	fReal* nextStep;
 
-	/* Wrap things up */
-	std::tuple<size_t, size_t, fReal> getLoopedPhiIndex(fReal phi);
-	std::tuple<size_t, size_t, fReal> getReflectedThetaIndex(fReal theta);
-
 	/* Get index */
 	inline size_t getIndex(size_t x, size_t y);
 
@@ -89,6 +85,9 @@ public:
 	/* Given the index, show its origin in world coordinates*/
 	fReal getPhiCoordAtIndex(size_t phi);
 	fReal getThetaCoordAtIndex(size_t theta);
+	/* And given world coordinates, show its index backwards... */
+	size_t getPhiIndexAtCoord(fReal phi);
+	size_t getThetaIndexAtCoord(fReal theta);
 
 	fReal getPhiOffset();
 	fReal getThetaOffset();
@@ -120,9 +119,9 @@ private:
 	fReal timeElapsed;
 
 	// Velocities at poles in xyz cartesian coordinates
-	fReal uThetaNorthP[2];
+	//fReal uThetaNorthP[2];
 	fReal uPhiNorthP[2];
-	fReal uThetaSouthP[2];
+	//fReal uThetaSouthP[2];
 	fReal uPhiSouthP[2];
 
 	void resetPoleVelocities();
