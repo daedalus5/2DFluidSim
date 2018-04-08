@@ -158,18 +158,56 @@ void KaminoSolver::advectionSpeed()
 		uPhiSouthP[x] += -uPhi * std::sin(gPhi);
 		uPhiSouthP[y] += uPhi * std::cos(gPhi);
 	}
-	//Phi of uTheta = Phi of uPhi - pi/2 at north pole
-	//Set incoming and outgoing, projection made trivial
-	// At north pole...
-	// At south pole...
+
+	fReal phiOfuPhiN = std::atan2(uPhiNorthP[y], uPhiNorthP[x]);
+	if (phiOfuPhiN < 0.0)
+	{
+		phiOfuPhiN = M_2PI + phiOfuPhiN;
+	}
+	size_t northSplit = uTheta->getPhiIndexAtCoord(phiOfuPhiN);
+
+	fReal phiOfuPhiS = std::atan2(uPhiSouthP[y], uPhiSouthP[x]);
+	if (phiOfuPhiS < 0.0)
+	{
+		phiOfuPhiS = M_2PI + phiOfuPhiS;
+	}
+	size_t southSplit = uTheta->getPhiIndexAtCoord(phiOfuPhiS);
+	
+	fReal uAmplituteN = std::sqrt(uPhiNorthP[x] * uPhiNorthP[x] + uPhiNorthP[y] * uPhiNorthP[y]);
+	fReal uAmplituteS = std::sqrt(uPhiSouthP[x] * uPhiSouthP[x] + uPhiSouthP[y] * uPhiSouthP[y]);
+
+	size_t northernPinch = 0;
+	size_t southernPinch = uTheta->getNTheta() - 1;
+	
+	size_t beltHalved = nPhi / 2;
+	for (size_t i = 0; i < beltHalved; ++i)
+	{
+		size_t indexPhi = (i + northSplit) % nPhi;
+		// North: neg
+		uTheta->writeValueTo(indexPhi, northernPinch, -uAmplituteN);
+
+		indexPhi = (i + southSplit) % nPhi;
+		// South: pos
+		uTheta->writeValueTo(indexPhi, southernPinch, uAmplituteS);
+	}
+	for (size_t i = beltHalved; i < nPhi; ++i)
+	{
+		size_t indexPhi = (i + northSplit) % nPhi;
+		// North: pos
+		uTheta->writeValueTo(indexPhi, northernPinch, uAmplituteN);
+
+		indexPhi = (i + southSplit) % nPhi;
+		// South: neg
+		uTheta->writeValueTo(indexPhi, southernPinch, -uAmplituteS);
+	}
 }
 
 void KaminoSolver::resetPoleVelocities()
 {
 	for (unsigned i = 0; i < 2; ++i)
 	{
-		uThetaNorthP[i] = 0.0;
-		uThetaSouthP[i] = 0.0;
+		//uThetaNorthP[i] = 0.0;
+		//uThetaSouthP[i] = 0.0;
 		uPhiNorthP[i] = 0.0;
 		uPhiSouthP[i] = 0.0;
 	}
@@ -249,7 +287,7 @@ void KaminoSolver::projection()
 		// oot : one over two
 
 		fReal uPlus, uMinus, vPlus, vMinus;
-		fReal sin = sin(gridLen / 2.0);
+		fReal sine = sin(gridLen / 2.0);
 		// right
 		size_t ipoot = (i + 1) % nPhi;
 		if (getGridTypeAt(ipoot, 0) == FLUIDGRID)
@@ -282,7 +320,7 @@ void KaminoSolver::projection()
 		}
 		// bottom
 		vMinus = 0.0;
-		b(getIndex(i, 0)) = (sin * (uPlus - uMinus) + sin * sin * (vPlus - vMinus));
+		b(getIndex(i, 0)) = (sine * (uPlus - uMinus) + sine * sine * (vPlus - vMinus));
 	}
 
 	// interior of sphere grid
@@ -294,7 +332,7 @@ void KaminoSolver::projection()
 			// oot : one over two
 
 			fReal uPlus, uMinus, vPlus, vMinus;
-			fReal sin = sin(j*gridLen + gridLen / 2.0);
+			fReal sine = sin(j*gridLen + gridLen / 2.0);
 			// right
 			size_t ipoot = (i + 1) % nPhi;
 			if (getGridTypeAt(ipoot, j) == FLUIDGRID)
@@ -335,7 +373,7 @@ void KaminoSolver::projection()
 			{
 				vMinus = 0.0;
 			}
-			b(getIndex(i, j)) = (sin * (uPlus - uMinus) + sin * sin * (vPlus - vMinus));
+			b(getIndex(i, j)) = (sine * (uPlus - uMinus) + sine * sine * (vPlus - vMinus));
 		}
 	}
 
@@ -346,7 +384,7 @@ void KaminoSolver::projection()
 		// oot : one over two
 
 		fReal uPlus, uMinus, vPlus, vMinus;
-		fReal sin = sin(M_PI - gridLen / 2.0);
+		fReal sine = sin(M_PI - gridLen / 2.0);
 		// right
 		size_t ipoot = (i + 1) % nPhi;
 		if (getGridTypeAt(ipoot, nTheta - 1) == FLUIDGRID)
@@ -379,7 +417,7 @@ void KaminoSolver::projection()
 		}
 		// top
 		vPlus = 0.0;
-		b(getIndex(i, nTheta - 1)) = (sin * (uPlus - uMinus) + sin * sin * (vPlus - vMinus));
+		b(getIndex(i, nTheta - 1)) = (sine * (uPlus - uMinus) + sine * sine * (vPlus - vMinus));
 	}
 
 	b = b * rhsScaleB;

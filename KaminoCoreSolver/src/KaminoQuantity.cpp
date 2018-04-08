@@ -66,11 +66,23 @@ fReal KaminoQuantity::getPhiCoordAtIndex(size_t x)
 	fReal xFloat = static_cast<fReal>(x) + xOffset;
 	return xFloat * this->gridLen;
 }
+// Might be problematic : what if phi - xOffset < 0.0 due to a float point error?
+size_t KaminoQuantity::getPhiIndexAtCoord(fReal phi)
+{
+	fReal xInt = phi * this->invGridLen;
+	return static_cast<size_t>(phi - xOffset);
+}
 
 fReal KaminoQuantity::getThetaCoordAtIndex(size_t y)
 {
 	fReal yFloat = static_cast<fReal>(y) + yOffset;
 	return yFloat * this->gridLen;
+}
+// Might be problematic as well : what if phi - xOffset < 0.0 due to a float point error?
+size_t KaminoQuantity::getThetaIndexAtCoord(fReal theta)
+{
+	fReal yInt = theta * this->invGridLen;
+	return static_cast<size_t>(theta - yOffset);
 }
 
 /*
