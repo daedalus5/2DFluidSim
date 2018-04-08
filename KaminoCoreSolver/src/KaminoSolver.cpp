@@ -49,9 +49,9 @@ void KaminoSolver::stepForward(fReal timeStep)
 	advectionSpeed();
 	this->swapAttrBuffers();
 
-	// geometric();
+	geometric();
 	// bodyForce();
-	// projection();
+	projection();
 }
 
 // Phi: 0 - 2pi  Theta: 0 - pi

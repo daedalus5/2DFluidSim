@@ -9,7 +9,7 @@ const fReal radius = 5.0;               // radius of sphere
 
 const float dt = 0.005;                 // simulation time step size
 const float DT = 1.0 / 24.0;            // framerate @ 24 fps = 0.0147
-const int frames = 200;                  // number of frames to output
+const int frames = 50;                  // number of frames to output
 const std::string filepath = "output/frame";
 
 int main(int argc, char** argv)
