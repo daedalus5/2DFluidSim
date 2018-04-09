@@ -5,7 +5,7 @@
 
 KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridLength, fReal frameDuration) :
 	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), frameDuration(frameDuration),
-	timeStep(0.0), timeElapsed(0.0), trc(0.0, 0.0)
+	timeStep(0.0), timeElapsed(0.0), trc(M_PI / 2.0, M_PI / 2.0)
 {
 	addStaggeredAttr("u", 0.0, 0.5);		// u velocity
 	addStaggeredAttr("v", 0.5, 0.0);		// v velocity
