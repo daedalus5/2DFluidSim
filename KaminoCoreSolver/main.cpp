@@ -11,6 +11,7 @@ const float dt = 0.005;                 // simulation time step size
 const float DT = 1.0 / 24.0;            // framerate @ 24 fps = 0.0147
 const int frames = 50;                  // number of frames to output
 const std::string filepath = "output/frame";
+const std::string tracerPath = "tracer/trace";
 
 int main(int argc, char** argv)
 {
@@ -24,6 +25,7 @@ int main(int argc, char** argv)
         solver.stepForward(dt + i*DT - T);
         T = i*DT;
         solver.write_data_bgeo(filepath, i);
+        solver.write_data_tracer(tracerPath, i);
     }
     return 0;
 }
