@@ -57,7 +57,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 	geometric();
 	// bodyForce();
 	projection();
-	// updateTracer();
+	updateTracer();
 }
 
 // Phi: 0 - 2pi  Theta: 0 - pi
