@@ -99,7 +99,7 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 	int phiIndex = std::floor(x * invGridLen - this->xOffset);
 	int thetaIndex = std::floor(y * invGridLen - this->yOffset);
 
-	size_t lowerX = phiIndex < 0 ? this->nPhi - 1 : phiIndex;
+	size_t lowerX = phiIndex < 0 ? this->nPhi - 1 : phiIndex % nPhi;
 	size_t upperX = lowerX + 1;
 	upperX = upperX >= nPhi ? 0 : upperX;
 
