@@ -333,7 +333,7 @@ void KaminoSolver::projection()
 		}
 		// bottom
 		vMinus = 0.0;
-		b(getIndex(i, 0)) = (sine * (uPlus - uMinus) + sinSq * (vPlus - vMinus) + gTerm * (vPlus + vMinus));
+		b(getIndex(i, 0)) = (sine * (uPlus - uMinus) + sinSq * (vPlus - vMinus));// + gTerm * (vPlus + vMinus));
 	}
 
 	// interior of sphere grid
@@ -390,7 +390,7 @@ void KaminoSolver::projection()
 			{
 				vMinus = 0.0;
 			}
-			b(getIndex(i, 0)) = (sine * (uPlus - uMinus) + sinSq * (vPlus - vMinus) + gTerm * (vPlus + vMinus));
+			b(getIndex(i, 0)) = (sine * (uPlus - uMinus) + sinSq * (vPlus - vMinus));// + gTerm * (vPlus + vMinus));
 		}
 	}
 
@@ -438,7 +438,7 @@ void KaminoSolver::projection()
 		}
 		// top
 		vPlus = 0.0;
-		b(getIndex(i, 0)) = (sine * (uPlus - uMinus) + sinSq * (vPlus - vMinus) + gTerm * (vPlus + vMinus));
+		b(getIndex(i, 0)) = (sine * (uPlus - uMinus) + sinSq * (vPlus - vMinus));// + gTerm * (vPlus + vMinus));
 	}
 
 	b = b * rhsScaleB;
@@ -578,10 +578,10 @@ void KaminoSolver::precomputeLaplacian()
 		// above cell
 		size_t jp1 = 1;	
 		if (getGridTypeAt(i, jp1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * sinSq - 1 * gTerm;
+			Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * sinSq;// - 1 * gTerm;
 			numThetaNeighbors++;
 		}
-		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors + (numThetaNeighbors * sinSq) + (numThetaNeighbors * gTerm);
+		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors + (sinSq * numThetaNeighbors);// + (numThetaNeighbors * gTerm);
 	}
 
 	// interior of sphere grid
@@ -611,13 +611,13 @@ void KaminoSolver::precomputeLaplacian()
 			// above cell
 			size_t jp1 = j + 1;
 			if(getGridTypeAt(i, jp1) == FLUIDGRID){
-				Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * sinSq - 1 * gTerm;
+				Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * sinSq;// - 1 * gTerm;
 				numPhiNeighbors++;
 			}	
 			// below cell
 			size_t jm1 = j - 1;
 			if(getGridTypeAt(i, jm1) == FLUIDGRID){
-				Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * sinSq + 1 * gTerm;
+				Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * sinSq;// + 1 * gTerm;
 				numPhiNeighbors++;
 			}
 			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = numPhiNeighbors + (sinSq * numThetaNeighbors);	
@@ -650,10 +650,10 @@ void KaminoSolver::precomputeLaplacian()
 		// below cell
 		size_t jm1 = nTheta - 2;
 		if (getGridTypeAt(i, jm1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * sinSq + 1 * gTerm;
+			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * sinSq;// + 1 * gTerm;
 			numThetaNeighbors++;
 		}
-		Laplacian.coeffRef(rowNumber, getIndex(i, nTheta - 1)) = numPhiNeighbors + (numThetaNeighbors * sinSq) - (numThetaNeighbors * gTerm);
+		Laplacian.coeffRef(rowNumber, getIndex(i, nTheta - 1)) = numPhiNeighbors + (numThetaNeighbors * sinSq); //- (numThetaNeighbors * gTerm);
 	}
 }
 
@@ -685,7 +685,7 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(cos(i * gridLen), cos(j * gridLen));
-			v->setValueAt(i, j, val);
+			v->setValueAt(i, j, 0.0);
 		}
 	}
 }
