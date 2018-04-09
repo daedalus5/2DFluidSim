@@ -93,6 +93,25 @@ public:
 	fReal getThetaOffset();
 };
 
+struct tracer
+{
+	fReal phi;
+	fReal theta;
+	tracer(fReal phi, fReal theta) : phi(phi), theta(theta)
+	{}
+	void tracerStepForward(fReal uPhi, fReal uTheta, fReal timeStep)
+	{
+		this->phi += timeStep * uPhi;
+		this->theta += timeStep * uTheta;
+	}
+	void getCartesianXYZ(fReal radius, fReal& x, fReal& y, fReal& z)
+	{
+		x = radius * std::sin(theta) * std::cos(phi);
+		z = radius * std::sin(theta) * std::sin(phi);
+		y = radius * std::cos(theta);
+	}
+};
+
 // The solver class.
 class KaminoSolver
 {
@@ -124,6 +143,8 @@ private:
 	//fReal uThetaSouthP[2];
 	fReal uPhiSouthP[2];
 
+	tracer trc;
+
 	void resetPoleVelocities();
 	void averageVelocities();
 
@@ -139,6 +160,7 @@ private:
 	void geometric();
 	void projection();
 	void bodyForce();
+	void updateTracer();
 
 	// Swap all these buffers of the attributes.
 	void swapAttrBuffers();

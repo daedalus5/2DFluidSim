@@ -3,10 +3,9 @@
 
 // CONSTRUCTOR / DESTRUCTOR >>>>>>>>>>
 
-
 KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridLength, fReal frameDuration) :
 	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), frameDuration(frameDuration),
-	timeStep(0.0), timeElapsed(0.0)
+	timeStep(0.0), timeElapsed(0.0), trc(0.0, 0.0)
 {
 	addStaggeredAttr("u", 0.0, 0.5);		// u velocity
 	addStaggeredAttr("v", 0.5, 0.0);		// v velocity
@@ -41,6 +40,12 @@ KaminoSolver::~KaminoSolver()
 // <<<<<<<<<<
 // CORE FLUID SOLVER >>>>>>>>>>
 
+void KaminoSolver::updateTracer()
+{
+	fReal uPhi = (*this)["u"]->sampleAt(trc.phi, trc.theta);
+	fReal uTheta = (*this)["v"]->sampleAt(trc.phi, trc.theta);
+	trc.tracerStepForward(uPhi, uTheta, timeStep);
+}
 
 void KaminoSolver::stepForward(fReal timeStep)
 {
@@ -52,6 +57,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 	geometric();
 	//bodyForce();
 	projection();
+	updateTracer();
 }
 
 // Phi: 0 - 2pi  Theta: 0 - pi
@@ -674,7 +680,7 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(sin(i * gridLen), sin(j * gridLen));
-			u->setValueAt(i, j, val);
+			u->setValueAt(i, j, 0.0);
 		}
 	}
 	sizePhi = v->getNPhi();
@@ -682,7 +688,7 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(cos(i * gridLen), cos(j * gridLen));
-			v->setValueAt(i, j, val);
+			v->setValueAt(i, j, -val);
 		}
 	}
 }
