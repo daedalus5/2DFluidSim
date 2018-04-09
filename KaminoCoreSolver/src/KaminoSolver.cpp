@@ -3,10 +3,9 @@
 
 // CONSTRUCTOR / DESTRUCTOR >>>>>>>>>>
 
-
 KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridLength, fReal frameDuration) :
 	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), frameDuration(frameDuration),
-	timeStep(0.0), timeElapsed(0.0)
+	timeStep(0.0), timeElapsed(0.0), trc(0.0, 0.0)
 {
 	addStaggeredAttr("u", 0.0, 0.5);		// u velocity
 	addStaggeredAttr("v", 0.5, 0.0);		// v velocity
@@ -41,6 +40,12 @@ KaminoSolver::~KaminoSolver()
 // <<<<<<<<<<
 // CORE FLUID SOLVER >>>>>>>>>>
 
+void KaminoSolver::updateTracer()
+{
+	fReal uPhi = (*this)["u"]->sampleAt(trc.phi, trc.theta);
+	fReal uTheta = (*this)["v"]->sampleAt(trc.phi, trc.theta);
+	trc.tracerStepForward(uPhi, uTheta, timeStep);
+}
 
 void KaminoSolver::stepForward(fReal timeStep)
 {
@@ -50,8 +55,9 @@ void KaminoSolver::stepForward(fReal timeStep)
 	this->swapAttrBuffers();
 
 	geometric();
-	bodyForce();
+	// bodyForce();
 	projection();
+	updateTracer();
 }
 
 // Phi: 0 - 2pi  Theta: 0 - pi
@@ -693,7 +699,7 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(sin(i * gridLen), sin(j * gridLen));
-			u->setValueAt(i, j, val);
+			u->setValueAt(i, j, 0.0);
 		}
 	}
 	sizePhi = v->getNPhi();
@@ -796,14 +802,16 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 	std::string file = s + std::to_string(frame) + ".bgeo";
 
 	Partio::ParticlesDataMutable* parts = Partio::create();
-	Partio::ParticleAttribute pH, vH, psH, test;
+	Partio::ParticleAttribute pH, vH, psH, test, tracer;
 	pH = parts->addAttribute("position", Partio::VECTOR, 3);
 	vH = parts->addAttribute("v", Partio::VECTOR, 3);
 	psH = parts->addAttribute("pressure", Partio::VECTOR, 1);
 	test = parts->addAttribute("test", Partio::VECTOR, 1);
+	tracer = parts->addAttribute("tracer", Partio::VECTOR, 3);
 
 	Eigen::Matrix<float, 3, 1> pos;
 	Eigen::Matrix<float, 3, 1> vel;
+	Eigen::Matrix<fReal, 3, 1> tracerPos;
 	fReal pressure, testVal;
 	fReal velX, velY;
 
@@ -827,6 +835,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 
 			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
 			vel = Eigen::Matrix<float, 3, 1>(0.0, velY, velX);
+			trc.getCartesianXYZ(radius, tracerPos[0], tracerPos[1], tracerPos[2]);
 			mapVToSphere(pos, vel);
 			mapPToSphere(pos);
 
@@ -838,6 +847,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			float* v = parts->dataWrite<float>(vH, idx);
 			float* ps = parts->dataWrite<float>(psH, idx);
 			float* ts = parts->dataWrite<float>(test, idx);
+			float* tr = parts->dataWrite<float>(tracer, idx);
 
 			ps[0] = pressure / 5000.0;
 			ts[0] = testVal / 13.0 * 255.0;
@@ -845,6 +855,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			for (int k = 0; k < 3; ++k) {
 				p[k] = pos(k, 0);
 				v[k] = vel(k, 0);
+				tr[k] = float (tracerPos(k, 0));
 			}
 		}
 	}
