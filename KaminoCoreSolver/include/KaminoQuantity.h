@@ -103,6 +103,20 @@ struct tracer
 	{
 		this->phi += timeStep * uPhi;
 		this->theta += timeStep * uTheta;
+		if (theta < 0.0)
+		{
+			theta = M_PI + theta;
+			phi += M_PI;
+		}
+		if (theta > M_PI)
+		{
+			theta = M_2PI - theta;
+			phi += M_PI;
+		}
+		if (phi > M_2PI)
+			phi -= M_2PI;
+		if (phi < 0.0)
+			phi += M_2PI;
 	}
 	void getCartesianXYZ(fReal radius, fReal& x, fReal& y, fReal& z)
 	{
