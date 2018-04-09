@@ -97,12 +97,13 @@ struct tracer
 {
 	fReal phi;
 	fReal theta;
-	tracer(fReal phi, fReal theta) : phi(phi), theta(theta)
+	fReal radius;
+	tracer(fReal phi, fReal theta, fReal radius) : phi(phi), theta(theta), radius(radius)
 	{}
 	void tracerStepForward(fReal uPhi, fReal uTheta, fReal timeStep)
 	{
-		this->phi += timeStep * uPhi;
-		this->theta += timeStep * uTheta;
+		this->phi += timeStep * uPhi / (radius);
+		this->theta += timeStep * uTheta / (radius * std::sin(theta));
 		if (theta < 0.0)
 		{
 			theta = M_PI + theta;
@@ -118,7 +119,7 @@ struct tracer
 		if (phi < 0.0)
 			phi += M_2PI;
 	}
-	void getCartesianXYZ(fReal radius, fReal& x, fReal& y, fReal& z)
+	void getCartesianXYZ(fReal& x, fReal& y, fReal& z)
 	{
 		x = radius * std::sin(theta) * std::cos(phi);
 		z = radius * std::sin(theta) * std::sin(phi);

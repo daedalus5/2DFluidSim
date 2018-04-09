@@ -5,7 +5,7 @@
 
 KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridLength, fReal frameDuration) :
 	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), frameDuration(frameDuration),
-	timeStep(0.0), timeElapsed(0.0), trc(M_PI / 2.0, M_PI / 2.0)
+	timeStep(0.0), timeElapsed(0.0), trc(M_PI / 2.0, M_PI / 2.0, radius)
 {
 	addStaggeredAttr("u", 0.0, 0.5);		// u velocity
 	addStaggeredAttr("v", 0.5, 0.0);		// v velocity
@@ -872,7 +872,7 @@ void KaminoSolver::write_data_tracer(const std::string& s, const int frame)
 	Eigen::Matrix<fReal, 3, 1> tracerPos;
 
 	int idx = parts->addParticle();
-	trc.getCartesianXYZ(radius, tracerPos[0], tracerPos[1], tracerPos[2]);
+	trc.getCartesianXYZ(tracerPos[0], tracerPos[1], tracerPos[2]);
 	float *p = parts->dataWrite<float>(pH, idx);
 	float *tr = parts->dataWrite<float>(tracer, idx);
 
