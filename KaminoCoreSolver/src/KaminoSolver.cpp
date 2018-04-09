@@ -699,7 +699,7 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(sin(i * gridLen), sin(j * gridLen));
-			u->setValueAt(i, j, 0.0);
+			u->setValueAt(i, j, val);
 		}
 	}
 	sizePhi = v->getNPhi();
@@ -802,16 +802,14 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 	std::string file = s + std::to_string(frame) + ".bgeo";
 
 	Partio::ParticlesDataMutable* parts = Partio::create();
-	Partio::ParticleAttribute pH, vH, psH, test, tracer;
+	Partio::ParticleAttribute pH, vH, psH, test;
 	pH = parts->addAttribute("position", Partio::VECTOR, 3);
 	vH = parts->addAttribute("v", Partio::VECTOR, 3);
 	psH = parts->addAttribute("pressure", Partio::VECTOR, 1);
 	test = parts->addAttribute("test", Partio::VECTOR, 1);
-	tracer = parts->addAttribute("tracer", Partio::VECTOR, 3);
 
 	Eigen::Matrix<float, 3, 1> pos;
 	Eigen::Matrix<float, 3, 1> vel;
-	Eigen::Matrix<fReal, 3, 1> tracerPos;
 	fReal pressure, testVal;
 	fReal velX, velY;
 
@@ -835,7 +833,6 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 
 			pos = Eigen::Matrix<float, 3, 1>(i * gridLen, j * gridLen, 0.0);
 			vel = Eigen::Matrix<float, 3, 1>(0.0, velY, velX);
-			trc.getCartesianXYZ(radius, tracerPos[0], tracerPos[1], tracerPos[2]);
 			mapVToSphere(pos, vel);
 			mapPToSphere(pos);
 
@@ -847,7 +844,6 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			float* v = parts->dataWrite<float>(vH, idx);
 			float* ps = parts->dataWrite<float>(psH, idx);
 			float* ts = parts->dataWrite<float>(test, idx);
-			float* tr = parts->dataWrite<float>(tracer, idx);
 
 			ps[0] = pressure / 5000.0;
 			ts[0] = testVal / 13.0 * 255.0;
@@ -855,10 +851,36 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			for (int k = 0; k < 3; ++k) {
 				p[k] = pos(k, 0);
 				v[k] = vel(k, 0);
-				tr[k] = float (tracerPos(k, 0));
 			}
 		}
 	}
+
+	Partio::write(file.c_str(), *parts);
+	parts->release();
+# endif
+}
+
+void KaminoSolver::write_data_tracer(const std::string& s, const int frame)
+{
+# ifndef _MSC_VER
+	std::string file = s + std::to_string(frame) + ".bgeo";
+
+	Partio::ParticlesDataMutable* parts = Partio::create();	
+	Partio::ParticleAttribute pH, tracer;
+	pH = parts->addAttribute("position", Partio::VECTOR, 3);
+	tracer = parts->addAttribute("tracer", Partio::VECTOR, 3);
+	Eigen::Matrix<fReal, 3, 1> tracerPos;
+
+	int idx = parts->addParticle();
+	trc.getCartesianXYZ(radius, tracerPos[0], tracerPos[1], tracerPos[2]);
+	float *p = parts->dataWrite<float>(pH, idx);
+	float *tr = parts->dataWrite<float>(tracer, idx);
+
+	for(int k = 0; k < 3; ++k){
+		p[k] = 0.0;
+		tr[k] = float (tracerPos(k, 0));
+	}
+
 	Partio::write(file.c_str(), *parts);
 	parts->release();
 # endif

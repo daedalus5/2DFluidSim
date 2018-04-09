@@ -218,4 +218,5 @@ public:
 	KaminoQuantity* operator[](std::string name);
 
 	void write_data_bgeo(const std::string& s, const int frame);
+	void write_data_tracer(const std::string& s, const int frame);
 };
