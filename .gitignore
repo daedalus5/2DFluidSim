@@ -342,3 +342,4 @@ ASALocalRun/
 *.binlog
 
 output/*
+tracer/*
