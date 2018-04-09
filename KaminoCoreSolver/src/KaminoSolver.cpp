@@ -50,7 +50,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 	this->swapAttrBuffers();
 
 	geometric();
-	//bodyForce();
+	bodyForce();
 	projection();
 }
 
@@ -273,6 +273,22 @@ void KaminoSolver::geometric()
 	}
 
 	u->swapBuffer();
+	v->swapBuffer();
+}
+
+void KaminoSolver::bodyForce()
+{
+	fReal gravity = 9.8;
+	KaminoQuantity* v = staggeredAttr["v"];
+
+	for(size_t j = 0; j < nTheta + 1; ++j){
+		for(size_t i = 0; i < nPhi; ++i){
+			fReal vBeforeUpdate = v->getValueAt(i, j);
+			fReal theta = j*gridLen + gridLen / 2.0;
+			v->writeValueTo(i, j, vBeforeUpdate + gravity * sin(theta) * timeStep);
+		}
+	}
+
 	v->swapBuffer();
 }
 
