@@ -601,108 +601,144 @@ void KaminoSolver::precomputeLaplacian()
 	Laplacian = Eigen::SparseMatrix<fReal>(nPhi*nTheta, nPhi*nTheta);
 	Laplacian.setZero();
 
-	// north pole / j = 0
-
-	for(size_t i = 0; i < nPhi; ++i){
-		size_t numPhiNeighbors = 0;
-		size_t numThetaNeighbors = 0;
-		size_t rowNumber = getIndex(i, 0);
-		fReal theta = gridLen / 2.0;
-		fReal sine = sin(theta);
+	// j = 0 northern belt
+	for (size_t i = 0; i < nPhi; ++i)
+	{
+		size_t j = 0;
+		if (getGridTypeAt(i, j) != FLUIDGRID)
+			continue;
+		fReal thetaNorth = 0.5 * gridLen;
+		fReal sine = std::sin(thetaNorth);
+		fReal cosine = std::cos(thetaNorth);
 		fReal sinSq = sine * sine;
-		fReal cosine = cos(theta);
-		fReal gTerm = gridLen * cosine * sine / 2.0;
-		// right of cell
+		fReal gTerm = 0.5 * this->radius * sine * cosine * gridLen;
+
+		fReal cofIJ = 0.0;
+		fReal cofIJp1 = 0.0;
+		//fReal cofIJm1 = 0.0;
+		fReal cofIp1J = 0.0;
+		fReal cofIm1J = 0.0;
+
 		size_t ip1 = (i + 1) % nPhi;
-		if(getGridTypeAt(ip1, 0) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(ip1, 0)) = -1;
-			numPhiNeighbors++;
-		}
-		// left of cell
 		size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
-		if(getGridTypeAt(im1, 0) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(im1, 0)) = -1;
-			numPhiNeighbors++;
+		size_t jp1 = 1;
+		if (getGridTypeAt(ip1, j) == FLUIDGRID)
+		{
+			cofIJ += 1.0;
+			cofIp1J -= -1.0;
 		}
-		// above cell
-		size_t jp1 = 1;	
-		if (getGridTypeAt(i, jp1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * sinSq - 1 * gTerm;
-			numThetaNeighbors++;
+		if (getGridTypeAt(im1, j) == FLUIDGRID)
+		{
+			cofIJ += 1.0;
+			cofIm1J -= -1.0;
 		}
-		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors + (sinSq * numThetaNeighbors) + (gTerm * numThetaNeighbors);
+		if (getGridTypeAt(i, jp1) == FLUIDGRID)
+		{
+			cofIJ += 1.0 * sinSq;
+			cofIJp1 -= 1.0 * sinSq;
+			cofIJp1 += 1.0 * gTerm;
+		}
+		// No jm1
+		size_t rowNumber = getIndex(i, j);
+		Laplacian.coeffRef(rowNumber, getIndex(i, j)) = cofIJ;
+		Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = cofIp1J;
+		Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = cofIm1J;
+		Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = cofIJp1;
 	}
+	// j = nTheta - 1 southern belt
+	for (size_t i = 0; i < nPhi; ++i)
+	{
+		size_t j = nTheta - 1;
+		if (getGridTypeAt(i, j) != FLUIDGRID)
+			continue;
+		fReal thetaSouth = M_PI - 0.5 * gridLen;
+		fReal sine = std::sin(thetaSouth);
+		fReal cosine = std::cos(thetaSouth);
+		fReal sinSq = sine * sine;
+		fReal gTerm = 0.5 * this->radius * sine * cosine * gridLen;
 
-	// interior of sphere grid
+		fReal cofIJ = 0.0;
+		//fReal cofIJp1 = 0.0;
+		fReal cofIJm1 = 0.0;
+		fReal cofIp1J = 0.0;
+		fReal cofIm1J = 0.0;
 
-	for(size_t j = 1; j < nTheta - 1; ++j){
-		for(size_t i = 0; i < nPhi; ++i){
-			size_t numPhiNeighbors = 0;
-			size_t numThetaNeighbors = 0;
-			size_t rowNumber = getIndex(i, j);
-			fReal theta = j*gridLen + gridLen / 2.0;
-			fReal sine = sin(theta);
+		size_t ip1 = (i + 1) % nPhi;
+		size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
+		size_t jm1 = j - 1;
+		if (getGridTypeAt(ip1, j) == FLUIDGRID)
+		{
+			cofIJ += 1.0;
+			cofIp1J -= -1.0;
+		}
+		if (getGridTypeAt(im1, j) == FLUIDGRID)
+		{
+			cofIJ += 1.0;
+			cofIm1J -= -1.0;
+		}
+		if (getGridTypeAt(i, jm1) == FLUIDGRID)
+		{
+			cofIJ += 1.0 * sinSq;
+			cofIJm1 -= 1.0 * sinSq;
+			cofIJm1 -= 1.0 * gTerm;
+		}
+		size_t rowNumber = getIndex(i, j);
+		Laplacian.coeffRef(rowNumber, getIndex(i, j)) = cofIJ;
+		Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = cofIp1J;
+		Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = cofIm1J;
+		Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = cofIJm1;
+	}
+	for (size_t i = 0; i < nPhi; ++i)
+	{
+		for (size_t j = 1; j < nTheta - 1; ++j)
+		{
+			if (getGridTypeAt(i, j) != FLUIDGRID)
+				continue;
+			fReal thetaNorth = (0.5 + j) * gridLen;
+			fReal sine = std::sin(thetaNorth);
+			fReal cosine = std::cos(thetaNorth);
 			fReal sinSq = sine * sine;
-			fReal cosine = cos(theta);
-			fReal gTerm = gridLen * cosine * sine / 2.0;
-			// right of cell
+			fReal gTerm = 0.5 * this->radius * sine * cosine * gridLen;
+
+			fReal cofIJ = 0.0;
+			fReal cofIJp1 = 0.0;
+			fReal cofIJm1 = 0.0;
+			fReal cofIp1J = 0.0;
+			fReal cofIm1J = 0.0;
+
 			size_t ip1 = (i + 1) % nPhi;
-			if(getGridTypeAt(ip1, j) == FLUIDGRID){
-				Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = -1;
-				numPhiNeighbors++;
-			}
-			// left of cell
 			size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
-			if(getGridTypeAt(im1, j) == FLUIDGRID){
-				Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = -1;
-				numPhiNeighbors++;
-			}	
-			// above cell
 			size_t jp1 = j + 1;
-			if(getGridTypeAt(i, jp1) == FLUIDGRID){
-				Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * sinSq - 1 * gTerm;
-				numPhiNeighbors++; /// numPhiNeighbors???
-			}	
-			// below cell
 			size_t jm1 = j - 1;
-			if(getGridTypeAt(i, jm1) == FLUIDGRID){
-				Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * sinSq + 1 * gTerm;
-				numPhiNeighbors++;
+			if (getGridTypeAt(ip1, j) == FLUIDGRID)
+			{
+				cofIJ += 1.0;
+				cofIp1J -= -1.0;
 			}
-			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = numPhiNeighbors + (sinSq * numThetaNeighbors);	
+			if (getGridTypeAt(im1, j) == FLUIDGRID)
+			{
+				cofIJ += 1.0;
+				cofIm1J -= -1.0;
+			}
+			if (getGridTypeAt(i, jp1) == FLUIDGRID)
+			{
+				cofIJ += 1.0 * sinSq;
+				cofIJp1 -= 1.0 * sinSq;
+				cofIJp1 += 1.0 * gTerm;
+			}
+			if (getGridTypeAt(i, jm1) == FLUIDGRID)
+			{
+				cofIJ += 1.0 * sinSq;
+				cofIJm1 -= 1.0 * sinSq;
+				cofIJm1 -= 1.0 * gTerm;
+			}
+			size_t rowNumber = getIndex(i, j);
+			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = cofIJ;
+			Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = cofIp1J;
+			Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = cofIm1J;
+			Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = cofIJp1;
+			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = cofIJm1;
 		}
-	}
-
-	// south pole / j = nTheta - 1
-
-	for(size_t i = 0; i < nPhi; ++i){
-		size_t numPhiNeighbors = 0;
-		size_t numThetaNeighbors = 0;
-		size_t rowNumber = getIndex(i, nTheta - 1);
-		fReal theta = M_PI - gridLen / 2.0;
-		fReal sine = sin(theta);
-		fReal sinSq = sine * sine;
-		fReal cosine = cos(theta);
-		fReal gTerm = gridLen * cosine * sine / 2.0;
-		// right of cell
-		size_t ip1 = (i + 1) % nPhi;
-		if(getGridTypeAt(ip1, nTheta - 1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(ip1, nTheta - 1)) = -1;
-			numPhiNeighbors++;
-		}
-		// left of cell
-		size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
-		if(getGridTypeAt(im1, nTheta - 1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(im1, nTheta - 1)) = -1;
-			numPhiNeighbors++;
-		}
-		// below cell
-		size_t jm1 = nTheta - 2;
-		if (getGridTypeAt(i, jm1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * sinSq + 1 * gTerm;
-			numThetaNeighbors++;
-		}
-		Laplacian.coeffRef(rowNumber, getIndex(i, nTheta - 1)) = numPhiNeighbors + (numThetaNeighbors * sinSq) - (gTerm * numThetaNeighbors);
 	}
 }
 
