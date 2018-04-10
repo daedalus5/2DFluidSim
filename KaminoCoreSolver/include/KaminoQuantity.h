@@ -187,6 +187,8 @@ private:
 	void initialize_test();
 	/* which grids are solid? */
 	void initialize_boundary();
+	/* sum of sine functions for velocity initialization */
+	fReal sinSum(const fReal x, const fReal y);
 	/* FBM noise function for velocity distribution */
 	fReal FBM(const fReal x, const fReal y);
 	/* 2D noise interpolation function for smooth FBM noise */

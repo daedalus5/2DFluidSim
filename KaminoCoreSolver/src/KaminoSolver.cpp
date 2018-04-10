@@ -57,7 +57,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 	geometric();
 	// bodyForce();
 	projection();
-	// updateTracer();
+	updateTracer();
 }
 
 // Phi: 0 - 2pi  Theta: 0 - pi
@@ -634,13 +634,13 @@ void KaminoSolver::precomputeLaplacian()
 			size_t jp1 = j + 1;
 			if(getGridTypeAt(i, jp1) == FLUIDGRID){
 				Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * sinSq - 1 * gTerm;
-				numPhiNeighbors++;
+				numThetaNeighbors++;
 			}	
 			// below cell
 			size_t jm1 = j - 1;
 			if(getGridTypeAt(i, jm1) == FLUIDGRID){
 				Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * sinSq + 1 * gTerm;
-				numPhiNeighbors++;
+				numThetaNeighbors++;
 			}
 			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = numPhiNeighbors + (sinSq * numThetaNeighbors);	
 		}
@@ -698,7 +698,8 @@ void KaminoSolver::initialize_velocity()
 	size_t sizeTheta = u->getNTheta();
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
-			val = FBM(sin(i * gridLen), sin(j * gridLen));
+			//val = FBM(sin(i * gridLen), sin(j * gridLen));
+			val = sinSum(i*gridLen, j*gridLen);
 			u->setValueAt(i, j, val);
 		}
 	}
@@ -707,9 +708,16 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(cos(i * gridLen), cos(j * gridLen));
-			v->setValueAt(i, j, 0.0);
+			v->setValueAt(i, j, val);
 		}
 	}
+}
+
+fReal KaminoSolver::sinSum(const fReal x, const fReal y)
+{
+	fReal arg = x / (2*M_PI);
+	fReal sum = sin(arg) + sin(2*arg) + sin(5*arg) + sin(3*y) + sin(7*y);
+	return sum / 4.0;
 }
 
 fReal KaminoSolver::FBM(const fReal x, const fReal y) {
