@@ -93,6 +93,8 @@ public:
 	fReal getThetaOffset();
 };
 
+void validatePhiTheta(fReal & phi, fReal & theta);
+
 struct tracer
 {
 	fReal phi;
@@ -104,20 +106,7 @@ struct tracer
 	{
 		this->phi += timeStep * uPhi / (radius);
 		this->theta += timeStep * uTheta / (radius * std::sin(theta));
-		if (theta < 0.0)
-		{
-			theta = M_PI + theta;
-			phi += M_PI;
-		}
-		if (theta > M_PI)
-		{
-			theta = M_2PI - theta;
-			phi += M_PI;
-		}
-		if (phi > M_2PI)
-			phi -= M_2PI;
-		if (phi < 0.0)
-			phi += M_2PI;
+		validatePhiTheta(phi, theta);
 	}
 	void getCartesianXYZ(fReal& x, fReal& y, fReal& z)
 	{
@@ -140,6 +129,8 @@ private:
 	fReal radius;
 	/* Grid size */
 	fReal gridLen;
+	/* Inverted grid size*/
+	fReal invGridLen;
 	/* Laplacian Matrix */
 	Eigen::SparseMatrix<fReal> Laplacian;
 
