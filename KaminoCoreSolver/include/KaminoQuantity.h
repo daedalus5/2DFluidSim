@@ -22,6 +22,7 @@
 // The solution to switch between double and float
 typedef double fReal;
 
+const fReal density = 1000.0;
 
 // Handy Lerp.
 template <class Type>

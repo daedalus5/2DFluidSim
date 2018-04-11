@@ -327,8 +327,8 @@ void KaminoSolver::bodyForce()
 
 void KaminoSolver::projection()
 {
-	const fReal density = 1000.0;
-	fReal rhsScaleB = -radius * density * (gridLen / timeStep);
+	//fReal rhsScaleB = -radius * density * (gridLen / timeStep);
+	fReal rhsScaleB = -1.0;
 
 	Eigen::VectorXd b(nPhi * nTheta);
 	b.setZero();
@@ -543,12 +543,12 @@ void KaminoSolver::precomputeLaplacian()
 			if (getGridTypeAt(ip1, j) == FLUIDGRID)
 			{
 				cofIJ += 1.0;
-				cofIp1J -= -1.0;
+				cofIp1J -= 1.0;
 			}
 			if (getGridTypeAt(im1, j) == FLUIDGRID)
 			{
 				cofIJ += 1.0;
-				cofIm1J -= -1.0;
+				cofIm1J -= 1.0;
 			}
 			if (j != 0)
 			{
@@ -578,6 +578,8 @@ void KaminoSolver::precomputeLaplacian()
 			Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = cofIm1J;
 		}
 	}
+	fReal coeffA = timeStep / (density * radius * gridLen);
+	Laplacian = coeffA * Laplacian;
 }
 
 void KaminoSolver::initialize_pressure()
