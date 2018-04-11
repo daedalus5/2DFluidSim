@@ -216,6 +216,7 @@ public:
 	void addStaggeredAttr(std::string name, fReal xOffset, fReal yOffset);
 
 	void precomputeLaplacian();
+	void testLaplacian();
 	
 	KaminoQuantity* getAttributeNamed(std::string name);
 	KaminoQuantity* operator[](std::string name);
