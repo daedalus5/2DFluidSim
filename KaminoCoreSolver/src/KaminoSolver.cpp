@@ -578,8 +578,8 @@ void KaminoSolver::precomputeLaplacian()
 			Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = cofIm1J;
 		}
 	}
-	fReal coeffA = timeStep / (density * radius * gridLen);
-	Laplacian = coeffA * Laplacian;
+	//fReal coeffA = timeStep / (density * radius * gridLen);
+	//Laplacian = coeffA * Laplacian;
 }
 
 void KaminoSolver::initialize_pressure()
