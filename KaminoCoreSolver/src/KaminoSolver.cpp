@@ -383,7 +383,8 @@ void KaminoSolver::projection()
 			}
 			else
 			{
-				div -= sine * uSolid;
+				uLeft = uSolid;
+				div -= sine * uLeft;
 			}
 			if (getGridTypeAt(grid2tRight, j) == FLUIDGRID)
 			{
@@ -391,7 +392,8 @@ void KaminoSolver::projection()
 			}
 			else
 			{
-				div += sine * uSolid;
+				uRight = uSolid;
+				div += sine * uRight;
 			}
 			if (j != 0)
 			{
@@ -402,7 +404,8 @@ void KaminoSolver::projection()
 				}
 				else
 				{
-					div -= sinSq * vSolid;
+					vUnder = vSolid;
+					div -= sinSq * vUnder;
 				}
 			}
 			if (j != nTheta - 1)
@@ -414,12 +417,14 @@ void KaminoSolver::projection()
 				}
 				else
 				{
-					div += sinSq * vSolid;
+					vAbove = vSolid;
+					div += sinSq * vAbove;
 				}
 			}
 			//fReal u = 0.5 * (uLeft + uRight);
 			fReal v = 0.5 * (vUnder + vAbove);
 			div += gTerm * v;
+			//Additional divergence goes here
 		}
 	}
 
