@@ -7,6 +7,13 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), invGridLen(1.0 / gridLength), frameDuration(frameDuration),
 	timeStep(0.0), timeElapsed(0.0), trc(M_PI / 2.0, M_PI / 2.0, radius)
 {
+	this->fourierF = new fReal[nPhi * nTheta];
+	this->fourierU = new fReal[nPhi * nTheta];
+
+	this->a = new fReal[nTheta];
+	this->b = new fReal[nTheta];
+	this->c = new fReal[nTheta];
+
 	addStaggeredAttr("u", 0.0, 0.5);		// u velocity
 	addStaggeredAttr("v", 0.5, 0.0);		// v velocity
 	addCenteredAttr("p", 0.5, 0.5);				// p pressure
@@ -25,6 +32,13 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 
 KaminoSolver::~KaminoSolver()
 {
+	delete[] fourierF;
+	delete[] fourierU;
+
+	delete[] a;
+	delete[] b;
+	delete[] c;
+
 	for (auto& attr : this->centeredAttr)
 	{
 		delete attr.second;
