@@ -132,6 +132,8 @@ private:
 	fReal* b;
 	// Diagonal elements c (upper);
 	fReal* c;
+	// Divergence fourier coefficients
+	fReal* d;
 
 	/* Grid types */
 	gridType* gridTypes;
