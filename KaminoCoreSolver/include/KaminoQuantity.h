@@ -208,6 +208,11 @@ private:
 	/* Duplicate of quantity's get index */
 	inline size_t getIndex(size_t x, size_t y);
 
+	/* Tri-diagonal matrix solver */
+	void TDMSolve(fReal* a, fReal* b, fReal* c, fReal* d);
+	/* Load diagonal element arrays */
+	void loadABC(size_t n);
+
 public:
 	KaminoSolver(size_t nx, size_t ny, fReal radius, fReal gridLength, fReal frameDuration = 1.0 / 30.0);
 	~KaminoSolver();
