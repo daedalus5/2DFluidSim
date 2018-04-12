@@ -13,6 +13,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	this->a = new fReal[nTheta];
 	this->b = new fReal[nTheta];
 	this->c = new fReal[nTheta];
+	this->d = new fReal[nTheta];
 
 	addStaggeredAttr("u", 0.0, 0.5);		// u velocity
 	addStaggeredAttr("v", 0.5, 0.0);		// v velocity
@@ -428,20 +429,38 @@ void KaminoSolver::projection()
 		}
 	}
 
-	/// TODO: Perform forward FFT on fourierF to make them fourier coefficients
+	// update pressure per strip
+	for(size_t k = 0; k < nPhi; ++k){
+		/// TODO: Perform forward FFT on fourierF to make them fourier coefficients
+		/// TODO: Load fourier coefficients into this->d for this strip
 
-	/// TODO: Solve for these U values and fill fourierU
+		/// TODO: Solve for these U values and fill fourierU
+		/// TODO: Inverse FFT to get actual pressures
+		for(size_t i = 0; i < nPhi; ++i){
+			int n = i - nPhi / 2;
+			loadABC(i);
+			// TODO check d vector
+			TDMSolve(this->a, this->b, this->c, this->d);
+			for(size_t j = 0; j < nTheta; ++j){
+				fReal theta = j*gridLen + gridLen / 2.0;
+				size_t index = getIndex(i, j);
+				fourierU[index] = d[j] * cos(n * theta);
+			}
+		}
 
-	/// TODO: Inverse FFT to get actual pressures
-
-	// Populate updated pressure values
-	for (size_t j = 0; j < nTheta; ++j) 
-	{
-		for (size_t i = 0; i < nPhi; ++i) 
+		// Populate updated pressure values
+		for (size_t j = 0; j < nTheta; ++j) 
 		{
-			//p->writeValueTo(i, j, pVector(getIndex(i, j)));
+			fReal pSum = 0.0
+			for (size_t i = 0; i < nPhi; ++i) 
+			{
+				size_t index = getIndex(i, j);
+				pSum += fourierU[index];
+			}
+			p->writeValueTo(k, j, pSum);
 		}
 	}
+
 	p->swapBuffer();
 
 
@@ -516,6 +535,10 @@ void KaminoSolver::projection()
 /* Tri-diagonal matrix solver */
 void KaminoSolver::TDMSolve(fReal* a, fReal* b, fReal* c, fReal* d)
 {
+	// |b0 c0 0 ||x0| |d0|
+ 	// |a1 b1 c1||x1|=|d1|
+ 	// |0  a2 b2||x2| |d2|
+
     int n = nPhi;
     n--; // since we index from 0
     c[0] /= b[0];
