@@ -12,6 +12,7 @@
 # include <cmath>
 # include <Eigen/IterativeLinearSolvers>
 # include <unsupported/Eigen/IterativeSolvers>
+# include <unsupported/Eigen/FFT>
 
 # define M_PI           3.14159265358979323846  /* pi */
 # define M_2PI			6.28318530717958647692  /* 2pi */
@@ -121,6 +122,11 @@ struct tracer
 class KaminoSolver
 {
 private:
+	// Buffer for the capital U.
+	fReal* fourierU;
+	// Buffer for the divergence, before and after transform.
+	fReal* fourierF;
+
 	/* Grid types */
 	gridType* gridTypes;
 	/* Grid dimensions */
@@ -133,7 +139,7 @@ private:
 	/* Inverted grid size*/
 	fReal invGridLen;
 	/* Laplacian Matrix */
-	Eigen::SparseMatrix<fReal> Laplacian;
+	//Eigen::SparseMatrix<fReal> Laplacian;
 
 	/* So that it remembers all these attributes within */
 	std::map<std::string, KaminoQuantity*> centeredAttr;

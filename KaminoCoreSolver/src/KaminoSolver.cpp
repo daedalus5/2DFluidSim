@@ -17,7 +17,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 
 	initialize_velocity();
 	initialize_pressure();
-	precomputeLaplacian();
+	//precomputeLaplacian();
 	initialize_test();
 
 	//initialize_boundary();
@@ -327,12 +327,6 @@ void KaminoSolver::bodyForce()
 
 void KaminoSolver::projection()
 {
-	//fReal rhsScaleB = -radius * density * (gridLen / timeStep);
-	fReal rhsScaleB = -1.0;
-
-	Eigen::VectorXd b(nPhi * nTheta);
-	b.setZero();
-
 	KaminoQuantity* u = staggeredAttr["u"];
 	KaminoQuantity* v = staggeredAttr["v"];
 	KaminoQuantity* p = centeredAttr["p"];
@@ -340,6 +334,7 @@ void KaminoSolver::projection()
 	const fReal uSolid = 0.0;
 	const fReal vSolid = 0.0;
 
+	/// TODO: Fill the fourierF buffer with divergence
 	for (size_t j = 0; j < nTheta; ++j)
 	{
 		fReal thetaOftheBelt = (j + 0.5) * gridLen;
@@ -411,23 +406,21 @@ void KaminoSolver::projection()
 			//fReal u = 0.5 * (uLeft + uRight);
 			fReal v = 0.5 * (vUnder + vAbove);
 			div += gTerm * v;
-
-			b.coeffRef(rowNumber) = rhsScaleB * div;
 		}
 	}
 
-	Eigen::VectorXd pVector(nPhi * nTheta);
-	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower | Eigen::Upper> cg;
-	//cg.setTolerance(pow(10, -1));
-	cg.compute(Laplacian);
-	pVector = cg.solve(b);
+	/// TODO: Perform forward FFT on fourierF to make them fourier coefficients
+
+	/// TODO: Solve for these U values and fill fourierU
+
+	/// TODO: Inverse FFT to get actual pressures
 
 	// Populate updated pressure values
 	for (size_t j = 0; j < nTheta; ++j) 
 	{
 		for (size_t i = 0; i < nPhi; ++i) 
 		{
-			p->writeValueTo(i, j, pVector(getIndex(i, j)));
+			//p->writeValueTo(i, j, pVector(getIndex(i, j)));
 		}
 	}
 	p->swapBuffer();
