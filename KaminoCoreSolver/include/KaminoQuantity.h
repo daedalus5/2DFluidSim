@@ -126,11 +126,11 @@ private:
 	fReal* fourierU;
 	// Buffer for the divergence, before and after transform.
 	fReal* fourierF;
-	// Diagonal elements a;
+	// Diagonal elements a (lower);
 	fReal* a;
-	// Diagonal elements b;
+	// Diagonal elements b (major diagonal);
 	fReal* b;
-	// Diagonal elements c;
+	// Diagonal elements c (upper);
 	fReal* c;
 
 	/* Grid types */
