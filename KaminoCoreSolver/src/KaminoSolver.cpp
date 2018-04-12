@@ -425,7 +425,7 @@ void KaminoSolver::projection()
 			//fReal u = 0.5 * (uLeft + uRight);
 			fReal v = 0.5 * (vUnder + vAbove);
 			div += gTerm * v;
-			//Additional divergence goes here
+			//Additional divergence scaling goes here
 		}
 	}
 
