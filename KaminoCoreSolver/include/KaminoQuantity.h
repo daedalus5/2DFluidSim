@@ -217,7 +217,7 @@ public:
 	void addCenteredAttr(std::string name, fReal xOffset = 0.5, fReal yOffset = 0.5);
 	void addStaggeredAttr(std::string name, fReal xOffset, fReal yOffset);
 
-	void precomputeLaplacian();
+	//void precomputeLaplacian();
 	
 	KaminoQuantity* getAttributeNamed(std::string name);
 	KaminoQuantity* operator[](std::string name);

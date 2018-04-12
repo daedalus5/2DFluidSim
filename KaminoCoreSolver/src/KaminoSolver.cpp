@@ -383,7 +383,8 @@ void KaminoSolver::projection()
 			}
 			else
 			{
-				div -= sine * uSolid;
+				uLeft = uSolid;
+				div -= sine * uLeft;
 			}
 			if (getGridTypeAt(grid2tRight, j) == FLUIDGRID)
 			{
@@ -391,7 +392,8 @@ void KaminoSolver::projection()
 			}
 			else
 			{
-				div += sine * uSolid;
+				uRight = uSolid;
+				div += sine * uRight;
 			}
 			if (j != 0)
 			{
@@ -402,7 +404,8 @@ void KaminoSolver::projection()
 				}
 				else
 				{
-					div -= sinSq * vSolid;
+					vUnder = vSolid;
+					div -= sinSq * vUnder;
 				}
 			}
 			if (j != nTheta - 1)
@@ -414,12 +417,14 @@ void KaminoSolver::projection()
 				}
 				else
 				{
-					div += sinSq * vSolid;
+					vAbove = vSolid;
+					div += sinSq * vAbove;
 				}
 			}
 			//fReal u = 0.5 * (uLeft + uRight);
 			fReal v = 0.5 * (vUnder + vAbove);
 			div += gTerm * v;
+			//Additional divergence goes here
 		}
 	}
 
@@ -520,7 +525,7 @@ gridType KaminoSolver::getGridTypeAt(size_t x, size_t y)
 }
 
 /* Compute Laplacian done right...probably */
-void KaminoSolver::precomputeLaplacian()
+/*void KaminoSolver::precomputeLaplacian()
 {
 	Laplacian = Eigen::SparseMatrix<fReal>(nPhi*nTheta, nPhi*nTheta);
 	Laplacian.setZero();
@@ -587,7 +592,7 @@ void KaminoSolver::precomputeLaplacian()
 	}
 	//fReal coeffA = timeStep / (density * radius * gridLen);
 	//Laplacian = coeffA * Laplacian;
-}
+}*/
 
 void KaminoSolver::initialize_pressure()
 {
