@@ -14,10 +14,11 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	this->b = new fReal[nTheta];
 	this->c = new fReal[nTheta];
 
-	addStaggeredAttr("u", 0.0, 0.5);		// u velocity
-	addStaggeredAttr("v", 0.5, 0.0);		// v velocity
-	addCenteredAttr("p", 0.5, 0.5);				// p pressure
-	addCenteredAttr("test", 0.5, 0.5);			// test scalar field
+	// Our new staggered grid...
+	addStaggeredAttr("u", -0.5, 0.5);		// u velocity
+	addStaggeredAttr("v", 0.0, 0.0);		// v velocity
+	addCenteredAttr("p", 0.0, 0.5);				// p pressure
+	addCenteredAttr("test", 0.0, 0.5);			// test scalar field
 
 	this->gridTypes = new gridType[nPhi * nTheta];
 	memset(reinterpret_cast<void*>(this->gridTypes), FLUIDGRID, nPhi * nTheta);
