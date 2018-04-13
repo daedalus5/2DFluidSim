@@ -15,10 +15,11 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	this->c = new fReal[nTheta];
 	this->d = new fReal[nTheta];
 
-	addStaggeredAttr("u", 0.0, 0.5);		// u velocity
-	addStaggeredAttr("v", 0.5, 0.0);		// v velocity
-	addCenteredAttr("p", 0.5, 0.5);				// p pressure
-	addCenteredAttr("test", 0.5, 0.5);			// test scalar field
+	// Our new staggered grid...
+	addStaggeredAttr("u", -0.5, 0.5);		// u velocity
+	addStaggeredAttr("v", 0.0, 0.0);		// v velocity
+	addCenteredAttr("p", 0.0, 0.5);				// p pressure
+	addCenteredAttr("test", 0.0, 0.5);			// test scalar field
 
 	this->gridTypes = new gridType[nPhi * nTheta];
 	memset(reinterpret_cast<void*>(this->gridTypes), FLUIDGRID, nPhi * nTheta);
@@ -340,31 +341,33 @@ void KaminoSolver::bodyForce()
 	v->swapBuffer();
 }
 
-void KaminoSolver::projection()
+void KaminoSolver::fillDivergence()
 {
 	KaminoQuantity* u = staggeredAttr["u"];
 	KaminoQuantity* v = staggeredAttr["v"];
-	KaminoQuantity* p = centeredAttr["p"];
 
 	const fReal uSolid = 0.0;
 	const fReal vSolid = 0.0;
+
+	fReal rhsScale = density * radius / timeStep;
 
 	/// TODO: Fill the fourierF buffer with divergence
 	for (size_t j = 0; j < nTheta; ++j)
 	{
 		fReal thetaOftheBelt = (j + 0.5) * gridLen;
 		fReal sine = std::sin(thetaOftheBelt);
-		fReal cosine = std::cos(thetaOftheBelt);
-		fReal sinSq = sine * sine;
-		fReal gTerm = sine * cosine * gridLen;
-		fReal div = 0.0;
+		fReal invSine = 1.0 / sine;
 
 		for (size_t i = 0; i < nPhi; ++i)
 		{
+			if (getGridTypeAt(i, j) != FLUIDGRID)
+			{
+				fourierF[getIndex(i, j)] = 0.0;
+				continue;//Leave it as 0 = 0 trivial problem
+			}
+
 			size_t rowNumber = getIndex(i, j);
 
-			if (getGridTypeAt(i, j) != FLUIDGRID)
-				continue;//Leave it as 0 = 0 trivial problem
 			size_t imoot = i;
 			size_t ipoot = (i + 1) % nPhi;
 			size_t jmoot = j;
@@ -373,40 +376,25 @@ void KaminoSolver::projection()
 			size_t grid2tRight = (i + 1) % nPhi;
 			size_t grid2tLeft = i == 0 ? nPhi - 1 : i - 1;
 
-			fReal uLeft = u->getValueAt(imoot, j);
-			fReal uRight = u->getValueAt(ipoot, j);
-			fReal vUnder = v->getValueAt(i, jmoot);
-			fReal vAbove = v->getValueAt(i, jpoot);
+			fReal uLeft = uSolid;
+			fReal uRight = uSolid;
+			fReal vUnder = vSolid;
+			fReal vAbove = vSolid;
 
 			if (getGridTypeAt(grid2tLeft, j) == FLUIDGRID)
 			{
-				div -= sine * uLeft;
-			}
-			else
-			{
-				uLeft = uSolid;
-				div -= sine * uLeft;
+				uLeft = u->getValueAt(imoot, j);
 			}
 			if (getGridTypeAt(grid2tRight, j) == FLUIDGRID)
 			{
-				div += sine * uRight;
-			}
-			else
-			{
-				uRight = uSolid;
-				div += sine * uRight;
+				uRight = u->getValueAt(ipoot, j);
 			}
 			if (j != 0)
 			{
 				size_t gridUnder = j - 1;
 				if (getGridTypeAt(i, gridUnder) == FLUIDGRID)
 				{
-					div -= sinSq * vUnder;
-				}
-				else
-				{
-					vUnder = vSolid;
-					div -= sinSq * vUnder;
+					vUnder = v->getValueAt(i, jmoot);
 				}
 			}
 			if (j != nTheta - 1)
@@ -414,20 +402,46 @@ void KaminoSolver::projection()
 				size_t gridAbove = j + 1;
 				if (getGridTypeAt(i, gridAbove) == FLUIDGRID)
 				{
-					div += sinSq * vAbove;
-				}
-				else
-				{
-					vAbove = vSolid;
-					div += sinSq * vAbove;
+					vAbove = v->getValueAt(i, jpoot);
 				}
 			}
-			//fReal u = 0.5 * (uLeft + uRight);
-			fReal v = 0.5 * (vUnder + vAbove);
-			div += gTerm * v;
+			fReal sinUpper = std::sin(thetaOftheBelt + 0.5 * gridLen);
+			fReal sinLower = std::sin(thetaOftheBelt - 0.5 * gridLen);
+			fReal termTheta = invSine * invGridLen * (vAbove * sinUpper - vUnder * sinLower);
+			fReal termPhi = invSine * invGridLen * (uRight - uLeft);
+
+			fReal div = termTheta + termPhi;
 			//Additional divergence scaling goes here
+			div *= rhsScale;
+			fourierF[getIndex(i, j)] = div;
 		}
 	}
+}
+
+void KaminoSolver::transformDivergence()
+{
+	for (1; 2; 3)
+	{
+		for (int n = -nPhi / 2; n < nPhi / 2; ++n)
+		{
+
+		}
+	}
+}
+
+void KaminoSolver::projection()
+{
+	KaminoQuantity* u = staggeredAttr["u"];
+	KaminoQuantity* v = staggeredAttr["v"];
+	KaminoQuantity* p = centeredAttr["p"];
+
+	/// TODO: Fill these divergence
+	fillDivergence();
+	/// TODO: Perform forward FFT on fourierF to make them fourier coefficients
+	transformDivergence();
+	/// TODO: Solve for these U values and fill fourierU
+
+	/// TODO: Inverse FFT to get actual pressures
 
 	// update pressure per strip
 	for(size_t k = 0; k < nPhi; ++k){
@@ -451,7 +465,7 @@ void KaminoSolver::projection()
 		// Populate updated pressure values
 		for (size_t j = 0; j < nTheta; ++j) 
 		{
-			fReal pSum = 0.0
+			fReal pSum = 0.0;
 			for (size_t i = 0; i < nPhi; ++i) 
 			{
 				size_t index = getIndex(i, j);

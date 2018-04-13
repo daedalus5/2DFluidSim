@@ -183,6 +183,10 @@ private:
 	void bodyForce();
 	void updateTracer();
 
+	void fillDivergence();
+	void transformDivergence();
+	void invTransformPressure();
+
 	// Swap all these buffers of the attributes.
 	void swapAttrBuffers();
 
