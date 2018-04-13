@@ -442,9 +442,9 @@ void KaminoSolver::projection()
 			// TODO check d vector
 			TDMSolve(this->a, this->b, this->c, this->d);
 			for(size_t j = 0; j < nTheta; ++j){
-				fReal theta = j*gridLen + gridLen / 2.0;
+				fReal phi = j*gridLen + gridLen / 2.0;
 				size_t index = getIndex(i, j);
-				fourierU[index] = d[j] * cos(n * theta);
+				fourierU[index] = d[j] * cos(n * phi);
 			}
 		}
 
