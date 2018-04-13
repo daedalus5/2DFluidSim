@@ -202,6 +202,8 @@ private:
 	void initialize_test();
 	/* which grids are solid? */
 	void initialize_boundary();
+	/* sum of sine functions for velocity initialization */
+	fReal sinSum(const fReal x, const fReal y);
 	/* FBM noise function for velocity distribution */
 	fReal FBM(const fReal x, const fReal y);
 	/* 2D noise interpolation function for smooth FBM noise */
@@ -232,8 +234,6 @@ public:
 	void addCenteredAttr(std::string name, fReal xOffset = 0.5, fReal yOffset = 0.5);
 	void addStaggeredAttr(std::string name, fReal xOffset, fReal yOffset);
 
-	//void precomputeLaplacian();
-	
 	KaminoQuantity* getAttributeNamed(std::string name);
 	KaminoQuantity* operator[](std::string name);
 

@@ -27,9 +27,9 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 
 	initialize_velocity();
 	initialize_pressure();
+
 	//precomputeLaplacian();
 	initialize_test();
-
 	//initialize_boundary();
 }
 
@@ -665,76 +665,6 @@ gridType KaminoSolver::getGridTypeAt(size_t x, size_t y)
 	return gridTypes[getIndex(x, y)];
 }
 
-/* Compute Laplacian done right...probably */
-// void KaminoSolver::precomputeLaplacian()
-// {
-// 	Laplacian = Eigen::SparseMatrix<fReal>(nPhi*nTheta, nPhi*nTheta);
-// 	Laplacian.setZero();
-
-// 	for (size_t i = 0; i < nPhi; ++i)
-// 	{
-// 		for (size_t j = 0; j < nTheta; ++j)
-// 		{
-// 			if (getGridTypeAt(i, j) != FLUIDGRID)
-// 				continue;
-// 			size_t rowNumber = getIndex(i, j);
-// 			fReal thetaBelt = (0.5 + j) * gridLen;
-// 			fReal sine = std::sin(thetaBelt);
-// 			fReal cosine = std::cos(thetaBelt);
-// 			fReal sinSq = sine * sine;
-// 			fReal gTerm = 0.5 * sine * cosine * gridLen;
-
-// 			fReal cofIJ = 0.0;
-// 			fReal cofIJp1 = 0.0;
-// 			fReal cofIJm1 = 0.0;
-// 			fReal cofIp1J = 0.0;
-// 			fReal cofIm1J = 0.0;
-
-// 			size_t ip1 = (i + 1) % nPhi;
-// 			size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
-			
-// 			if (getGridTypeAt(ip1, j) == FLUIDGRID)
-// 			{
-// 				cofIJ += 1.0;
-// 				cofIp1J -= 1.0;
-// 			}
-// 			if (getGridTypeAt(im1, j) == FLUIDGRID)
-// 			{
-// 				cofIJ += 1.0;
-// 				cofIm1J -= 1.0;
-// 			}
-// 			if (j != 0)
-// 			{
-// 				size_t jm1 = j - 1;
-// 				if (getGridTypeAt(i, jm1) == FLUIDGRID)
-// 				{
-// 					cofIJ += 1.0 * sinSq;
-// 					cofIJm1 -= 1.0 * sinSq;
-// 					cofIJm1 += 1.0 * gTerm;
-// 					Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = cofIJm1;
-// 				}
-// 			}
-// 			if (j != nTheta - 1)
-// 			{
-// 				size_t jp1 = j + 1;
-// 				if (getGridTypeAt(i, jp1) == FLUIDGRID)
-// 				{
-// 					cofIJ += 1.0 * sinSq;
-// 					cofIJp1 -= 1.0 * sinSq;
-// 					cofIJp1 -= 1.0 * gTerm;
-// 					Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = cofIJp1;
-// 				}
-// 			}
-
-// 			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = cofIJ;
-// 			Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = cofIp1J;
-// 			Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = cofIm1J;
-// 		}
-// 	}
-// 	//fReal coeffA = timeStep / (density * radius * gridLen);
-// 	//Laplacian = coeffA * Laplacian;
-// }
-
 void KaminoSolver::initialize_pressure()
 {
 	for(size_t i = 0; i < nPhi; ++i){
@@ -754,7 +684,8 @@ void KaminoSolver::initialize_velocity()
 	size_t sizeTheta = u->getNTheta();
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
-			val = FBM(sin(i * gridLen), sin(j * gridLen));
+			//val = FBM(sin(i * gridLen), sin(j * gridLen));
+			val = sinSum(i*gridLen, j*gridLen);
 			u->setValueAt(i, j, val);
 		}
 	}
@@ -766,6 +697,13 @@ void KaminoSolver::initialize_velocity()
 			v->setValueAt(i, j, val);
 		}
 	}
+}
+
+fReal KaminoSolver::sinSum(const fReal x, const fReal y)
+{
+	fReal arg = x / (2*M_PI);
+	fReal sum = sin(arg) + sin(2*arg) + sin(5*arg) + sin(3*y) + sin(7*y);
+	return sum / 4.0;
 }
 
 fReal KaminoSolver::FBM(const fReal x, const fReal y) {
