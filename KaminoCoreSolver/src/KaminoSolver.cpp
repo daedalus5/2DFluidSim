@@ -28,7 +28,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	initialize_velocity();
 	initialize_pressure();
 	//precomputeLaplacian();
-	initialize_test();
+	//initialize_test();
 
 	//initialize_boundary();
 }
@@ -352,8 +352,6 @@ void KaminoSolver::fillDivergence()
 	KaminoQuantity* u = staggeredAttr["u"];
 	KaminoQuantity* v = staggeredAttr["v"];
 
-	fReal rhsScale = density * radius / timeStep;
-
 	/// TODO: Fill the fourierF buffer with divergence
 	for (size_t j = 0; j < nTheta; ++j)
 	{
@@ -415,7 +413,7 @@ void KaminoSolver::fillDivergence()
 
 			fReal div = termTheta + termPhi;
 			//Additional divergence scaling goes here
-			div *= rhsScale;
+			//div *= rhsScale;
 			beffourierF[getIndex(i, j)] = div;
 		}
 	}
@@ -474,7 +472,8 @@ void KaminoSolver::projection()
 	/// TODO: Perform forward FFT on fourierF to make them fourier coefficients
 	transformDivergence();
 
-	fReal scaleD = density * radius * gridLen * gridLen / timeStep;
+	//fReal scaleD = density * radius * gridLen * gridLen / timeStep;
+	fReal scaleD = gridLen * gridLen;
 	for (int nIndex = 0; nIndex < nPhi; ++nIndex)
 	{
 		int n = nIndex - nPhi / 2;
@@ -505,14 +504,19 @@ void KaminoSolver::projection()
 				b[i] += coef * c[i];
 				c[i] = 0.0;
 			}
-			fReal fTabled = this->beffourierF[getIndex(nIndex, i)];
+			fReal fTabled = this->fourieredF[getIndex(nIndex, i)];
+			scaleD *= sinSq;
 			d[i] = fTabled * scaleD;
 		}
-		TDMSolve(this->a, this->b, this->c, this->d);
-		//d now contains Ui
-		for (size_t i = 0; i < nTheta; ++i)
+		//When n == 0, d = 0, whole system degenerates to Ax = 0 where A is singular
+		if (n != 0)
 		{
-			this->fourierU[getIndex(nIndex, i)] = d[i];
+			TDMSolve(this->a, this->b, this->c, this->d);
+		}
+		//d now contains Ui
+		for (size_t UiIndex = 0; UiIndex < nTheta; ++UiIndex)
+		{
+			this->fourierU[getIndex(nIndex, UiIndex)] = d[UiIndex];
 		}
 	}
 
@@ -520,7 +524,7 @@ void KaminoSolver::projection()
 	p->swapBuffer();
 
 	// Update velocities accordingly: uPhi
-	fReal factorTheta = -(timeStep * invGridLen) / (density * radius);
+	fReal factorTheta = -invGridLen;
 	for (size_t j = 0; j < u->getNTheta(); ++j)
 	{
 		for (size_t i = 0; i < u->getNPhi(); ++i)
@@ -605,7 +609,7 @@ void KaminoSolver::TDMSolve(fReal* a, fReal* b, fReal* c, fReal* d)
  	// |a1 b1 c1||x1|=|d1|
  	// |0  a2 b2||x2| |d2|
 
-    int n = nPhi;
+    int n = nTheta;
     n--; // since we index from 0
     c[0] /= b[0];
     d[0] /= b[0];
