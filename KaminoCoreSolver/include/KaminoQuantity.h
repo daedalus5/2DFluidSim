@@ -24,6 +24,8 @@
 typedef double fReal;
 
 const fReal density = 1000.0;
+const fReal uSolid = 0.0;
+const fReal vSolid = 0.0;
 
 // Handy Lerp.
 template <class Type>

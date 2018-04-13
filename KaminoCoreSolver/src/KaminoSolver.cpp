@@ -349,9 +349,6 @@ void KaminoSolver::fillDivergence()
 	KaminoQuantity* u = staggeredAttr["u"];
 	KaminoQuantity* v = staggeredAttr["v"];
 
-	const fReal uSolid = 0.0;
-	const fReal vSolid = 0.0;
-
 	fReal rhsScale = density * radius / timeStep;
 
 	/// TODO: Fill the fourierF buffer with divergence
@@ -530,16 +527,20 @@ void KaminoSolver::projection()
 			fReal invSine = 1.0 / std::sin(thetaBelt);
 			fReal factorPhi = factorTheta * invSine;
 
-			fReal pressurePhi = 0.0;
 			size_t gridLeftI = (i == 0 ? u->getNPhi() - 1 : i - 1);
 			size_t gridRightI = i;
-			if (getGridTypeAt(gridLeftI, j) == FLUIDGRID)
-				pressurePhi -= p->getValueAt(gridLeftI, j);
-			if (getGridTypeAt(gridRightI, j) == FLUIDGRID)
-				pressurePhi += p->getValueAt(gridRightI, j);
 
-			fReal deltauPhi = factorPhi * pressurePhi;
-			u->writeValueTo(i, j, uBefore + deltauPhi);
+			if (getGridTypeAt(gridLeftI, j) == SOLIDGRID ||
+				getGridTypeAt(gridRightI, j) == SOLIDGRID)
+			{
+				u->writeValueTo(i, j, uSolid);
+			}
+			else
+			{
+				fReal pressurePhi = p->getValueAt(gridRightI, j) - p->getValueAt(gridLeftI, j);
+				fReal deltauPhi = factorPhi * pressurePhi;
+				u->writeValueTo(i, j, uBefore + deltauPhi);
+			}
 		}
 	}
 	// Update velocities accordingly: uTheta
@@ -552,6 +553,7 @@ void KaminoSolver::projection()
 			{
 				size_t thetaLeft = i;
 				size_t thetaRight = (i + 1) % u->getNPhi();
+				// At north pole : duTheta/dTheta = -uPhi
 				fReal diff = u->getValueAt(thetaLeft, j) - u->getValueAt(thetaRight, j);
 				diff *= invGridLen;
 				v->writeValueTo(i, j, diff);
@@ -560,21 +562,27 @@ void KaminoSolver::projection()
 			{
 				size_t thetaLeft = i;
 				size_t thetaRight = (i + 1) % u->getNPhi();
+				// At south pole : duTheta/dTheta = uPhi
 				fReal diff = u->getValueAt(thetaRight, j - 1) - u->getValueAt(thetaLeft, j - 1);
 				diff *= invGridLen;
 				v->writeValueTo(i, j, diff);
 			}
 			else
 			{
-				fReal pressureTheta = 0.0;
 				size_t gridAboveJ = j;
 				size_t gridBelowJ = j - 1;
-				if (getGridTypeAt(i, gridBelowJ) == FLUIDGRID)
-					pressureTheta -= p->getValueAt(i, gridBelowJ);
-				if (getGridTypeAt(i, gridAboveJ) == FLUIDGRID)
-					pressureTheta += p->getValueAt(j, gridAboveJ);
-				fReal deltauTheta = factorTheta * pressureTheta;
-				v->writeValueTo(i, j, deltauTheta + vBefore);
+
+				if (getGridTypeAt(i, gridBelowJ == SOLIDGRID) ||
+					getGridTypeAt(i, gridAboveJ) == SOLIDGRID)
+				{
+					v->writeValueTo(i, j, vSolid);
+				}
+				else
+				{
+					fReal pressureTheta = p->getValueAt(i, gridAboveJ) - p->getValueAt(i, gridBelowJ);
+					fReal deltauTheta = factorTheta * pressureTheta;
+					v->writeValueTo(i, j, deltauTheta + vBefore);
+				}
 			}
 		}
 	}
@@ -747,7 +755,7 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(cos(i * gridLen), cos(j * gridLen));
-			v->setValueAt(i, j, val);
+			v->setValueAt(i, j, 0.0);
 		}
 	}
 }
