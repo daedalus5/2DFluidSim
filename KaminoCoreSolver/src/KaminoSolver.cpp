@@ -28,7 +28,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	initialize_velocity();
 	initialize_pressure();
 	//precomputeLaplacian();
-	//initialize_test();
+	initialize_test();
 
 	//initialize_boundary();
 }
@@ -76,7 +76,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 
 	geometric();
 	std::cout << "Geometric completed" << std::endl;
-	// bodyForce();
+	//bodyForce();
 	projection();
 	std::cout << "Projection completed" << std::endl;
 	updateTracer();
@@ -762,7 +762,7 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(cos(i * gridLen), cos(j * gridLen));
-			v->setValueAt(i, j, 0.0);
+			v->setValueAt(i, j, val);
 		}
 	}
 }
@@ -991,8 +991,8 @@ void KaminoSolver::addStaggeredAttr(std::string name, fReal xOffset, fReal yOffs
 {
 	size_t attrnPhi = this->nPhi;
 	size_t attrnTheta = this->nTheta;
-	// Is the staggered attribute u?
-	if (xOffset == 0.5)
+	// Is the staggered attribute uTheta?
+	if (name == "v")
 	{
 		attrnTheta += 1;
 	}
