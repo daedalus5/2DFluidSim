@@ -96,7 +96,7 @@ void validatePhiTheta(fReal & phi, fReal & theta)
 	phi = phi - loops * M_2PI;*/
 	if (theta < 0.0)
 	{
-		theta = M_PI + theta;
+		theta = -theta;
 		phi += M_PI;
 	}
 	if (theta > M_PI)
