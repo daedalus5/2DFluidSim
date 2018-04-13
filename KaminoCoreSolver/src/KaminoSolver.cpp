@@ -4,20 +4,30 @@
 // CONSTRUCTOR / DESTRUCTOR >>>>>>>>>>
 
 KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridLength, fReal frameDuration) :
-	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), frameDuration(frameDuration),
-	timeStep(0.0), timeElapsed(0.0), trc(M_PI / 2.0, M_PI / 2.0)
+	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), invGridLen(1.0 / gridLength), frameDuration(frameDuration),
+	timeStep(0.0), timeElapsed(0.0), trc(M_PI / 2.0, M_PI / 2.0, radius)
 {
-	addStaggeredAttr("u", 0.0, 0.5);		// u velocity
-	addStaggeredAttr("v", 0.5, 0.0);		// v velocity
-	addCenteredAttr("p", 0.5, 0.5);				// p pressure
-	addCenteredAttr("test", 0.5, 0.5);			// test scalar field
+	this->beffourierF = new fReal[nPhi * nTheta];
+	this->fourieredF = new fReal[nPhi * nTheta];
+	this->fourierU = new fReal[nPhi * nTheta];
+
+	this->a = new fReal[nTheta];
+	this->b = new fReal[nTheta];
+	this->c = new fReal[nTheta];
+	this->d = new fReal[nTheta];
+
+	// Our new staggered grid...
+	addStaggeredAttr("u", -0.5, 0.5);		// u velocity
+	addStaggeredAttr("v", 0.0, 0.0);		// v velocity
+	addCenteredAttr("p", 0.0, 0.5);				// p pressure
+	addCenteredAttr("test", 0.0, 0.5);			// test scalar field
 
 	this->gridTypes = new gridType[nPhi * nTheta];
 	memset(reinterpret_cast<void*>(this->gridTypes), FLUIDGRID, nPhi * nTheta);
 
 	initialize_velocity();
 	initialize_pressure();
-	precomputeLaplacian();
+	//precomputeLaplacian();
 	initialize_test();
 
 	//initialize_boundary();
@@ -25,6 +35,15 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 
 KaminoSolver::~KaminoSolver()
 {
+	delete[] beffourierF;
+	delete[] fourieredF;
+	delete[] fourierU;
+
+	delete[] a;
+	delete[] b;
+	delete[] c;
+	delete[] d;
+
 	for (auto& attr : this->centeredAttr)
 	{
 		delete attr.second;
@@ -52,18 +71,21 @@ void KaminoSolver::stepForward(fReal timeStep)
 	this->timeStep = timeStep;
 	advectionScalar();
 	advectionSpeed();
+	std::cout << "Advection completed" << std::endl;
 	this->swapAttrBuffers();
 
 	geometric();
-	// bodyForce();
+	std::cout << "Geometric completed" << std::endl;
+	//bodyForce();
 	projection();
+	std::cout << "Projection completed" << std::endl;
 	updateTracer();
 }
 
 // Phi: 0 - 2pi  Theta: 0 - pi
 void validatePhiTheta(fReal & phi, fReal & theta)
 {
-	int loops = static_cast<int>(std::floor(theta / M_2PI));
+	/*int loops = static_cast<int>(std::floor(theta / M_2PI));
 	theta = theta - loops * M_2PI;
 	if (theta > M_PI)
 	{
@@ -71,7 +93,21 @@ void validatePhiTheta(fReal & phi, fReal & theta)
 		phi += M_PI;
 	}
 	loops = static_cast<int>(std::floor(phi / M_2PI));
-	phi = phi - loops * M_2PI;
+	phi = phi - loops * M_2PI;*/
+	if (theta < 0.0)
+	{
+		theta = M_PI + theta;
+		phi += M_PI;
+	}
+	if (theta > M_PI)
+	{
+		theta = M_2PI - theta;
+		phi += M_PI;
+	}
+	if (phi > M_2PI)
+		phi -= M_2PI;
+	if (phi < 0.0)
+		phi += M_2PI;
 }
 
 void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gridTheta)
@@ -152,7 +188,23 @@ void KaminoSolver::advectionSpeed()
 	/// TODO
 	// First we derive velocity at the poles...
 	size_t northernBelt = 0;
-	size_t southernBelt = this->nTheta - 1; // uTheta->getNTheta() - 2
+	size_t southernBelt = uPhi->getNTheta() - 1; // uTheta->getNTheta() - 2
+	size_t northernPinch = 0;
+	size_t southernPinch = uTheta->getNTheta() - 1;
+	/*for (size_t gridPhi = 0; gridPhi < uPhi->getNPhi(); ++gridPhi)
+	{
+		size_t phiLower = gridPhi;
+		size_t phiHigher = (gridPhi + 1) % uPhi->getNPhi();
+		// duPhi / dPhi = -uTheta
+		fReal uPhiDiff = uPhi->getValueAt(phiLower, northernBelt) - uPhi->getValueAt(phiHigher, northernBelt);
+		fReal uThetaNorth = uPhiDiff * this->invGridLen;
+		uTheta->writeValueTo(gridPhi, northernPinch, uThetaNorth);
+
+		// duPhi / dPhi = uTheta
+		uPhiDiff = uPhi->getValueAt(phiHigher, southernBelt) - uPhi->getValueAt(phiHigher, southernBelt);
+		fReal uThetaSouth = uPhiDiff * this->invGridLen;
+		uTheta->writeValueTo(gridPhi, southernPinch, uThetaSouth);
+	}*/
 	resetPoleVelocities();
 	for (size_t gridPhi = 0; gridPhi < this->nPhi; ++gridPhi)
 	{
@@ -184,9 +236,6 @@ void KaminoSolver::advectionSpeed()
 	fReal uAmplituteN = std::sqrt(uPhiNorthP[x] * uPhiNorthP[x] + uPhiNorthP[y] * uPhiNorthP[y]);
 	fReal uAmplituteS = std::sqrt(uPhiSouthP[x] * uPhiSouthP[x] + uPhiSouthP[y] * uPhiSouthP[y]);
 
-	size_t northernPinch = 0;
-	size_t southernPinch = uTheta->getNTheta() - 1;
-	
 	size_t beltHalved = this->nPhi / 2;
 	for (size_t i = 0; i < beltHalved; ++i)
 	{
@@ -298,255 +347,252 @@ void KaminoSolver::bodyForce()
 	v->swapBuffer();
 }
 
+void KaminoSolver::fillDivergence()
+{
+	KaminoQuantity* u = staggeredAttr["u"];
+	KaminoQuantity* v = staggeredAttr["v"];
+
+	fReal scaleDiv = density * radius / timeStep;
+	/// TODO: Fill the fourierF buffer with divergence
+	for (size_t j = 0; j < nTheta; ++j)
+	{
+		fReal thetaOftheBelt = (j + 0.5) * gridLen;
+		fReal sine = std::sin(thetaOftheBelt);
+		fReal invSine = 1.0 / sine;
+
+		for (size_t i = 0; i < nPhi; ++i)
+		{
+			if (getGridTypeAt(i, j) != FLUIDGRID)
+			{
+				beffourierF[getIndex(i, j)] = 0.0;
+				continue;//Leave it as 0 = 0 trivial problem
+			}
+
+			size_t rowNumber = getIndex(i, j);
+
+			size_t imoot = i;
+			size_t ipoot = (i + 1) % nPhi;
+			size_t jmoot = j;
+			size_t jpoot = j + 1;
+
+			size_t grid2tRight = (i + 1) % nPhi;
+			size_t grid2tLeft = i == 0 ? nPhi - 1 : i - 1;
+
+			fReal uLeft = uSolid;
+			fReal uRight = uSolid;
+			fReal vUnder = vSolid;
+			fReal vAbove = vSolid;
+
+			if (getGridTypeAt(grid2tLeft, j) == FLUIDGRID)
+			{
+				uLeft = u->getValueAt(imoot, j);
+			}
+			if (getGridTypeAt(grid2tRight, j) == FLUIDGRID)
+			{
+				uRight = u->getValueAt(ipoot, j);
+			}
+			if (j != 0)
+			{
+				size_t gridUnder = j - 1;
+				if (getGridTypeAt(i, gridUnder) == FLUIDGRID)
+				{
+					vUnder = v->getValueAt(i, jmoot);
+				}
+			}
+			if (j != nTheta - 1)
+			{
+				size_t gridAbove = j + 1;
+				if (getGridTypeAt(i, gridAbove) == FLUIDGRID)
+				{
+					vAbove = v->getValueAt(i, jpoot);
+				}
+			}
+			fReal sinUpper = std::sin(thetaOftheBelt + 0.5 * gridLen);
+			fReal sinLower = std::sin(thetaOftheBelt - 0.5 * gridLen);
+			fReal termTheta = invSine * invGridLen * (vAbove * sinUpper - vUnder * sinLower);
+			fReal termPhi = invSine * invGridLen * (uRight - uLeft);
+
+			fReal div = termTheta + termPhi;
+			//Additional divergence scaling goes here
+			div *= scaleDiv;
+			beffourierF[getIndex(i, j)] = div;
+		}
+	}
+}
+
+void KaminoSolver::transformDivergence()
+{
+	for (size_t thetaI = 0; thetaI < nTheta; ++thetaI)
+	{
+		for (int nIndex = 0; nIndex < nPhi; ++nIndex)
+		{
+			int n = nIndex - nPhi / 2;
+			fReal accumulatedReal = 0.0;
+			for (size_t j = 0; j < nPhi; ++j)
+			{
+				fReal phiJ = (M_2PI / nPhi) * j;
+				fReal phase = -n * phiJ;
+				fReal fThetaN = beffourierF[getIndex(j, thetaI)];
+				accumulatedReal += fThetaN * std::cos(phase);
+			}
+			accumulatedReal = accumulatedReal / nPhi;
+			fourieredF[getIndex(nIndex, thetaI)] = accumulatedReal;
+		}
+	}
+}
+
+void KaminoSolver::invTransformPressure()
+{
+	KaminoQuantity* p = (*this)["p"];
+	for (size_t gTheta = 0; gTheta < nTheta; ++gTheta)
+	{
+		for (size_t gPhi = 0; gPhi < nPhi; ++gPhi)
+		{
+			fReal Phi = M_2PI / nPhi * gPhi;
+			fReal accumulatedPressure = 0.0;
+			for (int nIndex = 0; nIndex < nPhi; ++nIndex)
+			{
+				int n = nIndex - nPhi / 2;
+				fReal phase = n * Phi;
+				fReal pressureFourierCoef = fourierU[getIndex(nIndex, gTheta)];
+				accumulatedPressure += pressureFourierCoef * std::cos(phase);
+			}
+			p->writeValueTo(gPhi, gTheta, accumulatedPressure);
+		}
+	}
+}
+
 void KaminoSolver::projection()
 {
-	const fReal density = 1000.0;
-	fReal rhsScaleB = -gridLen * radius * density / timeStep;
-	fReal scaleP = 1.0 / rhsScaleB;
-
-	Eigen::VectorXd b(nPhi * nTheta);
-	b.setZero();
-
 	KaminoQuantity* u = staggeredAttr["u"];
 	KaminoQuantity* v = staggeredAttr["v"];
 	KaminoQuantity* p = centeredAttr["p"];
 
-	// north pole / j = 0
+	/// TODO: Fill these divergence
+	fillDivergence();
+	/// TODO: Perform forward FFT on fourierF to make them fourier coefficients
+	transformDivergence();
 
-	for (size_t i = 0; i < nPhi; ++i)
+	//fReal scaleD = density * radius * gridLen * gridLen / timeStep;
+	fReal scaleD = gridLen * gridLen;
+	for (int nIndex = 0; nIndex < nPhi; ++nIndex)
 	{
-		// oot : one over two
+		int n = nIndex - nPhi / 2;
+		fReal nSqgridSq = n * gridLen;
+		nSqgridSq = nSqgridSq * nSqgridSq;
 
-		fReal uPlus, uMinus, vPlus, vMinus;
-		fReal theta = gridLen / 2.0;
-		fReal sine = sin(theta);
-		fReal sinSq = sine * sine;
-		fReal cosine = cos(theta);
-		fReal gTerm = gridLen * cosine * sine / 2.0;
-		// right
-		size_t ipoot = (i + 1) % nPhi;
-		if (getGridTypeAt(ipoot, 0) == FLUIDGRID)
+		for (int i = 0; i < nTheta; ++i)
 		{
-			uPlus = u->getValueAt(ipoot, 0);
-		}
-		else
-		{
-			uPlus = 0.0;
-		}
-		// left
-		size_t imoot = i;
-		if (getGridTypeAt(imoot, 0) == FLUIDGRID)
-		{
-			uMinus = u->getValueAt(imoot, 0);
-		}
-		else
-		{
-			uMinus = 0.0;
-		}
-		// top
-		size_t jpoot = 1;
-		if (getGridTypeAt(i, jpoot) == FLUIDGRID)
-		{
-			vPlus = v->getValueAt(i, jpoot);
-		}
-		else
-		{
-			vPlus = 0.0;
-		}
-		// bottom
-		vMinus = 0.0;
-		b(getIndex(i, 0)) = (sine * (uPlus - uMinus) + sinSq * (vPlus - vMinus) + gTerm * (vPlus + vMinus));
-	}
-
-	// interior of sphere grid
-
-	for (size_t j = 0; j < nTheta; ++j)
-	{
-		for (size_t i = 0; i < nPhi; ++i)
-		{
-			// oot : one over two
-
-			fReal uPlus, uMinus, vPlus, vMinus;
-			fReal theta = j*gridLen + gridLen / 2.0;
-			fReal sine = sin(theta);
+			fReal thetaI = (i + 0.5) * gridLen;
+			fReal sine = std::sin(thetaI);
 			fReal sinSq = sine * sine;
-			fReal cosine = cos(theta);
-			fReal gTerm = gridLen * cosine * sine / 2.0;
-			// right
-			size_t ipoot = (i + 1) % nPhi;
-			if (getGridTypeAt(ipoot, j) == FLUIDGRID)
+			fReal sincos = std::cos(thetaI) * sine;
+			fReal ip1im1Term2 = 0.5 * sincos * gridLen;
+
+			b[i] = -2.0 * sinSq - nSqgridSq;
+			a[i] = sinSq - ip1im1Term2;
+			c[i] = sinSq + ip1im1Term2;
+
+			if (i == 0)
 			{
-				uPlus = u->getValueAt(ipoot, j);
+				fReal coef = std::pow(-1.0, n);
+				b[i] += coef * a[i];
+				a[i] = 0.0;
 			}
-			else
+			if (i == nTheta - 1)
 			{
-				uPlus = 0.0;
+				fReal coef = std::pow(-1.0, n);
+				b[i] += coef * c[i];
+				c[i] = 0.0;
 			}
-			// left
-			size_t imoot = i;
-			if (getGridTypeAt(imoot, j) == FLUIDGRID)
-			{
-				uMinus = u->getValueAt(imoot, j);
-			}
-			else
-			{
-				uMinus = 0.0;
-			}
-			// top
-			size_t jpoot = j + 1;
-			if (getGridTypeAt(i, jpoot) == FLUIDGRID)
-			{
-				vPlus = v->getValueAt(i, jpoot);
-			}
-			else
-			{
-				vPlus = 0.0;
-			}
-			// bottom
-			size_t jmoot = j;
-			if (getGridTypeAt(i, jmoot) == FLUIDGRID)
-			{
-				vMinus = v->getValueAt(i, jmoot);
-			}
-			else
-			{
-				vMinus = 0.0;
-			}
-			b(getIndex(i, j)) = (sine * (uPlus - uMinus) + sinSq * (vPlus - vMinus) + gTerm * (vPlus + vMinus));
+			fReal fTabled = this->fourieredF[getIndex(nIndex, i)];
+			scaleD *= sinSq;
+			d[i] = fTabled * scaleD;
+		}
+		//When n == 0, d = 0, whole system degenerates to Ax = 0 where A is singular
+		if (n != 0)
+		{
+			TDMSolve(this->a, this->b, this->c, this->d);
+		}
+		//d now contains Ui
+		for (size_t UiIndex = 0; UiIndex < nTheta; ++UiIndex)
+		{
+			this->fourierU[getIndex(nIndex, UiIndex)] = d[UiIndex];
 		}
 	}
 
-	// south pole / j = nTheta - 1
-
-	for (size_t i = 0; i < nPhi; ++i)
-	{
-		// oot : one over two
-
-		fReal uPlus, uMinus, vPlus, vMinus;
-		fReal theta = M_PI - gridLen / 2.0;
-		fReal sine = sin(theta);
-		fReal sinSq = sine * sine;
-		fReal cosine = cos(theta);
-		fReal gTerm = gridLen * cosine * sine / 2.0;
-		// right
-		size_t ipoot = (i + 1) % nPhi;
-		if (getGridTypeAt(ipoot, nTheta - 1) == FLUIDGRID)
-		{
-			uPlus = u->getValueAt(ipoot, nTheta - 1);
-		}
-		else
-		{
-			uPlus = 0.0;
-		}
-		// left
-		size_t imoot = i;
-		if (getGridTypeAt(imoot, nTheta - 1) == FLUIDGRID)
-		{
-			uMinus = u->getValueAt(imoot, nTheta - 1);
-		}
-		else
-		{
-			uMinus = 0.0;
-		}
-		// bottom
-		size_t jmoot = nTheta - 1;
-		if (getGridTypeAt(i, jmoot) == FLUIDGRID)
-		{
-			vMinus = v->getValueAt(i, jmoot);
-		}
-		else
-		{
-			vMinus = 0.0;
-		}
-		// top
-		vPlus = 0.0;
-		b(getIndex(i, nTheta - 1)) = (sine * (uPlus - uMinus) + sinSq * (vPlus - vMinus) + gTerm * (vPlus + vMinus));
-	}
-
-	b = b * rhsScaleB;
-
-	Eigen::VectorXd pVector(nPhi * nTheta);
-	
-	Eigen::ConjugateGradient<Eigen::SparseMatrix<fReal>, Eigen::Lower | Eigen::Upper> cg;
-	//cg.setTolerance(pow(10, -1));
-	cg.compute(Laplacian);
-	pVector = cg.solve(b);
-
-	// Populate updated pressure values
-	for (size_t j = 0; j < nTheta; ++j) 
-	{
-		for (size_t i = 0; i < nPhi; ++i) 
-		{
-			p->writeValueTo(i, j, pVector(getIndex(i, j)));
-		}
-	}
+	invTransformPressure();
 	p->swapBuffer();
 
-	const fReal usolid = 0.0;
-	const fReal vsolid = 0.0;
-
-	// north pole / j = 0
-
-	for(size_t i = 0; i < nPhi; ++i){
-		fReal uBeforeUpdate = u->getValueAt(i, 0);
-		fReal vBeforeUpdate = v->getValueAt(i, 0);
-		fReal invSin = 1 / sin(gridLen / 2.0);
-		size_t iRhs = i;
-		size_t iLhs = (i == 0 ? nPhi - 1 : i - 1);
-		if (getGridTypeAt(iRhs, 0) == FLUIDGRID && getGridTypeAt(iLhs, 0) == FLUIDGRID)
+	// Update velocities accordingly: uPhi
+	fReal factorTheta = -invGridLen * timeStep / (density * radius);
+	for (size_t j = 0; j < u->getNTheta(); ++j)
+	{
+		for (size_t i = 0; i < u->getNPhi(); ++i)
 		{
-			fReal pressureSummedU = p->getValueAt(iRhs, 0) - p->getValueAt(iLhs, 0);
-			fReal deltaU = scaleP * invSin * pressureSummedU;
-			u->writeValueTo(i, 0, uBeforeUpdate + deltaU);
-		}
-		else
-		{
-			u->writeValueTo(i, 0, usolid);
-		}
-		// we get divergence-free velocity for free at polar points
-		v->writeValueTo(i, 0, vBeforeUpdate);
-	}
+			fReal uBefore = u->getValueAt(i, j);
+			fReal thetaBelt = (j + 0.5) * gridLen;
+			fReal invSine = 1.0 / std::sin(thetaBelt);
+			fReal factorPhi = factorTheta * invSine;
 
-	// interior of sphere grid
+			size_t gridLeftI = (i == 0 ? u->getNPhi() - 1 : i - 1);
+			size_t gridRightI = i;
 
-	for(size_t j = 1; j < nTheta; ++j){
-		for(size_t i = 0; i < nPhi; ++i){
-			fReal uBeforeUpdate = u->getValueAt(i, j);
-			fReal vBeforeUpdate = v->getValueAt(i, j);
-			fReal invSin = 1 / sin(j*gridLen + gridLen / 2.0);
-			size_t iRhs = i;
-			size_t iLhs = (i == 0 ? nPhi - 1 : i - 1);
-			if (getGridTypeAt(iRhs, j) == FLUIDGRID && getGridTypeAt(iLhs, j) == FLUIDGRID)
+			if (getGridTypeAt(gridLeftI, j) == SOLIDGRID ||
+				getGridTypeAt(gridRightI, j) == SOLIDGRID)
 			{
-				fReal pressureSummedU = p->getValueAt(iRhs, j) - p->getValueAt(iLhs, j);
-				fReal deltaU = scaleP * invSin * pressureSummedU;
-				u->writeValueTo(i, j, uBeforeUpdate + deltaU);
+				u->writeValueTo(i, j, uSolid);
 			}
 			else
 			{
-				u->writeValueTo(i, j, usolid);
-			}
-			size_t jUpper = j;
-			size_t jLower = j - 1;
-			if (getGridTypeAt(i, jUpper) == FLUIDGRID && getGridTypeAt(i, jLower) == FLUIDGRID)
-			{
-				fReal pressureSummedV = p->getValueAt(i, jUpper) - p->getValueAt(i, jLower);
-				fReal deltaV = scaleP * pressureSummedV;
-				v->writeValueTo(i, j, vBeforeUpdate + deltaV);
-			}
-			else
-			{
-				v->writeValueTo(i, j, vsolid);
+				fReal pressurePhi = p->getValueAt(gridRightI, j) - p->getValueAt(gridLeftI, j);
+				fReal deltauPhi = factorPhi * pressurePhi;
+				u->writeValueTo(i, j, uBefore + deltauPhi);
 			}
 		}
 	}
+	// Update velocities accordingly: uTheta
+	for (size_t j = 0; j < v->getNTheta(); ++j)
+	{
+		for (size_t i = 0; i < v->getNPhi(); ++i)
+		{
+			fReal vBefore = v->getValueAt(i, j);
+			if (j == 0)
+			{
+				size_t thetaLeft = i;
+				size_t thetaRight = (i + 1) % u->getNPhi();
+				// At north pole : duTheta/dTheta = -uPhi
+				fReal diff = u->getValueAt(thetaLeft, j) - u->getValueAt(thetaRight, j);
+				diff *= invGridLen;
+				v->writeValueTo(i, j, diff);
+			}
+			else if (j == v->getNTheta() - 1)
+			{
+				size_t thetaLeft = i;
+				size_t thetaRight = (i + 1) % u->getNPhi();
+				// At south pole : duTheta/dTheta = uPhi
+				fReal diff = u->getValueAt(thetaRight, j - 1) - u->getValueAt(thetaLeft, j - 1);
+				diff *= invGridLen;
+				v->writeValueTo(i, j, diff);
+			}
+			else
+			{
+				size_t gridAboveJ = j;
+				size_t gridBelowJ = j - 1;
 
-	// south pole / j = nTheta
-
-	for(size_t i = 0; i < nPhi; ++i){
-		fReal vBeforeUpdate = v->getValueAt(i, nTheta);
-		// we get divergence-free velocity for free at polar points
-		v->writeValueTo(i, nTheta, vBeforeUpdate);
+				if (getGridTypeAt(i, gridBelowJ == SOLIDGRID) ||
+					getGridTypeAt(i, gridAboveJ) == SOLIDGRID)
+				{
+					v->writeValueTo(i, j, vSolid);
+				}
+				else
+				{
+					fReal pressureTheta = p->getValueAt(i, gridAboveJ) - p->getValueAt(i, gridBelowJ);
+					fReal deltauTheta = factorTheta * pressureTheta;
+					v->writeValueTo(i, j, deltauTheta + vBefore);
+				}
+			}
+		}
 	}
 
 	u->swapBuffer();
@@ -556,6 +602,57 @@ void KaminoSolver::projection()
 
 // <<<<<<<<<<
 // INITIALIZATION >>>>>>>>>>
+
+/* Tri-diagonal matrix solver */
+void KaminoSolver::TDMSolve(fReal* a, fReal* b, fReal* c, fReal* d)
+{
+	// |b0 c0 0 ||x0| |d0|
+ 	// |a1 b1 c1||x1|=|d1|
+ 	// |0  a2 b2||x2| |d2|
+
+    int n = nTheta;
+    n--; // since we index from 0
+    c[0] /= b[0];
+    d[0] /= b[0];
+
+	for (int i = 1; i < n; i++) {
+        c[i] /= b[i] - a[i]*c[i-1];
+        d[i] = (d[i] - a[i]*d[i-1]) / (b[i] - a[i]*c[i-1]);
+    }
+
+    d[n] = (d[n] - a[n]*d[n-1]) / (b[n] - a[n]*c[n-1]);
+
+    for (int i = n; i-- > 0;) {
+        d[i] -= c[i]*d[i+1];
+    }
+}
+
+/* Load diagonal element arrays */
+void KaminoSolver::loadABC(size_t n)
+{
+	// A and B can be precomputed later to optimize
+	std::vector<fReal> A;
+	std::vector<fReal> B;
+	for(size_t i = 0; i < nTheta; ++i){
+		fReal theta = i * gridLen + gridLen / 2.0;
+		fReal Aval = (gridLen / 2.0) * (cos(theta) / sin(theta));
+		fReal Bval = gridLen * gridLen * n * n / (sin(theta) * sin(theta));
+		A.push_back(Aval);
+		B.push_back(Bval);
+	}
+
+	a[0] = 0.0;
+	b[0] = pow(-1.0, n) - 2 - A[0] * pow(-1.0, n) - B[0];
+	c[0] = 1 + B[0];
+	for(size_t i = 1; i < nTheta - 1; ++i){
+		a[i] = 1 - A[i];
+		b[i] = -2 - B[i];
+		c[i] = 1 + B[i];
+	}
+	a[nTheta - 1] = -2 - B[nTheta - 1];
+	b[nTheta - 1] = pow(-1.0, n) - 2 + A[nTheta - 1] * pow(-1.0 , n) - B[nTheta - 1];
+	c[nTheta - 1] = 0;
+}
 
 /* Duplicate of getIndex() in KaminoQuantity */
 size_t KaminoSolver::getIndex(size_t x, size_t y)
@@ -569,115 +666,74 @@ gridType KaminoSolver::getGridTypeAt(size_t x, size_t y)
 }
 
 /* Compute Laplacian done right...probably */
-void KaminoSolver::precomputeLaplacian()
-{
-	Laplacian = Eigen::SparseMatrix<fReal>(nPhi*nTheta, nPhi*nTheta);
-	Laplacian.setZero();
+// void KaminoSolver::precomputeLaplacian()
+// {
+// 	Laplacian = Eigen::SparseMatrix<fReal>(nPhi*nTheta, nPhi*nTheta);
+// 	Laplacian.setZero();
 
-	// north pole / j = 0
+// 	for (size_t i = 0; i < nPhi; ++i)
+// 	{
+// 		for (size_t j = 0; j < nTheta; ++j)
+// 		{
+// 			if (getGridTypeAt(i, j) != FLUIDGRID)
+// 				continue;
+// 			size_t rowNumber = getIndex(i, j);
+// 			fReal thetaBelt = (0.5 + j) * gridLen;
+// 			fReal sine = std::sin(thetaBelt);
+// 			fReal cosine = std::cos(thetaBelt);
+// 			fReal sinSq = sine * sine;
+// 			fReal gTerm = 0.5 * sine * cosine * gridLen;
 
-	for(size_t i = 0; i < nPhi; ++i){
-		size_t numPhiNeighbors = 0;
-		size_t numThetaNeighbors = 0;
-		size_t rowNumber = getIndex(i, 0);
-		fReal theta = gridLen / 2.0;
-		fReal sine = sin(theta);
-		fReal sinSq = sine * sine;
-		fReal cosine = cos(theta);
-		fReal gTerm = gridLen * cosine * sine / 2.0;
-		// right of cell
-		size_t ip1 = (i + 1) % nPhi;
-		if(getGridTypeAt(ip1, 0) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(ip1, 0)) = -1;
-			numPhiNeighbors++;
-		}
-		// left of cell
-		size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
-		if(getGridTypeAt(im1, 0) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(im1, 0)) = -1;
-			numPhiNeighbors++;
-		}
-		// above cell
-		size_t jp1 = 1;	
-		if (getGridTypeAt(i, jp1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * sinSq - 1 * gTerm;
-			numThetaNeighbors++;
-		}
-		Laplacian.coeffRef(rowNumber, getIndex(i, 0)) = numPhiNeighbors + (sinSq * numThetaNeighbors) + (gTerm * numThetaNeighbors);
-	}
+// 			fReal cofIJ = 0.0;
+// 			fReal cofIJp1 = 0.0;
+// 			fReal cofIJm1 = 0.0;
+// 			fReal cofIp1J = 0.0;
+// 			fReal cofIm1J = 0.0;
 
-	// interior of sphere grid
+// 			size_t ip1 = (i + 1) % nPhi;
+// 			size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
+			
+// 			if (getGridTypeAt(ip1, j) == FLUIDGRID)
+// 			{
+// 				cofIJ += 1.0;
+// 				cofIp1J -= 1.0;
+// 			}
+// 			if (getGridTypeAt(im1, j) == FLUIDGRID)
+// 			{
+// 				cofIJ += 1.0;
+// 				cofIm1J -= 1.0;
+// 			}
+// 			if (j != 0)
+// 			{
+// 				size_t jm1 = j - 1;
+// 				if (getGridTypeAt(i, jm1) == FLUIDGRID)
+// 				{
+// 					cofIJ += 1.0 * sinSq;
+// 					cofIJm1 -= 1.0 * sinSq;
+// 					cofIJm1 += 1.0 * gTerm;
+// 					Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = cofIJm1;
+// 				}
+// 			}
+// 			if (j != nTheta - 1)
+// 			{
+// 				size_t jp1 = j + 1;
+// 				if (getGridTypeAt(i, jp1) == FLUIDGRID)
+// 				{
+// 					cofIJ += 1.0 * sinSq;
+// 					cofIJp1 -= 1.0 * sinSq;
+// 					cofIJp1 -= 1.0 * gTerm;
+// 					Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = cofIJp1;
+// 				}
+// 			}
 
-	for(size_t j = 1; j < nTheta - 1; ++j){
-		for(size_t i = 0; i < nPhi; ++i){
-			size_t numPhiNeighbors = 0;
-			size_t numThetaNeighbors = 0;
-			size_t rowNumber = getIndex(i, j);
-			fReal theta = j*gridLen + gridLen / 2.0;
-			fReal sine = sin(theta);
-			fReal sinSq = sine * sine;
-			fReal cosine = cos(theta);
-			fReal gTerm = gridLen * cosine * sine / 2.0;
-			// right of cell
-			size_t ip1 = (i + 1) % nPhi;
-			if(getGridTypeAt(ip1, j) == FLUIDGRID){
-				Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = -1;
-				numPhiNeighbors++;
-			}
-			// left of cell
-			size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
-			if(getGridTypeAt(im1, j) == FLUIDGRID){
-				Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = -1;
-				numPhiNeighbors++;
-			}	
-			// above cell
-			size_t jp1 = j + 1;
-			if(getGridTypeAt(i, jp1) == FLUIDGRID){
-				Laplacian.coeffRef(rowNumber, getIndex(i, jp1)) = -1 * sinSq - 1 * gTerm;
-				numPhiNeighbors++;
-			}	
-			// below cell
-			size_t jm1 = j - 1;
-			if(getGridTypeAt(i, jm1) == FLUIDGRID){
-				Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * sinSq + 1 * gTerm;
-				numPhiNeighbors++;
-			}
-			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = numPhiNeighbors + (sinSq * numThetaNeighbors);	
-		}
-	}
-
-	// south pole / j = nTheta - 1
-
-	for(size_t i = 0; i < nPhi; ++i){
-		size_t numPhiNeighbors = 0;
-		size_t numThetaNeighbors = 0;
-		size_t rowNumber = getIndex(i, nTheta - 1);
-		fReal theta = M_PI - gridLen / 2.0;
-		fReal sine = sin(theta);
-		fReal sinSq = sine * sine;
-		fReal cosine = cos(theta);
-		fReal gTerm = gridLen * cosine * sine / 2.0;
-		// right of cell
-		size_t ip1 = (i + 1) % nPhi;
-		if(getGridTypeAt(ip1, nTheta - 1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(ip1, nTheta - 1)) = -1;
-			numPhiNeighbors++;
-		}
-		// left of cell
-		size_t im1 = (i == 0 ? nPhi - 1 : i - 1);
-		if(getGridTypeAt(im1, nTheta - 1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(im1, nTheta - 1)) = -1;
-			numPhiNeighbors++;
-		}
-		// below cell
-		size_t jm1 = nTheta - 2;
-		if (getGridTypeAt(i, jm1) == FLUIDGRID){
-			Laplacian.coeffRef(rowNumber, getIndex(i, jm1)) = -1 * sinSq + 1 * gTerm;
-			numThetaNeighbors++;
-		}
-		Laplacian.coeffRef(rowNumber, getIndex(i, nTheta - 1)) = numPhiNeighbors + (numThetaNeighbors * sinSq) - (gTerm * numThetaNeighbors);
-	}
-}
+// 			Laplacian.coeffRef(rowNumber, getIndex(i, j)) = cofIJ;
+// 			Laplacian.coeffRef(rowNumber, getIndex(ip1, j)) = cofIp1J;
+// 			Laplacian.coeffRef(rowNumber, getIndex(im1, j)) = cofIm1J;
+// 		}
+// 	}
+// 	//fReal coeffA = timeStep / (density * radius * gridLen);
+// 	//Laplacian = coeffA * Laplacian;
+// }
 
 void KaminoSolver::initialize_pressure()
 {
@@ -707,7 +763,7 @@ void KaminoSolver::initialize_velocity()
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			val = FBM(cos(i * gridLen), cos(j * gridLen));
-			v->setValueAt(i, j, 0.0);
+			v->setValueAt(i, j, val);
 		}
 	}
 }
@@ -800,6 +856,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 {
 # ifndef _MSC_VER
 	std::string file = s + std::to_string(frame) + ".bgeo";
+	std::cout << "Writing to: " << file << std::endl;
 
 	Partio::ParticlesDataMutable* parts = Partio::create();
 	Partio::ParticleAttribute pH, vH, psH, test;
@@ -872,7 +929,7 @@ void KaminoSolver::write_data_tracer(const std::string& s, const int frame)
 	Eigen::Matrix<fReal, 3, 1> tracerPos;
 
 	int idx = parts->addParticle();
-	trc.getCartesianXYZ(radius, tracerPos[0], tracerPos[1], tracerPos[2]);
+	trc.getCartesianXYZ(tracerPos[0], tracerPos[1], tracerPos[2]);
 	float *p = parts->dataWrite<float>(pH, idx);
 	float *tr = parts->dataWrite<float>(tracer, idx);
 
@@ -935,8 +992,8 @@ void KaminoSolver::addStaggeredAttr(std::string name, fReal xOffset, fReal yOffs
 {
 	size_t attrnPhi = this->nPhi;
 	size_t attrnTheta = this->nTheta;
-	// Is the staggered attribute u?
-	if (xOffset == 0.5)
+	// Is the staggered attribute uTheta?
+	if (name == "v")
 	{
 		attrnTheta += 1;
 	}

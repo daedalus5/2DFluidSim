@@ -12,6 +12,7 @@
 # include <cmath>
 # include <Eigen/IterativeLinearSolvers>
 # include <unsupported/Eigen/IterativeSolvers>
+# include <unsupported/Eigen/FFT>
 
 # define M_PI           3.14159265358979323846  /* pi */
 # define M_2PI			6.28318530717958647692  /* 2pi */
@@ -22,6 +23,9 @@
 // The solution to switch between double and float
 typedef double fReal;
 
+const fReal density = 1000.0;
+const fReal uSolid = 0.0;
+const fReal vSolid = 0.0;
 
 // Handy Lerp.
 template <class Type>
@@ -93,32 +97,22 @@ public:
 	fReal getThetaOffset();
 };
 
+void validatePhiTheta(fReal & phi, fReal & theta);
+
 struct tracer
 {
 	fReal phi;
 	fReal theta;
-	tracer(fReal phi, fReal theta) : phi(phi), theta(theta)
+	fReal radius;
+	tracer(fReal phi, fReal theta, fReal radius) : phi(phi), theta(theta), radius(radius)
 	{}
 	void tracerStepForward(fReal uPhi, fReal uTheta, fReal timeStep)
 	{
-		this->phi += timeStep * uPhi;
-		this->theta += timeStep * uTheta;
-		if (theta < 0.0)
-		{
-			theta = M_PI + theta;
-			phi += M_PI;
-		}
-		if (theta > M_PI)
-		{
-			theta = M_2PI - theta;
-			phi += M_PI;
-		}
-		if (phi > M_2PI)
-			phi -= M_2PI;
-		if (phi < 0.0)
-			phi += M_2PI;
+		this->phi += timeStep * uPhi / (radius);
+		this->theta += timeStep * uTheta / (radius * std::sin(theta));
+		validatePhiTheta(phi, theta);
 	}
-	void getCartesianXYZ(fReal radius, fReal& x, fReal& y, fReal& z)
+	void getCartesianXYZ(fReal& x, fReal& y, fReal& z)
 	{
 		x = radius * std::sin(theta) * std::cos(phi);
 		z = radius * std::sin(theta) * std::sin(phi);
@@ -130,6 +124,21 @@ struct tracer
 class KaminoSolver
 {
 private:
+	// Buffer for the capital U.
+	fReal* fourierU;
+	// Buffer for the divergence, before the transform.
+	fReal* beffourierF;
+	// Buffer for the divergence, F n theta.
+	fReal* fourieredF;
+	// Diagonal elements a (lower);
+	fReal* a;
+	// Diagonal elements b (major diagonal);
+	fReal* b;
+	// Diagonal elements c (upper);
+	fReal* c;
+	// Divergence fourier coefficients
+	fReal* d;
+
 	/* Grid types */
 	gridType* gridTypes;
 	/* Grid dimensions */
@@ -139,8 +148,10 @@ private:
 	fReal radius;
 	/* Grid size */
 	fReal gridLen;
+	/* Inverted grid size*/
+	fReal invGridLen;
 	/* Laplacian Matrix */
-	Eigen::SparseMatrix<fReal> Laplacian;
+	//Eigen::SparseMatrix<fReal> Laplacian;
 
 	/* So that it remembers all these attributes within */
 	std::map<std::string, KaminoQuantity*> centeredAttr;
@@ -176,6 +187,10 @@ private:
 	void bodyForce();
 	void updateTracer();
 
+	void fillDivergence();
+	void transformDivergence();
+	void invTransformPressure();
+
 	// Swap all these buffers of the attributes.
 	void swapAttrBuffers();
 
@@ -203,6 +218,11 @@ private:
 	/* Duplicate of quantity's get index */
 	inline size_t getIndex(size_t x, size_t y);
 
+	/* Tri-diagonal matrix solver */
+	void TDMSolve(fReal* a, fReal* b, fReal* c, fReal* d);
+	/* Load diagonal element arrays */
+	void loadABC(size_t n);
+
 public:
 	KaminoSolver(size_t nx, size_t ny, fReal radius, fReal gridLength, fReal frameDuration = 1.0 / 30.0);
 	~KaminoSolver();
@@ -212,7 +232,7 @@ public:
 	void addCenteredAttr(std::string name, fReal xOffset = 0.5, fReal yOffset = 0.5);
 	void addStaggeredAttr(std::string name, fReal xOffset, fReal yOffset);
 
-	void precomputeLaplacian();
+	//void precomputeLaplacian();
 	
 	KaminoQuantity* getAttributeNamed(std::string name);
 	KaminoQuantity* operator[](std::string name);
