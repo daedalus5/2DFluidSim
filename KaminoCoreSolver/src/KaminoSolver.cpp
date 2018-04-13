@@ -7,7 +7,8 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), invGridLen(1.0 / gridLength), frameDuration(frameDuration),
 	timeStep(0.0), timeElapsed(0.0), trc(M_PI / 2.0, M_PI / 2.0, radius)
 {
-	this->fourierF = new fReal[nPhi * nTheta];
+	this->beffourierF = new fReal[nPhi * nTheta];
+	this->fourieredF = new fReal[nPhi * nTheta];
 	this->fourierU = new fReal[nPhi * nTheta];
 
 	this->a = new fReal[nTheta];
@@ -34,12 +35,14 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 
 KaminoSolver::~KaminoSolver()
 {
-	delete[] fourierF;
+	delete[] beffourierF;
+	delete[] fourieredF;
 	delete[] fourierU;
 
 	delete[] a;
 	delete[] b;
 	delete[] c;
+	delete[] d;
 
 	for (auto& attr : this->centeredAttr)
 	{
@@ -362,7 +365,7 @@ void KaminoSolver::fillDivergence()
 		{
 			if (getGridTypeAt(i, j) != FLUIDGRID)
 			{
-				fourierF[getIndex(i, j)] = 0.0;
+				beffourierF[getIndex(i, j)] = 0.0;
 				continue;//Leave it as 0 = 0 trivial problem
 			}
 
@@ -413,18 +416,49 @@ void KaminoSolver::fillDivergence()
 			fReal div = termTheta + termPhi;
 			//Additional divergence scaling goes here
 			div *= rhsScale;
-			fourierF[getIndex(i, j)] = div;
+			beffourierF[getIndex(i, j)] = div;
 		}
 	}
 }
 
 void KaminoSolver::transformDivergence()
 {
-	for (1; 2; 3)
+	for (size_t thetaI = 0; thetaI < nTheta; ++thetaI)
 	{
-		for (int n = -nPhi / 2; n < nPhi / 2; ++n)
+		for (int nIndex = 0; nIndex < nPhi; ++nIndex)
 		{
+			int n = nIndex - nPhi / 2;
+			fReal accumulatedReal = 0.0;
+			for (size_t j = 0; j < nPhi; ++j)
+			{
+				fReal phiJ = (M_2PI / nPhi) * j;
+				fReal phase = -n * phiJ;
+				fReal fThetaN = beffourierF[getIndex(j, thetaI)];
+				accumulatedReal += fThetaN * std::cos(phase);
+			}
+			accumulatedReal = accumulatedReal / nPhi;
+			fourieredF[getIndex(nIndex, thetaI)] = accumulatedReal;
+		}
+	}
+}
 
+void KaminoSolver::invTransformPressure()
+{
+	KaminoQuantity* p = (*this)["p"];
+	for (size_t gTheta = 0; gTheta < nTheta; ++gTheta)
+	{
+		for (size_t gPhi = 0; gPhi < nPhi; ++gPhi)
+		{
+			fReal Phi = M_2PI / nPhi * gPhi;
+			fReal accumulatedPressure = 0.0;
+			for (int nIndex = 0; nIndex < nPhi; ++nIndex)
+			{
+				int n = nIndex - nPhi / 2;
+				fReal phase = n * Phi;
+				fReal pressureFourierCoef = fourierU[getIndex(nIndex, gTheta)];
+				accumulatedPressure += pressureFourierCoef * std::cos(phase);
+			}
+			p->writeValueTo(gPhi, gTheta, accumulatedPressure);
 		}
 	}
 }
@@ -439,44 +473,51 @@ void KaminoSolver::projection()
 	fillDivergence();
 	/// TODO: Perform forward FFT on fourierF to make them fourier coefficients
 	transformDivergence();
-	/// TODO: Solve for these U values and fill fourierU
 
-	/// TODO: Inverse FFT to get actual pressures
+	fReal scaleD = density * radius * gridLen * gridLen / timeStep;
+	for (int nIndex = 0; nIndex < nPhi; ++nIndex)
+	{
+		int n = nIndex - nPhi / 2;
+		fReal nSqgridSq = n * gridLen;
+		fReal nSqgridSq = nSqgridSq * nSqgridSq;
 
-	// update pressure per strip
-	for(size_t k = 0; k < nPhi; ++k){
-		/// TODO: Perform forward FFT on fourierF to make them fourier coefficients
-		/// TODO: Load fourier coefficients into this->d for this strip
-
-		/// TODO: Solve for these U values and fill fourierU
-		/// TODO: Inverse FFT to get actual pressures
-		for(size_t i = 0; i < nPhi; ++i){
-			int n = i - nPhi / 2;
-			loadABC(i);
-			// TODO check d vector
-			TDMSolve(this->a, this->b, this->c, this->d);
-			for(size_t j = 0; j < nTheta; ++j){
-				fReal theta = j*gridLen + gridLen / 2.0;
-				size_t index = getIndex(i, j);
-				fourierU[index] = d[j] * cos(n * theta);
-			}
-		}
-
-		// Populate updated pressure values
-		for (size_t j = 0; j < nTheta; ++j) 
+		for (int i = 0; i < nTheta; ++i)
 		{
-			fReal pSum = 0.0;
-			for (size_t i = 0; i < nPhi; ++i) 
+			fReal thetaI = (i + 0.5) * gridLen;
+			fReal sine = std::sin(thetaI);
+			fReal sinSq = sine * sine;
+			fReal sincos = std::cos(thetaI) * sine;
+			fReal ip1im1Term2 = 0.5 * sincos * gridLen;
+
+			b[i] = -2.0 * sinSq - nSqgridSq;
+			a[i] = sinSq - ip1im1Term2;
+			c[i] = sinSq + ip1im1Term2;
+
+			if (i == 0)
 			{
-				size_t index = getIndex(i, j);
-				pSum += fourierU[index];
+				fReal coef = std::pow(-1.0, n);
+				b[i] += coef * a[i];
+				a[i] = 0.0;
 			}
-			p->writeValueTo(k, j, pSum);
+			if (i == nTheta - 1)
+			{
+				fReal coef = std::pow(-1.0, n);
+				b[i] += coef * c[i];
+				c[i] = 0.0;
+			}
+			fReal fTabled = this->beffourierF[getIndex(nIndex, i)];
+			d[i] = fTabled * scaleD;
+		}
+		TDMSolve(this->a, this->b, this->c, this->d);
+		//d now contains Ui
+		for (size_t i = 0; i < nTheta; ++i)
+		{
+			this->fourierU[getIndex(nIndex, i)] = d[i];
 		}
 	}
 
+	invTransformPressure();
 	p->swapBuffer();
-
 
 	// Update velocities accordingly: uPhi
 	fReal factorTheta = -(timeStep * invGridLen) / (density * radius);
@@ -576,7 +617,7 @@ void KaminoSolver::loadABC(size_t n)
 	// A and B can be precomputed later to optimize
 	std::vector<fReal> A;
 	std::vector<fReal> B;
-	for(size_t i = 0; i < nPhi; ++i){
+	for(size_t i = 0; i < nTheta; ++i){
 		fReal theta = i * gridLen + gridLen / 2.0;
 		fReal Aval = (gridLen / 2.0) * (cos(theta) / sin(theta));
 		fReal Bval = gridLen * gridLen * n * n / (sin(theta) * sin(theta));
@@ -587,14 +628,14 @@ void KaminoSolver::loadABC(size_t n)
 	a[0] = 0.0;
 	b[0] = pow(-1.0, n) - 2 - A[0] * pow(-1.0, n) - B[0];
 	c[0] = 1 + B[0];
-	for(size_t i = 1; i < nPhi - 1; ++i){
+	for(size_t i = 1; i < nTheta - 1; ++i){
 		a[i] = 1 - A[i];
 		b[i] = -2 - B[i];
 		c[i] = 1 + B[i];
 	}
-	a[nPhi - 1] = -2 - B[nPhi - 1];
-	b[nPhi - 1] = pow(-1.0, n) - 2 + A[nPhi - 1] * pow(-1.0 , n) - B[nPhi - 1];
-	c[nPhi - 1] = 0;
+	a[nTheta - 1] = -2 - B[nTheta - 1];
+	b[nTheta - 1] = pow(-1.0, n) - 2 + A[nTheta - 1] * pow(-1.0 , n) - B[nTheta - 1];
+	c[nTheta - 1] = 0;
 }
 
 /* Duplicate of getIndex() in KaminoQuantity */

@@ -124,8 +124,10 @@ class KaminoSolver
 private:
 	// Buffer for the capital U.
 	fReal* fourierU;
-	// Buffer for the divergence, before and after transform.
-	fReal* fourierF;
+	// Buffer for the divergence, before the transform.
+	fReal* beffourierF;
+	// Buffer for the divergence, F n theta.
+	fReal* fourieredF;
 	// Diagonal elements a (lower);
 	fReal* a;
 	// Diagonal elements b (major diagonal);
