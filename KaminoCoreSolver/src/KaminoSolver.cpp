@@ -71,11 +71,14 @@ void KaminoSolver::stepForward(fReal timeStep)
 	this->timeStep = timeStep;
 	advectionScalar();
 	advectionSpeed();
+	std::cout << "Advection completed" << std::endl;
 	this->swapAttrBuffers();
 
 	geometric();
+	std::cout << "Geometric completed" << std::endl;
 	// bodyForce();
 	projection();
+	std::cout << "Projection completed" << std::endl;
 	updateTracer();
 }
 
@@ -476,7 +479,7 @@ void KaminoSolver::projection()
 	{
 		int n = nIndex - nPhi / 2;
 		fReal nSqgridSq = n * gridLen;
-		fReal nSqgridSq = nSqgridSq * nSqgridSq;
+		nSqgridSq = nSqgridSq * nSqgridSq;
 
 		for (int i = 0; i < nTheta; ++i)
 		{
@@ -848,6 +851,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 {
 # ifndef _MSC_VER
 	std::string file = s + std::to_string(frame) + ".bgeo";
+	std::cout << "Writing to: " << file << std::endl;
 
 	Partio::ParticlesDataMutable* parts = Partio::create();
 	Partio::ParticleAttribute pH, vH, psH, test;
