@@ -33,7 +33,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 
 	//precomputeLaplacian();
 	initialize_test();
-	//initialize_boundary();
+	initialize_boundary();
 }
 
 KaminoSolver::~KaminoSolver()
@@ -345,7 +345,7 @@ void KaminoSolver::bodyForce()
 	for(size_t j = 0; j < nTheta + 1; ++j){
 		for(size_t i = 0; i < nPhi; ++i){
 			fReal vBeforeUpdate = v->getValueAt(i, j);
-			fReal theta = j*gridLen + gridLen / 2.0;
+			fReal theta = j*gridLen;
 			v->writeValueTo(i, j, vBeforeUpdate + gravity * sin(theta) * timeStep);
 		}
 	}
@@ -798,8 +798,8 @@ void KaminoSolver::initialize_boundary()
 {
 	for (size_t gridX = 0; gridX != this->nPhi; ++gridX)
 	{
-		this->gridTypes[getIndex(gridX, 0)] = SOLIDGRID;
-		this->gridTypes[getIndex(gridX, this->nTheta - 1)] = SOLIDGRID;
+		this->gridTypes[getIndex(gridX, nTheta / 2)] = SOLIDGRID;
+		//this->gridTypes[getIndex(gridX, this->nTheta - 1)] = SOLIDGRID;
 	}
 }
 
