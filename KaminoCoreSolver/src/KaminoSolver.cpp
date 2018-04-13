@@ -8,13 +8,16 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	timeStep(0.0), timeElapsed(0.0), trc(M_PI / 2.0, M_PI / 2.0, radius)
 {
 	this->beffourierF = new fReal[nPhi * nTheta];
-	this->fourieredF = new fReal[nPhi * nTheta];
-	this->fourierU = new fReal[nPhi * nTheta];
+	this->fourieredFReal = new fReal[nPhi * nTheta];
+	this->fourieredFImag = new fReal[nPhi * nTheta];
+	this->fourierUReal = new fReal[nPhi * nTheta];
+	this->fourierUImag = new fReal[nPhi * nTheta];
 
 	this->a = new fReal[nTheta];
 	this->b = new fReal[nTheta];
 	this->c = new fReal[nTheta];
-	this->d = new fReal[nTheta];
+	this->dReal = new fReal[nTheta];
+	this->dImag = new fReal[nTheta];
 
 	// Our new staggered grid...
 	addStaggeredAttr("u", -0.5, 0.5);		// u velocity
@@ -36,13 +39,16 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 KaminoSolver::~KaminoSolver()
 {
 	delete[] beffourierF;
-	delete[] fourieredF;
-	delete[] fourierU;
+	delete[] fourieredFReal;
+	delete[] fourieredFImag;
+	delete[] fourierUReal;
+	delete[] fourierUImag;
 
 	delete[] a;
 	delete[] b;
 	delete[] c;
-	delete[] d;
+	delete[] dReal;
+	delete[] dImag;
 
 	for (auto& attr : this->centeredAttr)
 	{
@@ -428,15 +434,19 @@ void KaminoSolver::transformDivergence()
 		{
 			int n = nIndex - nPhi / 2;
 			fReal accumulatedReal = 0.0;
+			fReal accumulatedImag = 0.0;
 			for (size_t j = 0; j < nPhi; ++j)
 			{
 				fReal phiJ = (M_2PI / nPhi) * j;
 				fReal phase = -n * phiJ;
 				fReal fThetaN = beffourierF[getIndex(j, thetaI)];
 				accumulatedReal += fThetaN * std::cos(phase);
+				accumulatedImag += fThetaN * std::sin(phase);
 			}
 			accumulatedReal = accumulatedReal / nPhi;
-			fourieredF[getIndex(nIndex, thetaI)] = accumulatedReal;
+			accumulatedImag = accumulatedReal / nPhi;
+			fourieredFReal[getIndex(nIndex, thetaI)] = accumulatedReal;
+			fourieredFImag[getIndex(nIndex, thetaI)] = accumulatedImag;
 		}
 	}
 }
@@ -454,8 +464,10 @@ void KaminoSolver::invTransformPressure()
 			{
 				int n = nIndex - nPhi / 2;
 				fReal phase = n * Phi;
-				fReal pressureFourierCoef = fourierU[getIndex(nIndex, gTheta)];
-				accumulatedPressure += pressureFourierCoef * std::cos(phase);
+				fReal pressureFourierCoefReal = fourierUReal[getIndex(nIndex, gTheta)];
+				fReal pressureFourierCoefImag = fourierUImag[getIndex(nIndex, gTheta)];
+				accumulatedPressure += pressureFourierCoefReal * std::cos(phase);
+				accumulatedPressure -= pressureFourierCoefImag * std::sin(phase);
 			}
 			p->writeValueTo(gPhi, gTheta, accumulatedPressure);
 		}
@@ -488,6 +500,7 @@ void KaminoSolver::projection()
 			fReal sinSq = sine * sine;
 			fReal sincos = std::cos(thetaI) * sine;
 			fReal ip1im1Term2 = 0.5 * sincos * gridLen;
+			scaleD *= sinSq;
 
 			b[i] = -2.0 * sinSq - nSqgridSq;
 			a[i] = sinSq - ip1im1Term2;
@@ -505,19 +518,23 @@ void KaminoSolver::projection()
 				b[i] += coef * c[i];
 				c[i] = 0.0;
 			}
-			fReal fTabled = this->fourieredF[getIndex(nIndex, i)];
-			scaleD *= sinSq;
-			d[i] = fTabled * scaleD;
+			fReal fTabled = this->fourieredFReal[getIndex(nIndex, i)];
+			dReal[i] = fTabled * scaleD;
+			fTabled = this->fourieredFImag[getIndex(nIndex, i)];
+			dImag[i] = fTabled * scaleD;
 		}
+		
 		//When n == 0, d = 0, whole system degenerates to Ax = 0 where A is singular
 		if (n != 0)
 		{
-			TDMSolve(this->a, this->b, this->c, this->d);
+			TDMSolve(this->a, this->b, this->c, this->dReal);
+			TDMSolve(this->a, this->b, this->c, this->dImag);
 		}
 		//d now contains Ui
 		for (size_t UiIndex = 0; UiIndex < nTheta; ++UiIndex)
 		{
-			this->fourierU[getIndex(nIndex, UiIndex)] = d[UiIndex];
+			this->fourierUReal[getIndex(nIndex, UiIndex)] = dReal[UiIndex];
+			this->fourierUImag[getIndex(nIndex, UiIndex)] = dImag[UiIndex];
 		}
 	}
 

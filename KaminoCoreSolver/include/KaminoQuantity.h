@@ -125,11 +125,13 @@ class KaminoSolver
 {
 private:
 	// Buffer for the capital U.
-	fReal* fourierU;
+	fReal* fourierUReal;
+	fReal* fourierUImag;
 	// Buffer for the divergence, before the transform.
 	fReal* beffourierF;
 	// Buffer for the divergence, F n theta.
-	fReal* fourieredF;
+	fReal* fourieredFReal;
+	fReal* fourieredFImag;
 	// Diagonal elements a (lower);
 	fReal* a;
 	// Diagonal elements b (major diagonal);
@@ -137,7 +139,8 @@ private:
 	// Diagonal elements c (upper);
 	fReal* c;
 	// Divergence fourier coefficients
-	fReal* d;
+	fReal* dReal;
+	fReal* dImag;
 
 	/* Grid types */
 	gridType* gridTypes;
