@@ -89,7 +89,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 }
 
 // Phi: 0 - 2pi  Theta: 0 - pi
-void validatePhiTheta(fReal & phi, fReal & theta)
+bool validatePhiTheta(fReal & phi, fReal & theta)
 {
 	/*int loops = static_cast<int>(std::floor(theta / M_2PI));
 	theta = theta - loops * M_2PI;
@@ -100,20 +100,24 @@ void validatePhiTheta(fReal & phi, fReal & theta)
 	}
 	loops = static_cast<int>(std::floor(phi / M_2PI));
 	phi = phi - loops * M_2PI;*/
+	bool isFlipped = false;
 	if (theta < 0.0)
 	{
 		theta = -theta;
 		phi += M_PI;
+		isFlipped = true;
 	}
 	if (theta > M_PI)
 	{
 		theta = M_2PI - theta;
 		phi += M_PI;
+		isFlipped = true;
 	}
 	if (phi > M_2PI)
 		phi -= M_2PI;
 	if (phi < 0.0)
 		phi += M_2PI;
+	return isFlipped;
 }
 
 void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gridTheta)
@@ -146,9 +150,11 @@ void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gri
 
 	fReal pPhi = gPhi - deltaPhi;
 	fReal pTheta = gTheta - deltaTheta;
-	validatePhiTheta(pPhi, pTheta);
+	bool isFlipped = validatePhiTheta(pPhi, pTheta);
 
 	fReal advectedVal = attr->sampleAt(pPhi, pTheta);
+	if (isFlipped && attr->getName() == "v")
+		advectedVal = -advectedVal;
 	attr->writeValueTo(gridPhi, gridTheta, advectedVal);
 }
 

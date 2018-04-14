@@ -71,7 +71,8 @@ public:
 
 	/* Swap the buffer */
 	void swapBuffer();
-
+	/* Get its name */
+	std::string getName();
 	/* Get nx */
 	size_t getNPhi();
 	/* Get ny */
@@ -97,7 +98,7 @@ public:
 	fReal getThetaOffset();
 };
 
-void validatePhiTheta(fReal & phi, fReal & theta);
+bool validatePhiTheta(fReal & phi, fReal & theta);
 
 struct tracer
 {

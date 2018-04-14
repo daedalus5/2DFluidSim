@@ -13,6 +13,11 @@ KaminoQuantity::~KaminoQuantity()
 	delete[] nextStep;
 }
 
+std::string KaminoQuantity::getName()
+{
+	return this->attrName;
+}
+
 size_t KaminoQuantity::getNPhi()
 {
 	return this->nPhi;
