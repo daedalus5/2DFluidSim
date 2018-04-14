@@ -1,6 +1,6 @@
 #include "include/KaminoQuantity.h"
 
-const size_t nTheta = 50;               // number of grid cells in u direction
+const size_t nTheta = 200;               // number of grid cells in u direction
 const size_t nPhi = 2 * nTheta;         // number of grid cells in v direction
 const fReal gridLen = M_PI / nTheta;    // grid spacing (square in uv plane)
 const fReal radius = 5.0;               // radius of sphere
