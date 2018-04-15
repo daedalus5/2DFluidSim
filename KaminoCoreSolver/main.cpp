@@ -1,6 +1,6 @@
 #include "include/KaminoQuantity.h"
 
-const size_t nTheta = 200;               // number of grid cells in u direction
+const size_t nTheta = 100;               // number of grid cells in u direction
 const size_t nPhi = 2 * nTheta;         // number of grid cells in v direction
 const fReal gridLen = M_PI / nTheta;    // grid spacing (square in uv plane)
 const fReal radius = 5.0;               // radius of sphere
@@ -16,6 +16,7 @@ const std::string tracerPath = "tracer/trace";
 int main(int argc, char** argv)
 {
     KaminoSolver solver(nPhi, nTheta, radius, gridLen, dt);
+	solver.write_data_bgeo(filepath, 0);
     float T = 0.0;              // simulation time
     for(int i = 1; i <= frames; i++){
         while(T < i*DT){

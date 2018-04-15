@@ -176,6 +176,7 @@ private:
 
 	void resetPoleVelocities();
 	void averageVelocities();
+	void solvePolarVelocities();
 
 	// Is it solid? or fluid? or even air?
 	gridType getGridTypeAt(size_t x, size_t y);
