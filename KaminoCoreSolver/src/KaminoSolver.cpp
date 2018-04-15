@@ -33,7 +33,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 
 	//precomputeLaplacian();
 	initialize_test();
-	initialize_boundary();
+	//initialize_boundary();
 }
 
 KaminoSolver::~KaminoSolver()
@@ -397,7 +397,7 @@ void KaminoSolver::fillDivergence()
 			size_t jpoot = j + 1;
 
 			size_t grid2tRight = (i + 1) % nPhi;
-			size_t grid2tLeft = i == 0 ? nPhi - 1 : i - 1;
+			size_t grid2tLeft = (i == 0 ? nPhi - 1 : i - 1);
 
 			fReal uLeft = uSolid;
 			fReal uRight = uSolid;
@@ -480,9 +480,17 @@ void KaminoSolver::invTransformPressure()
 				int n = nIndex - nPhi / 2;
 				fReal phase = n * Phi;
 				fReal pressureFourierCoefReal = fourierUReal[getIndex(nIndex, gTheta)];
+				if (n == 0)
+					pressureFourierCoefReal = 0.0;
 				fReal pressureFourierCoefImag = fourierUImag[getIndex(nIndex, gTheta)];
+				if (n == 0)
+					pressureFourierCoefImag = 0.0;
 				accumulatedPressure += pressureFourierCoefReal * std::cos(phase);
 				accumulatedPressure -= pressureFourierCoefImag * std::sin(phase);
+				if (abs(accumulatedPressure) > 1e2)
+				{
+					std::cerr << "exp" << std::endl;
+				}
 			}
 			p->writeValueTo(gPhi, gTheta, accumulatedPressure);
 		}
@@ -500,26 +508,19 @@ void KaminoSolver::projection()
 	/// TODO: Perform forward FFT on fourierF to make them fourier coefficients
 	transformDivergence();
 
-	//fReal scaleD = density * radius * gridLen * gridLen / timeStep;
-	fReal scaleD = gridLen * gridLen;
 	for (int nIndex = 0; nIndex < nPhi; ++nIndex)
 	{
 		int n = nIndex - nPhi / 2;
-		fReal nSqgridSq = n * gridLen;
-		nSqgridSq = nSqgridSq * nSqgridSq;
-
+		
 		for (int i = 0; i < nTheta; ++i)
 		{
 			fReal thetaI = (i + 0.5) * gridLen;
-			fReal sine = std::sin(thetaI);
-			fReal sinSq = sine * sine;
-			fReal sincos = std::cos(thetaI) * sine;
-			fReal ip1im1Term2 = 0.5 * sincos * gridLen;
-			scaleD *= sinSq;
 
-			b[i] = -2.0 * sinSq - nSqgridSq;
-			a[i] = sinSq - ip1im1Term2;
-			c[i] = sinSq + ip1im1Term2;
+			b[i] = -2.0 / (gridLen * gridLen) - n * n / (sin(thetaI) * sin(thetaI));
+			a[i] = 1.0 / (gridLen * gridLen) - cos(thetaI) / 2.0 / gridLen / sin(thetaI);
+			c[i] = 1.0 / (gridLen * gridLen) + cos(thetaI) / 2.0 / gridLen / sin(thetaI);
+
+			dReal[i] = this->fourieredFReal[getIndex(nIndex, i)];
 
 			if (i == 0)
 			{
@@ -533,22 +534,51 @@ void KaminoSolver::projection()
 				b[i] += coef * c[i];
 				c[i] = 0.0;
 			}
-			fReal fTabled = this->fourieredFReal[getIndex(nIndex, i)];
-			dReal[i] = fTabled * scaleD;
-			fTabled = this->fourieredFImag[getIndex(nIndex, i)];
-			dImag[i] = fTabled * scaleD;
 		}
-		
 		//When n == 0, d = 0, whole system degenerates to Ax = 0 where A is singular
 		if (n != 0)
 		{
 			TDMSolve(this->a, this->b, this->c, this->dReal);
-			TDMSolve(this->a, this->b, this->c, this->dImag);
 		}
 		//d now contains Ui
 		for (size_t UiIndex = 0; UiIndex < nTheta; ++UiIndex)
 		{
 			this->fourierUReal[getIndex(nIndex, UiIndex)] = dReal[UiIndex];
+		}
+
+
+
+		for (int i = 0; i < nTheta; ++i)
+		{
+			fReal thetaI = (i + 0.5) * gridLen;
+
+			b[i] = -2.0 / (gridLen * gridLen) - n * n / (sin(thetaI) * sin(thetaI));
+			a[i] = 1.0 / (gridLen * gridLen) - cos(thetaI) / 2.0 / gridLen / sin(thetaI);
+			c[i] = 1.0 / (gridLen * gridLen) + cos(thetaI) / 2.0 / gridLen / sin(thetaI);
+
+			dImag[i] = this->fourieredFImag[getIndex(nIndex, i)];
+
+			if (i == 0)
+			{
+				fReal coef = std::pow(-1.0, n);
+				b[i] += coef * a[i];
+				a[i] = 0.0;
+			}
+			if (i == nTheta - 1)
+			{
+				fReal coef = std::pow(-1.0, n);
+				b[i] += coef * c[i];
+				c[i] = 0.0;
+			}
+		}
+		//When n == 0, d = 0, whole system degenerates to Ax = 0 where A is singular
+		if (n != 0)
+		{
+			TDMSolve(this->a, this->b, this->c, this->dImag);
+		}
+		//d now contains Ui
+		for (size_t UiIndex = 0; UiIndex < nTheta; ++UiIndex)
+		{
 			this->fourierUImag[getIndex(nIndex, UiIndex)] = dImag[UiIndex];
 		}
 	}
@@ -623,6 +653,8 @@ void KaminoSolver::projection()
 
 	solvePolarVelocities();
 	v->swapBuffer();
+
+	fillDivergence();
 }
 
 
@@ -805,10 +837,15 @@ void KaminoSolver::initialize_test()
 
 void KaminoSolver::initialize_boundary()
 {
-	for (size_t gridX = 0; gridX != this->nPhi; ++gridX)
+	/*for (size_t gridX = 0; gridX != this->nPhi; ++gridX)
 	{
 		this->gridTypes[getIndex(gridX, nTheta / 2)] = SOLIDGRID;
 		//this->gridTypes[getIndex(gridX, this->nTheta - 1)] = SOLIDGRID;
+	}*/
+	for (size_t gridY = 0; gridY != this->nTheta; ++gridY)
+	{
+		this->gridTypes[getIndex(0, gridY)] = SOLIDGRID;
+		this->gridTypes[getIndex(nPhi / 2, gridY)] = SOLIDGRID;
 	}
 }
 
@@ -866,7 +903,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			float* ps = parts->dataWrite<float>(psH, idx);
 			float* ts = parts->dataWrite<float>(test, idx);
 
-			ps[0] = pressure / 5000.0;
+			ps[0] = pressure;
 			ts[0] = testVal / 13.0 * 255.0;
 
 			for (int k = 0; k < 3; ++k) {
