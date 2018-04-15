@@ -372,7 +372,8 @@ void KaminoSolver::fillDivergence()
 	KaminoQuantity* u = staggeredAttr["u"];
 	KaminoQuantity* v = staggeredAttr["v"];
 
-	fReal scaleDiv = density * radius / timeStep;
+	//fReal scaleDiv = density * radius / timeStep;
+	fReal scaleDiv = 1.0;
 	/// TODO: Fill the fourierF buffer with divergence
 	for (size_t j = 0; j < nTheta; ++j)
 	{
@@ -556,7 +557,7 @@ void KaminoSolver::projection()
 	p->swapBuffer();
 
 	// Update velocities accordingly: uPhi
-	fReal factorTheta = -invGridLen * timeStep / (density * radius);
+	fReal factorTheta = -invGridLen;
 	for (size_t j = 0; j < u->getNTheta(); ++j)
 	{
 		for (size_t i = 0; i < u->getNPhi(); ++i)
@@ -619,6 +620,7 @@ void KaminoSolver::projection()
 			}
 		}
 	}
+
 	solvePolarVelocities();
 	v->swapBuffer();
 }
