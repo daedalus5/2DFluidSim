@@ -19,6 +19,7 @@ add_cispba_executable(2DFluidSim
 			            KaminoCoreSolver/src/KaminoInit.cpp
 			            KaminoCoreSolver/src/KaminoProjection.cpp
                         KaminoCoreSolver/src/KaminoQuantity.cpp
+                        KaminoCoreSolver/src/KaminoParticles.cpp
                         )
         
 target_include_directories(2DFluidSim SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIR})

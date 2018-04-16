@@ -249,3 +249,16 @@ public:
 	void write_data_bgeo(const std::string& s, const int frame);
 	void write_data_tracer(const std::string& s, const int frame);
 };
+
+class KaminoParticles
+{
+private:
+	fReal radius;
+	std::vector<Eigen::Matrix<fReal, 2, 1>> positions;
+public:
+	KaminoParticles(int n, fReal radius);
+	~KaminoParticles();
+
+	void updatePositions(KaminoQuantity* u, KaminoQuantity* v, fReal deltaT);
+	void write_data_bgeo(const std::string& s, const int frame);
+};
