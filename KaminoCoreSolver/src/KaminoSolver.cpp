@@ -77,14 +77,14 @@ void KaminoSolver::stepForward(fReal timeStep)
 	this->timeStep = timeStep;
 	advectionScalar();
 	advectionSpeed();
-	std::cout << "Advection completed" << std::endl;
+	//std::cout << "Advection completed" << std::endl;
 	this->swapAttrBuffers();
 
 	geometric();
-	std::cout << "Geometric completed" << std::endl;
+	//std::cout << "Geometric completed" << std::endl;
 	//bodyForce();
 	projection();
-	std::cout << "Projection completed" << std::endl;
+	//std::cout << "Projection completed" << std::endl;
 	updateTracer();
 }
 
@@ -750,34 +750,68 @@ void KaminoSolver::initialize_pressure()
 
 void KaminoSolver::initialize_velocity()
 {
-	fReal val = 0.0;
 	KaminoQuantity* u = this->staggeredAttr["u"];
 	KaminoQuantity* v = this->staggeredAttr["v"];
 
+	fReal f = 0.0;
+	fReal g = 0.0;
 	size_t sizePhi = u->getNPhi();
 	size_t sizeTheta = u->getNTheta();
 	for (size_t j = 0; j < sizeTheta; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
-			//val = FBM(sin(i * gridLen), sin(j * gridLen));
-			val = sinSum(i*gridLen, j*gridLen);
-			u->setValueAt(i, j, val);
+			f = fPhi(i * gridLen);
+			g = gTheta(j * gridLen);
+			u->setValueAt(i, j, f * g);
 		}
 	}
+
+	fReal l = 0.0;
+	fReal m = 0.0;
 	sizePhi = v->getNPhi();
 	sizeTheta = v->getNTheta();
-	for (size_t j = 0; j < sizeTheta; ++j) {
+	// pole conditions
+	for(size_t i = 0; i < sizePhi; ++i){
+		v->setValueAt(i, 0, 0.0);
+		v->setValueAt(i, sizeTheta - 1, 0.0);
+	}
+	// rest of sphere
+	for (size_t j = 1; j < sizeTheta - 1; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
-			val = FBM(cos(i * gridLen), cos(j * gridLen));
-			v->setValueAt(i, j, 0.0);
+			l = lPhi(i * gridLen);
+			m = mTheta(j * gridLen);
+			v->setValueAt(i, j, l * m);
 		}
 	}
 }
 
-fReal KaminoSolver::sinSum(const fReal x, const fReal y)
+fReal KaminoSolver::fPhi(const fReal x)
 {
-	fReal arg = x / (2*M_PI);
-	fReal sum = sin(arg) + sin(2*arg) + sin(5*arg) + sin(3*y) + sin(7*y);
-	return sum / 4.0;
+	fReal arg = x;
+	fReal a1, b1, c1, d1, e1;
+	a1 = -1.0; b1 = 0.5; c1 = 0.5; d1 = 0.9; e1 = -0.8;
+	fReal sumSin = a1 * sin(arg) + b1 * sin(2*arg) + c1 * sin(3*arg) + d1 * sin(4*arg) + e1 * sin(5*arg);
+	return sumSin;
+}
+
+fReal KaminoSolver::gTheta(const fReal y)
+{
+	fReal arg = y;
+	return cos(arg) * sin(arg);
+}
+
+fReal KaminoSolver::lPhi(const fReal x)
+{
+	fReal arg = x;
+	return cos(arg);
+}
+
+fReal KaminoSolver::mTheta(const fReal y)
+{
+	fReal arg = y;
+	fReal a1, b1, c1, d1, e1;
+	a1 = 1.0; b1 = -0.1; c1 = -0.5; d1 = 0.8; e1 = 0.8;
+	fReal sumSin = a1 * sin(arg) + b1 * sin(2*arg) + c1 * sin(3*arg) + d1 * sin(4*arg) + e1 * sin(5*arg);
+	return sumSin;
 }
 
 fReal KaminoSolver::FBM(const fReal x, const fReal y) {

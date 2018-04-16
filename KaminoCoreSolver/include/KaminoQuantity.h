@@ -208,7 +208,13 @@ private:
 	/* which grids are solid? */
 	void initialize_boundary();
 	/* sum of sine functions for velocity initialization */
-	fReal sinSum(const fReal x, const fReal y);
+	fReal fPhi(const fReal x);
+	/* */
+	fReal gTheta(const fReal y);
+	/* */
+	fReal lPhi(const fReal x);
+	/* */
+	fReal mTheta(const fReal y);
 	/* FBM noise function for velocity distribution */
 	fReal FBM(const fReal x, const fReal y);
 	/* 2D noise interpolation function for smooth FBM noise */
