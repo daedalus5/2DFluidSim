@@ -20,7 +20,13 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\CubicSolver.cpp" />
+    <ClCompile Include="src\KaminoAdvection.cpp" />
+    <ClCompile Include="src\KaminoFFT.cpp" />
+    <ClCompile Include="src\KaminoGeometry.cpp" />
+    <ClCompile Include="src\KaminoInit.cpp" />
+    <ClCompile Include="src\KaminoProjection.cpp" />
     <ClCompile Include="src\KaminoQuantity.cpp" />
+    <ClCompile Include="src\KaminoSampler.cpp" />
     <ClCompile Include="src\KaminoSolver.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

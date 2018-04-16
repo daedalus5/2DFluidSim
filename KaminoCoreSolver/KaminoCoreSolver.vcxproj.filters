@@ -37,5 +37,23 @@
     <ClCompile Include="src\CubicSolver.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\KaminoSampler.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KaminoAdvection.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KaminoGeometry.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KaminoProjection.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KaminoFFT.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KaminoInit.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
