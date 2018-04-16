@@ -101,31 +101,68 @@ Bilinear interpolated for now.
 */
 fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 {
-	int phiIndex = std::floor(x * invGridLen - this->xOffset);
-	int thetaIndex = std::floor(y * invGridLen - this->yOffset);
+	fReal phi = x - gridLen * this->xOffset;
+	fReal theta = y - gridLen * this->yOffset;
+	// Phi and Theta are now shifted back to origin
 
-	size_t lowerX = phiIndex < 0 ? this->nPhi - 1 : phiIndex % nPhi;
-	size_t upperX = lowerX + 1;
-	upperX = upperX >= nPhi ? 0 : upperX;
+	bool isFlippedPole = validatePhiTheta(phi, theta);
+	fReal normedPhi = phi * invGridLen;
+	fReal normedTheta = theta * invGridLen;
 
-	//This wouldn't go below 0 but incase there's floating point error...
-	size_t lowerY = thetaIndex < 0 ? 0 : thetaIndex;
-	size_t upperY = lowerY + 1;
-	upperY = upperY >= nTheta ? nTheta - 1 : upperY;
+	int phiIndex = static_cast<int>(std::floor(normedPhi));
+	int thetaIndex = static_cast<int>(std::floor(normedTheta));
+	fReal alphaPhi = normedPhi - static_cast<fReal>(phiIndex);
+	fReal alphaTheta = normedTheta - static_cast<fReal>(thetaIndex);
 
-	fReal lowerLeft = getValueAt(lowerX, lowerY);
-	fReal upperLeft = getValueAt(lowerX, upperY);
-	fReal lowerRight = getValueAt(upperX, lowerY);
-	fReal upperRight = getValueAt(upperX, upperY);
+	if (thetaIndex == 0 && isFlippedPole) // If it's not flipped the theta+1 belt would just be belt 1
+	{
+		//Lower is to the opposite, higher is on this side
+		alphaTheta = 1.0 - alphaTheta;
+		size_t phiLower = phiIndex % nPhi;
+		size_t phiHigher = (phiLower + 1) % nPhi;
+		size_t phiLowerOppo = (phiLower + nPhi / 2) % nPhi;
+		size_t phiHigherOppo = (phiHigher + nPhi / 2) % nPhi;
 
-	fReal alphaX = x - static_cast<fReal>(std::floor(x));
-	fReal alphaY = y - static_cast<fReal>(std::floor(y));
+		fReal lowerBelt = KaminoLerp<fReal>(getValueAt(phiLower, 0), getValueAt(phiHigher, 0), alphaPhi);
+		fReal higherBelt = KaminoLerp<fReal>(getValueAt(phiLowerOppo, 0), getValueAt(phiHigherOppo, 0), alphaPhi);
 
-	fReal lerpedLower = KaminoLerp<fReal>(lowerLeft, lowerRight, alphaX);
-	fReal lerpedUpper = KaminoLerp<fReal>(upperLeft, upperRight, alphaX);
-	fReal lerped = KaminoLerp<fReal>(lerpedLower, lerpedUpper, alphaY);
+		// "v" would never reach here
+		if (attrName == "u")
+			lowerBelt = -lowerBelt;
+		fReal lerped = KaminoLerp<fReal>(lowerBelt, higherBelt, alphaTheta);
+		return lerped;
+	}
+	else if (thetaIndex == nTheta - 1)
+	{
+		//Lower is on this side, higher is to the opposite
+		size_t phiLower = phiIndex % nPhi;
+		size_t phiHigher = (phiLower + 1) % nPhi;
+		size_t phiLowerOppo = (phiLower + nPhi / 2) % nPhi;
+		size_t phiHigherOppo = (phiHigher + nPhi / 2) % nPhi;
 
-	return lerped;
+		fReal lowerBelt = KaminoLerp<fReal>(getValueAt(phiLower, nTheta - 1), getValueAt(phiHigher, nTheta - 1), alphaPhi);
+		fReal higherBelt = KaminoLerp<fReal>(getValueAt(phiLowerOppo, nTheta - 1), getValueAt(phiHigherOppo, nTheta - 1), alphaTheta);
+
+		// "v" would never reach here
+		if (attrName == "u")
+			higherBelt = -higherBelt;
+
+		fReal lerped = KaminoLerp<fReal>(lowerBelt, higherBelt, alphaTheta);
+		return lerped;
+	}
+	else
+	{
+		size_t phiLower = phiIndex % nPhi;
+		size_t phiHigher = (phiLower + 1) % nPhi;
+		size_t thetaLower = thetaIndex;
+		size_t thetaHigher = thetaIndex + 1;
+
+		fReal lowerBelt = KaminoLerp<fReal>(getValueAt(phiLower, thetaLower), getValueAt(phiHigher, thetaLower), alphaPhi);
+		fReal higherBelt = KaminoLerp<fReal>(getValueAt(phiLower, thetaHigher), getValueAt(phiHigher, thetaHigher), alphaPhi);
+
+		fReal lerped = KaminoLerp<fReal>(lowerBelt, higherBelt, alphaTheta);
+		return lerped;
+	}
 }
 
 fReal KaminoQuantity::getThetaOffset()
