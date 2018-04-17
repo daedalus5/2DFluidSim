@@ -61,10 +61,10 @@ void KaminoSolver::solvePolarVelocities()
 	size_t southernBelt = uPhi->getNTheta() - 1; // uTheta->getNTheta() - 2
 	size_t northernPinch = 0;
 	size_t southernPinch = uTheta->getNTheta() - 1;
+	resetPoleVelocities();
 	for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi)
 	{
 		fReal phi = (M_2PI / nPhi) * gridPhi;
-		resetPoleVelocities();
 
 		size_t gridPhiP1 = (gridPhi + 1) % nPhi;
 		fReal ootBeltUPhi = KaminoLerp(uPhi->getValueAt(gridPhi, northernBelt), uPhi->getValueAt(gridPhiP1, northernBelt), 0.5);
@@ -91,9 +91,9 @@ void KaminoSolver::solvePolarVelocities()
 	{
 		fReal phi = (M_2PI / nPhi) * gridPhi;
 		fReal northernUTheta = uNorthP[x] * std::cos(phi) + uNorthP[y] * std::sin(phi);
-		uTheta->writeValueTo(gridPhi, northernPinch, northernUTheta);
+		uTheta->setValueAt(gridPhi, northernPinch, northernUTheta);
 		fReal southernUTheta = -uSouthP[x] * std::cos(phi) - uSouthP[y] * std::sin(phi);
-		uTheta->writeValueTo(gridPhi, southernPinch, southernUTheta);
+		uTheta->setValueAt(gridPhi, southernPinch, southernUTheta);
 	}
 }
 

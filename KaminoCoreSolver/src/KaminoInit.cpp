@@ -22,7 +22,7 @@ void KaminoSolver::initialize_velocity()
 		for (size_t i = 0; i < sizePhi; ++i) {
 			f = fPhi(i * gridLen);
 			g = gTheta(j * gridLen);
-			u->writeValueTo(i, j, f * g);
+			u->setValueAt(i, j, f * g);
 		}
 	}
 
@@ -36,13 +36,11 @@ void KaminoSolver::initialize_velocity()
 		for (size_t i = 0; i < sizePhi; ++i) {
 			l = lPhi(i * gridLen);
 			m = mTheta(j * gridLen);
-			v->writeValueTo(i, j, l * m);
+			v->setValueAt(i, j, l * m);
 		}
 	}
 
 	solvePolarVelocities();
-	u->swapBuffer();
-	v->swapBuffer();
 }
 
 
