@@ -110,8 +110,6 @@ bool validatePhiTheta(fReal & phi, fReal & theta)
 	phi = phi - loops * M_2PI;
 	// Now phi is in 0-2pi range
 
-	if (phi > M_2PI)
-		phi -= M_2PI;
 	return isFlipped;
 }
 
