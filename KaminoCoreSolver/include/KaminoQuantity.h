@@ -261,4 +261,5 @@ public:
 
 	void updatePositions(KaminoQuantity* u, KaminoQuantity* v, fReal deltaT);
 	void write_data_bgeo(const std::string& s, const int frame);
+	void mapPToSphere(Eigen::Matrix<float, 3, 1>& pos) const;
 };

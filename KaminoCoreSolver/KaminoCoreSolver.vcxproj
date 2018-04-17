@@ -26,7 +26,6 @@
     <ClCompile Include="src\KaminoInit.cpp" />
     <ClCompile Include="src\KaminoProjection.cpp" />
     <ClCompile Include="src\KaminoQuantity.cpp" />
-    <ClCompile Include="src\KaminoSampler.cpp" />
     <ClCompile Include="src\KaminoSolver.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -37,9 +37,6 @@
     <ClCompile Include="src\CubicSolver.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\KaminoSampler.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\KaminoAdvection.cpp">
       <Filter>src</Filter>
     </ClCompile>

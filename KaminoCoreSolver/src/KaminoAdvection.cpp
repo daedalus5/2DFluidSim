@@ -21,7 +21,6 @@ void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gri
 
 	fReal midPhi = gPhi - 0.5 * deltaPhi;
 	fReal midTheta = gTheta - 0.5 * deltaTheta;
-	validatePhiTheta(midPhi, midTheta);
 
 	fReal muPhi = uPhi->sampleAt(midPhi, midTheta);
 	fReal muTheta = uTheta->sampleAt(midPhi, midTheta);
@@ -31,11 +30,9 @@ void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gri
 
 	fReal pPhi = gPhi - deltaPhi;
 	fReal pTheta = gTheta - deltaTheta;
-	bool isFlipped = validatePhiTheta(pPhi, pTheta);
 
 	fReal advectedVal = attr->sampleAt(pPhi, pTheta);
-	if (isFlipped && attr->getName() == "v")
-		advectedVal = -advectedVal;
+	
 	attr->writeValueTo(gridPhi, gridTheta, advectedVal);
 }
 
@@ -66,71 +63,27 @@ void KaminoSolver::solvePolarVelocities()
 	size_t southernBelt = uPhi->getNTheta() - 1; // uTheta->getNTheta() - 2
 	size_t northernPinch = 0;
 	size_t southernPinch = uTheta->getNTheta() - 1;
-	/*for (size_t gridPhi = 0; gridPhi < uPhi->getNPhi(); ++gridPhi)
+	for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi)
 	{
-	size_t phiLower = gridPhi;
-	size_t phiHigher = (gridPhi + 1) % uPhi->getNPhi();
-	// duPhi / dPhi = -uTheta
-	fReal uPhiDiff = uPhi->getValueAt(phiLower, northernBelt) - uPhi->getValueAt(phiHigher, northernBelt);
-	fReal uThetaNorth = uPhiDiff * this->invGridLen;
-	uTheta->writeValueTo(gridPhi, northernPinch, uThetaNorth);
+		fReal phi = (M_2PI / nPhi) * gridPhi;
 
-	// duPhi / dPhi = uTheta
-	uPhiDiff = uPhi->getValueAt(phiHigher, southernBelt) - uPhi->getValueAt(phiHigher, southernBelt);
-	fReal uThetaSouth = uPhiDiff * this->invGridLen;
-	uTheta->writeValueTo(gridPhi, southernPinch, uThetaSouth);
-	}*/
-	resetPoleVelocities();
-	for (size_t gridPhi = 0; gridPhi < this->nPhi; ++gridPhi)
-	{
-		fReal gPhi = uPhi->getPhiCoordAtIndex(gridPhi);
+		size_t phiLower = gridPhi;
+		size_t phiHigher = (phiLower + 1) % nPhi;
+		size_t phiLowerOppo = (phiLower + nPhi / 2) % nPhi;
+		size_t phiHigherOppo = (phiHigher + nPhi / 2) % nPhi;
 
-		fReal uPhiVal = uPhi->getValueAt(gridPhi, northernBelt);
-		uPhiNorthP[x] += -uPhiVal * std::sin(gPhi);
-		uPhiNorthP[y] += uPhiVal * std::cos(gPhi);
+		fReal uBeltThisside = KaminoLerp(uPhi->getValueAt(phiLower, northernBelt), uPhi->getValueAt(phiHigher, northernBelt), 0.5);
+		fReal uBeltOpposide = KaminoLerp(uPhi->getValueAt(phiLowerOppo, northernBelt), uPhi->getValueAt(phiHigherOppo, northernBelt), 0.5);
+		fReal uPhiNorthernPolar = KaminoLerp(uBeltThisside, uBeltOpposide, 0.5);
+		//uTheta is behind uPhi for pi/2 at north pole
+		uTheta->writeValueTo(gridPhi, northernPinch, uPhiNorthernPolar);
 
-		uPhiVal = uPhi->getValueAt(gridPhi, southernBelt);
-		uPhiSouthP[x] += -uPhiVal * std::sin(gPhi);
-		uPhiSouthP[y] += uPhiVal * std::cos(gPhi);
-	}
-	averageVelocities();
-	fReal phiOfuPhiN = std::atan2(uPhiNorthP[y], uPhiNorthP[x]);
-	if (phiOfuPhiN < 0.0)
-	{
-		phiOfuPhiN = M_2PI + phiOfuPhiN;
-	}
-	size_t northSplit = uTheta->getPhiIndexAtCoord(phiOfuPhiN);
-
-	fReal phiOfuPhiS = std::atan2(uPhiSouthP[y], uPhiSouthP[x]);
-	if (phiOfuPhiS < 0.0)
-	{
-		phiOfuPhiS = M_2PI + phiOfuPhiS;
-	}
-	size_t southSplit = uTheta->getPhiIndexAtCoord(phiOfuPhiS);
-
-	fReal uAmplituteN = std::sqrt(uPhiNorthP[x] * uPhiNorthP[x] + uPhiNorthP[y] * uPhiNorthP[y]);
-	fReal uAmplituteS = std::sqrt(uPhiSouthP[x] * uPhiSouthP[x] + uPhiSouthP[y] * uPhiSouthP[y]);
-
-	size_t beltHalved = this->nPhi / 2;
-	for (size_t i = 0; i < beltHalved; ++i)
-	{
-		size_t indexPhi = (i + northSplit) % this->nPhi;
-		// North: neg
-		uTheta->writeValueTo(indexPhi, northernPinch, -uAmplituteN);
-
-		indexPhi = (i + southSplit) % this->nPhi;
-		// South: pos
-		uTheta->writeValueTo(indexPhi, southernPinch, uAmplituteS);
-	}
-	for (size_t i = beltHalved; i < this->nPhi; ++i)
-	{
-		size_t indexPhi = (i + northSplit) % this->nPhi;
-		// North: pos
-		uTheta->writeValueTo(indexPhi, northernPinch, uAmplituteN);
-
-		indexPhi = (i + southSplit) % this->nPhi;
-		// South: neg
-		uTheta->writeValueTo(indexPhi, southernPinch, -uAmplituteS);
+		
+		uBeltThisside = KaminoLerp(uPhi->getValueAt(phiLower, southernBelt), uPhi->getValueAt(phiHigher, southernBelt), 0.5);
+		uBeltOpposide = KaminoLerp(uPhi->getValueAt(phiLowerOppo, southernBelt), uPhi->getValueAt(phiHigherOppo, southernBelt), 0.5);
+		fReal uPhiSouthernPolar = KaminoLerp(uBeltThisside, uBeltOpposide, 0.5);
+		//uTheta is before uPhi for pi/2 at south pole
+		uTheta->writeValueTo(gridPhi, southernPinch, uPhiSouthernPolar);
 	}
 }
 

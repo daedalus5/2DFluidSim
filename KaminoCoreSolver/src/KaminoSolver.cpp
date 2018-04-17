@@ -26,8 +26,14 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	addCenteredAttr("test", 0.0, 0.5);			// test scalar field
 
 	this->gridTypes = new gridType[nPhi * nTheta];
-	memset(reinterpret_cast<void*>(this->gridTypes), FLUIDGRID, nPhi * nTheta);
-
+	for (size_t gPhi = 0; gPhi < nPhi; ++gPhi)
+	{
+		for (size_t gTheta = 0; gTheta < nTheta; ++gTheta)
+		{
+			gridTypes[getIndex(gPhi, gTheta)] = FLUIDGRID;
+		}
+	}
+	
 	initialize_velocity();
 	initialize_pressure();
 
