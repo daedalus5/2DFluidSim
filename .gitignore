@@ -9,6 +9,7 @@ Kamino.VC.db
 ./2DFluidSim
 2DFluidSim
 tracer/
+particles/
 
 # User-specific files
 *.suo

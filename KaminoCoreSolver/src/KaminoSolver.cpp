@@ -67,10 +67,6 @@ KaminoSolver::~KaminoSolver()
 	delete[] this->gridTypes;
 }
 
-
-// <<<<<<<<<<
-// CORE FLUID SOLVER >>>>>>>>>>
-
 void KaminoSolver::updateTracer()
 {
 	fReal uPhi = (*this)["u"]->sampleAt(trc.phi, trc.theta, this->uNorthP, this->uSouthP);
@@ -135,9 +131,6 @@ void KaminoSolver::bodyForce()
 	v->swapBuffer();
 }
 
-// <<<<<<<<<<
-// INITIALIZATION >>>>>>>>>>
-
 /* Tri-diagonal matrix solver */
 void KaminoSolver::TDMSolve(fReal* a, fReal* b, fReal* c, fReal* d)
 {
@@ -172,9 +165,6 @@ gridType KaminoSolver::getGridTypeAt(size_t x, size_t y)
 {
 	return gridTypes[getIndex(x, y)];
 }
-
-// <<<<<<<<<<
-// ACCESS >>>>>>>>>>
 
 
 void KaminoSolver::addCenteredAttr(std::string name, fReal xOffset, fReal yOffset)
@@ -230,8 +220,6 @@ void KaminoSolver::swapAttrBuffers()
 
 
 // <<<<<<<<<<
-
-
 // OUTPUT >>>>>>>>>>
 
 
@@ -285,7 +273,7 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			float* ps = parts->dataWrite<float>(psH, idx);
 			float* ts = parts->dataWrite<float>(test, idx);
 
-			ps[0] = pressure;
+			ps[0] = density * radius * pressure / timeStep;
 			ts[0] = testVal / 13.0 * 255.0;
 
 			for (int k = 0; k < 3; ++k) {

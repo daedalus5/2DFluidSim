@@ -12,21 +12,31 @@ const float DT = 1.0 / 24.0;            // framerate @ 24 fps = 0.0147
 const int frames = 1000;                  // number of frames to output
 const std::string filepath = "output/frame";
 const std::string tracerPath = "tracer/trace";
+const std::string particlePath = "particles/frame";
 
 int main(int argc, char** argv)
 {
     KaminoSolver solver(nPhi, nTheta, radius, gridLen, dt);
-	solver.write_data_bgeo(filepath, 0);
+    solver.write_data_bgeo(filepath, 0);
+   
+    KaminoParticles particles(50, radius);
+    KaminoQuantity* u = solver.getAttributeNamed("u");
+    KaminoQuantity* v = solver.getAttributeNamed("v");
+    particles.write_data_bgeo(particlePath, 0);
+
     float T = 0.0;              // simulation time
     for(int i = 1; i <= frames; i++){
         while(T < i*DT){
             solver.stepForward(dt);
+            particles.updatePositions(u, v, dt);
             T += dt;
         }
         solver.stepForward(dt + i*DT - T);
+        particles.updatePositions(u, v, dt);
         T = i*DT;
         solver.write_data_bgeo(filepath, i);
-        solver.write_data_tracer(tracerPath, i);
+        particles.write_data_bgeo(particlePath, i);
+        //solver.write_data_tracer(tracerPath, i);
     }
     return 0;
 }
