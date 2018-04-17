@@ -22,7 +22,7 @@ void KaminoSolver::initialize_velocity()
 		for (size_t i = 0; i < sizePhi; ++i) {
 			f = fPhi(i * gridLen);
 			g = gTheta(j * gridLen);
-			u->setValueAt(i, j, f * g);
+			u->writeValueTo(i, j, f * g);
 		}
 	}
 
@@ -30,19 +30,19 @@ void KaminoSolver::initialize_velocity()
 	fReal m = 0.0;
 	sizePhi = v->getNPhi();
 	sizeTheta = v->getNTheta();
-	// pole conditions
-	for (size_t i = 0; i < sizePhi; ++i) {
-		v->setValueAt(i, 0, 0.0);
-		v->setValueAt(i, sizeTheta - 1, 0.0);
-	}
+	
 	// rest of sphere
 	for (size_t j = 1; j < sizeTheta - 1; ++j) {
 		for (size_t i = 0; i < sizePhi; ++i) {
 			l = lPhi(i * gridLen);
 			m = mTheta(j * gridLen);
-			v->setValueAt(i, j, l * m);
+			v->writeValueTo(i, j, l * m);
 		}
 	}
+
+	solvePolarVelocities();
+	u->swapBuffer();
+	v->swapBuffer();
 }
 
 
