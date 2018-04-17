@@ -73,8 +73,8 @@ KaminoSolver::~KaminoSolver()
 
 void KaminoSolver::updateTracer()
 {
-	fReal uPhi = (*this)["u"]->sampleAt(trc.phi, trc.theta);
-	fReal uTheta = (*this)["v"]->sampleAt(trc.phi, trc.theta);
+	fReal uPhi = (*this)["u"]->sampleAt(trc.phi, trc.theta, this->uNorthP, this->uSouthP);
+	fReal uTheta = (*this)["v"]->sampleAt(trc.phi, trc.theta, this->uNorthP, this->uSouthP);
 	trc.tracerStepForward(uPhi, uTheta, timeStep);
 }
 
@@ -97,32 +97,25 @@ void KaminoSolver::stepForward(fReal timeStep)
 // Phi: 0 - 2pi  Theta: 0 - pi
 bool validatePhiTheta(fReal & phi, fReal & theta)
 {
-	/*int loops = static_cast<int>(std::floor(theta / M_2PI));
+	int loops = static_cast<int>(std::floor(theta / M_2PI));
 	theta = theta - loops * M_2PI;
-	if (theta > M_PI)
-	{
-		theta = M_2PI - theta;
-		phi += M_PI;
-	}
-	loops = static_cast<int>(std::floor(phi / M_2PI));
-	phi = phi - loops * M_2PI;*/
+	// Now theta is in 0-2pi range
+
 	bool isFlipped = false;
-	if (theta < 0.0)
-	{
-		theta = -theta;
-		phi += M_PI;
-		isFlipped = true;
-	}
+	
 	if (theta > M_PI)
 	{
 		theta = M_2PI - theta;
 		phi += M_PI;
 		isFlipped = true;
 	}
+
+	loops = static_cast<int>(std::floor(phi / M_2PI));
+	phi = phi - loops * M_2PI;
+	// Now phi is in 0-2pi range
+
 	if (phi > M_2PI)
 		phi -= M_2PI;
-	if (phi < 0.0)
-		phi += M_2PI;
 	return isFlipped;
 }
 

@@ -9,8 +9,8 @@ void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gri
 	fReal gPhi = attr->getPhiCoordAtIndex(gridPhi);
 	fReal gTheta = attr->getThetaCoordAtIndex(gridTheta);
 
-	fReal guPhi = uPhi->sampleAt(gPhi, gTheta);
-	fReal guTheta = uTheta->sampleAt(gPhi, gTheta);
+	fReal guPhi = uPhi->sampleAt(gPhi, gTheta, this->uNorthP, this->uSouthP);
+	fReal guTheta = uTheta->sampleAt(gPhi, gTheta, this->uNorthP, this->uSouthP);
 
 	fReal latRadius = this->radius * std::sin(gTheta);
 	fReal cofPhi = timeStep / latRadius;
@@ -22,8 +22,8 @@ void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gri
 	fReal midPhi = gPhi - 0.5 * deltaPhi;
 	fReal midTheta = gTheta - 0.5 * deltaTheta;
 
-	fReal muPhi = uPhi->sampleAt(midPhi, midTheta);
-	fReal muTheta = uTheta->sampleAt(midPhi, midTheta);
+	fReal muPhi = uPhi->sampleAt(midPhi, midTheta, this->uNorthP, this->uSouthP);
+	fReal muTheta = uTheta->sampleAt(midPhi, midTheta, this->uNorthP, this->uSouthP);
 
 	deltaPhi = muPhi * cofPhi;
 	deltaTheta = muTheta * cofTheta;
@@ -31,7 +31,7 @@ void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gri
 	fReal pPhi = gPhi - deltaPhi;
 	fReal pTheta = gTheta - deltaTheta;
 
-	fReal advectedVal = attr->sampleAt(pPhi, pTheta);
+	fReal advectedVal = attr->sampleAt(pPhi, pTheta, this->uNorthP, this->uSouthP);
 	
 	attr->writeValueTo(gridPhi, gridTheta, advectedVal);
 }
@@ -50,8 +50,6 @@ void KaminoSolver::advectionScalar()
 		}
 	}
 }
-
-enum Coord { x, y };
 
 void KaminoSolver::solvePolarVelocities()
 {

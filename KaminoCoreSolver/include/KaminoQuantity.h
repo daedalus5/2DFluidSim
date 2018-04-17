@@ -36,6 +36,8 @@ Type KaminoLerp(const Type &fromEndPoint, const Type &toEndPoint, double factor)
 
 enum gridType { FLUIDGRID, SOLIDGRID, AIRGRID };
 
+enum Coord { x, y };
+
 // The attribute base class.
 class KaminoQuantity
 {
@@ -86,7 +88,7 @@ public:
 	/* Access */
 	fReal& accessValueAt(size_t x, size_t y);
 	/* Lerped Sampler using world coordinates */
-	fReal sampleAt(fReal x, fReal y);
+	fReal sampleAt(fReal x, fReal y, fReal uNorth[2], fReal uSouth[2]);
 	/* Given the index, show its origin in world coordinates*/
 	fReal getPhiCoordAtIndex(size_t phi);
 	fReal getThetaCoordAtIndex(size_t theta);

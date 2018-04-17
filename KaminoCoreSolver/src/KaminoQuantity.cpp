@@ -99,7 +99,7 @@ size_t KaminoQuantity::getThetaIndexAtCoord(fReal theta)
 /*
 Bilinear interpolated for now.
 */
-fReal KaminoQuantity::sampleAt(fReal x, fReal y)
+fReal KaminoQuantity::sampleAt(fReal x, fReal y, fReal uNorthP[2], fReal uSouthP[2])
 {
 	fReal phi = x - gridLen * this->xOffset;
 	fReal theta = y - gridLen * this->yOffset;
@@ -116,39 +116,69 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 
 	if (thetaIndex == 0 && isFlippedPole) // If it's not flipped the theta+1 belt would just be belt 1
 	{
-		//Lower is to the opposite, higher is on this side
-		alphaTheta = 1.0 - alphaTheta;
-		size_t phiLower = phiIndex % nPhi;
-		size_t phiHigher = (phiLower + 1) % nPhi;
-		size_t phiLowerOppo = (phiLower + nPhi / 2) % nPhi;
-		size_t phiHigherOppo = (phiHigher + nPhi / 2) % nPhi;
+		if (attrName == "u")
+		{
+			alphaTheta = 2.0 * alphaTheta;
+			size_t phiLower = (phiIndex + nPhi / 2) % nPhi;
+			size_t phiHigher = (phiLower + 1) % nPhi;
+			fReal lowerBelt = KaminoLerp(getValueAt(phiLower, 0), getValueAt(phiHigher, 0), alphaPhi);
 
-		fReal lowerBelt = KaminoLerp<fReal>(getValueAt(phiLower, 0), getValueAt(phiHigher, 0), alphaPhi);
-		fReal higherBelt = KaminoLerp<fReal>(getValueAt(phiLowerOppo, 0), getValueAt(phiHigherOppo, 0), alphaPhi);
+			fReal lowerPhi = M_2PI / nPhi * phiLower;
+			fReal higherPhi = M_2PI / nPhi * phiHigher;
+			fReal loweruPhi = uNorthP[0] * std::cos(lowerPhi) + uNorthP[1] * std::sin(lowerPhi);
+			fReal higheruPhi = uNorthP[0] * std::cos(higherPhi) + uNorthP[1] * std::sin(higherPhi);
+			fReal higherBelt = KaminoLerp(loweruPhi, higheruPhi, alphaPhi);
 
-		// "v" would never reach here
-		/*if (attrName == "u")
-			lowerBelt = -lowerBelt;*/
-		fReal lerped = KaminoLerp<fReal>(lowerBelt, higherBelt, alphaTheta);
-		return lerped;
+			fReal lerped = KaminoLerp(lowerBelt, higherBelt, alphaTheta);
+			return lerped;
+		}
+		else
+		{
+			//Lower is to the opposite, higher is on this side
+			alphaTheta = 1.0 - alphaTheta;
+			size_t phiLower = phiIndex % nPhi;
+			size_t phiHigher = (phiLower + 1) % nPhi;
+			size_t phiLowerOppo = (phiLower + nPhi / 2) % nPhi;
+			size_t phiHigherOppo = (phiHigher + nPhi / 2) % nPhi;
+
+			fReal lowerBelt = KaminoLerp<fReal>(getValueAt(phiLower, 0), getValueAt(phiHigher, 0), alphaPhi);
+			fReal higherBelt = KaminoLerp<fReal>(getValueAt(phiLowerOppo, 0), getValueAt(phiHigherOppo, 0), alphaPhi);
+			fReal lerped = KaminoLerp<fReal>(lowerBelt, higherBelt, alphaTheta);
+			return lerped;
+		}
 	}
 	else if (thetaIndex == nTheta - 1)
 	{
-		//Lower is on this side, higher is to the opposite
-		size_t phiLower = phiIndex % nPhi;
-		size_t phiHigher = (phiLower + 1) % nPhi;
-		size_t phiLowerOppo = (phiLower + nPhi / 2) % nPhi;
-		size_t phiHigherOppo = (phiHigher + nPhi / 2) % nPhi;
+		if (attrName == "u")
+		{
+			alphaTheta = 2.0 * alphaTheta;
+			size_t phiLower = phiIndex % nPhi;
+			size_t phiHigher = (phiLower + 1) % nPhi;
+			fReal lowerBelt = KaminoLerp(getValueAt(phiLower, thetaIndex), getValueAt(phiHigher, thetaIndex), alphaPhi);
+			
+			fReal lowerPhi = (M_2PI / nPhi) * phiLower;
+			fReal higherPhi = (M_2PI / nPhi) * phiHigher;
+			fReal loweruPhi = -uSouthP[0] * std::cos(lowerPhi) - uSouthP[1] * std::sin(lowerPhi);
+			fReal higheruPhi = -uSouthP[0] * std::cos(higherPhi) - uSouthP[1] * std::sin(higherPhi);
+			fReal higherBelt = KaminoLerp(loweruPhi, higheruPhi, alphaPhi);
 
-		fReal lowerBelt = KaminoLerp<fReal>(getValueAt(phiLower, nTheta - 1), getValueAt(phiHigher, nTheta - 1), alphaPhi);
-		fReal higherBelt = KaminoLerp<fReal>(getValueAt(phiLowerOppo, nTheta - 1), getValueAt(phiHigherOppo, nTheta - 1), alphaTheta);
+			fReal lerped = KaminoLerp(lowerBelt, higherBelt, alphaTheta);
+			return lerped;
+		}
+		else
+		{
+			//Lower is on this side, higher is to the opposite
+				size_t phiLower = phiIndex % nPhi;
+			size_t phiHigher = (phiLower + 1) % nPhi;
+			size_t phiLowerOppo = (phiLower + nPhi / 2) % nPhi;
+			size_t phiHigherOppo = (phiHigher + nPhi / 2) % nPhi;
 
-		// "v" would never reach here
-		/*if (attrName == "u")
-			higherBelt = -higherBelt;*/
+			fReal lowerBelt = KaminoLerp<fReal>(getValueAt(phiLower, nTheta - 1), getValueAt(phiHigher, nTheta - 1), alphaPhi);
+			fReal higherBelt = KaminoLerp<fReal>(getValueAt(phiLowerOppo, nTheta - 1), getValueAt(phiHigherOppo, nTheta - 1), alphaTheta);
 
-		fReal lerped = KaminoLerp<fReal>(lowerBelt, higherBelt, alphaTheta);
-		return lerped;
+			fReal lerped = KaminoLerp<fReal>(lowerBelt, higherBelt, alphaTheta);
+			return lerped;
+		}
 	}
 	else
 	{

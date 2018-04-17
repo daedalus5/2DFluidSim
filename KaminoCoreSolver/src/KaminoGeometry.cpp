@@ -50,6 +50,7 @@ void KaminoSolver::geometric()
 			v->writeValueTo(phiI, thetaJ, vNext);
 		}
 	}
+	solvePolarVelocities();
 
 	solvePolarVelocities();
 
