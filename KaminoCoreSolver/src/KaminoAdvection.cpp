@@ -66,24 +66,36 @@ void KaminoSolver::solvePolarVelocities()
 	for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi)
 	{
 		fReal phi = (M_2PI / nPhi) * gridPhi;
+		resetPoleVelocities();
 
-		size_t phiLower = gridPhi;
-		size_t phiHigher = (phiLower + 1) % nPhi;
-		size_t phiLowerOppo = (phiLower + nPhi / 2) % nPhi;
-		size_t phiHigherOppo = (phiHigher + nPhi / 2) % nPhi;
+		size_t gridPhiP1 = (gridPhi + 1) % nPhi;
+		fReal ootBeltUPhi = KaminoLerp(uPhi->getValueAt(gridPhi, northernBelt), uPhi->getValueAt(gridPhiP1, northernBelt), 0.5);
+		fReal totBeltUPhi = KaminoLerp(uPhi->getValueAt(gridPhi, northernBelt + 1), uPhi->getValueAt(gridPhiP1, northernBelt + 1), 0.5);
+		fReal uPhiLatLine = KaminoLerp(ootBeltUPhi, totBeltUPhi, 0.5);
+		fReal uThetaLatLine = uTheta->getValueAt(gridPhi, northernPinch + 1);
 
-		fReal uBeltThisside = KaminoLerp(uPhi->getValueAt(phiLower, northernBelt), uPhi->getValueAt(phiHigher, northernBelt), 0.5);
-		fReal uBeltOpposide = KaminoLerp(uPhi->getValueAt(phiLowerOppo, northernBelt), uPhi->getValueAt(phiHigherOppo, northernBelt), 0.5);
-		fReal uPhiNorthernPolar = KaminoLerp(uBeltThisside, uBeltOpposide, 0.5);
-		//uTheta is behind uPhi for pi/2 at north pole
-		uTheta->writeValueTo(gridPhi, northernPinch, uPhiNorthernPolar);
+		uNorthP[x] += uThetaLatLine * std::cos(phi) - uPhiLatLine * std::sin(phi);
+		uNorthP[y] += uThetaLatLine * std::sin(phi) + uPhiLatLine * std::cos(phi);
 
-		
-		uBeltThisside = KaminoLerp(uPhi->getValueAt(phiLower, southernBelt), uPhi->getValueAt(phiHigher, southernBelt), 0.5);
-		uBeltOpposide = KaminoLerp(uPhi->getValueAt(phiLowerOppo, southernBelt), uPhi->getValueAt(phiHigherOppo, southernBelt), 0.5);
-		fReal uPhiSouthernPolar = KaminoLerp(uBeltThisside, uBeltOpposide, 0.5);
-		//uTheta is before uPhi for pi/2 at south pole
-		uTheta->writeValueTo(gridPhi, southernPinch, uPhiSouthernPolar);
+
+		ootBeltUPhi = KaminoLerp(uPhi->getValueAt(gridPhi, southernBelt), uPhi->getValueAt(gridPhiP1, southernBelt), 0.5);
+		totBeltUPhi = KaminoLerp(uPhi->getValueAt(gridPhi, southernBelt - 1), uPhi->getValueAt(gridPhiP1, southernBelt - 1), 0.5);
+		uPhiLatLine = KaminoLerp(ootBeltUPhi, totBeltUPhi, 0.5);
+		uThetaLatLine = uTheta->getValueAt(gridPhi, southernPinch - 1);
+
+
+		uSouthP[x] += -uThetaLatLine * std::cos(phi) - uPhiLatLine * std::sin(phi);
+		uSouthP[y] += -uThetaLatLine * std::sin(phi) + uPhiLatLine * std::cos(phi);
+	}
+	averageVelocities();
+	//Now we have the projected x, y components at polars
+	for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi)
+	{
+		fReal phi = (M_2PI / nPhi) * gridPhi;
+		fReal northernUTheta = uNorthP[x] * std::cos(phi) + uNorthP[y] * std::sin(phi);
+		uTheta->writeValueTo(gridPhi, northernPinch, northernUTheta);
+		fReal southernUTheta = -uSouthP[x] * std::cos(phi) - uSouthP[y] * std::sin(phi);
+		uTheta->writeValueTo(gridPhi, southernPinch, southernUTheta);
 	}
 }
 
@@ -117,8 +129,8 @@ void KaminoSolver::resetPoleVelocities()
 {
 	for (unsigned i = 0; i < 2; ++i)
 	{
-		uPhiNorthP[i] = 0.0;
-		uPhiSouthP[i] = 0.0;
+		uNorthP[i] = 0.0;
+		uSouthP[i] = 0.0;
 	}
 }
 
@@ -126,7 +138,7 @@ void KaminoSolver::averageVelocities()
 {
 	for (unsigned i = 0; i < 2; ++i)
 	{
-		uPhiNorthP[i] /= this->nPhi;
-		uPhiSouthP[i] /= this->nPhi;
+		uNorthP[i] /= this->nPhi;
+		uSouthP[i] /= this->nPhi;
 	}
 }

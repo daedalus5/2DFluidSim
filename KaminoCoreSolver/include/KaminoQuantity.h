@@ -168,9 +168,9 @@ private:
 
 	// Velocities at poles in xyz cartesian coordinates
 	//fReal uThetaNorthP[2];
-	fReal uPhiNorthP[2];
+	fReal uNorthP[2];
 	//fReal uThetaSouthP[2];
-	fReal uPhiSouthP[2];
+	fReal uSouthP[2];
 
 	tracer trc;
 
