@@ -51,6 +51,8 @@ void KaminoSolver::geometric()
 		}
 	}
 
+	solvePolarVelocities();
+
 	u->swapBuffer();
 	v->swapBuffer();
 }

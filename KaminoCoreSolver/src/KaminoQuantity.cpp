@@ -127,8 +127,8 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 		fReal higherBelt = KaminoLerp<fReal>(getValueAt(phiLowerOppo, 0), getValueAt(phiHigherOppo, 0), alphaPhi);
 
 		// "v" would never reach here
-		if (attrName == "u")
-			lowerBelt = -lowerBelt;
+		/*if (attrName == "u")
+			lowerBelt = -lowerBelt;*/
 		fReal lerped = KaminoLerp<fReal>(lowerBelt, higherBelt, alphaTheta);
 		return lerped;
 	}
@@ -144,8 +144,8 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y)
 		fReal higherBelt = KaminoLerp<fReal>(getValueAt(phiLowerOppo, nTheta - 1), getValueAt(phiHigherOppo, nTheta - 1), alphaTheta);
 
 		// "v" would never reach here
-		if (attrName == "u")
-			higherBelt = -higherBelt;
+		/*if (attrName == "u")
+			higherBelt = -higherBelt;*/
 
 		fReal lerped = KaminoLerp<fReal>(lowerBelt, higherBelt, alphaTheta);
 		return lerped;

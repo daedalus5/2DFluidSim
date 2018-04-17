@@ -86,7 +86,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 	//std::cout << "Advection completed" << std::endl;
 	this->swapAttrBuffers();
 
-	geometric();
+	geometric(); // Buffer is swapped here
 	//std::cout << "Geometric completed" << std::endl;
 	//bodyForce();
 	projection();
