@@ -1,6 +1,6 @@
 # include "../include/KaminoQuantity.h"
 
-KaminoParticles::KaminoParticles(int n, fReal radius) : radius(radius)
+KaminoParticles::KaminoParticles(int n, fReal radius, KaminoSolver* solver) : radius(radius), parentSolver(solver)
 {
     fReal delta = M_PI / n;
     for(unsigned int i = 0; i < 2 * n; ++i){
@@ -20,8 +20,8 @@ KaminoParticles::~KaminoParticles()
 void KaminoParticles::updatePositions(KaminoQuantity* u, KaminoQuantity* v, fReal deltaT)
 {
     for(unsigned int i = 0; i < positions.size(); ++i){
-        fReal uPhi = u->sampleAt(positions[i][0], positions[i][1]);
-        fReal uTheta = v->sampleAt(positions[i][0], positions[i][1]);
+        fReal uPhi = u->sampleAt(positions[i][0], positions[i][1], parentSolver->uNorthP, parentSolver->uSouthP);
+        fReal uTheta = v->sampleAt(positions[i][0], positions[i][1], parentSolver->uNorthP, parentSolver->uSouthP);
         fReal nextPhi;
         fReal nextTheta;
         // problem at the south pole

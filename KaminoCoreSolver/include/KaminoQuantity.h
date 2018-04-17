@@ -168,12 +168,6 @@ private:
 	fReal timeStep;
 	fReal timeElapsed;
 
-	// Velocities at poles in xyz cartesian coordinates
-	//fReal uThetaNorthP[2];
-	fReal uNorthP[2];
-	//fReal uThetaSouthP[2];
-	fReal uSouthP[2];
-
 	tracer trc;
 
 	void resetPoleVelocities();
@@ -237,6 +231,12 @@ private:
 	void TDMSolve(fReal* a, fReal* b, fReal* c, fReal* d);
 	
 public:
+	// Velocities at poles in xyz cartesian coordinates
+	//fReal uThetaNorthP[2];
+	fReal uNorthP[2];
+	//fReal uThetaSouthP[2];
+	fReal uSouthP[2];
+
 	KaminoSolver(size_t nx, size_t ny, fReal radius, fReal gridLength, fReal frameDuration = 1.0 / 30.0);
 	~KaminoSolver();
 
@@ -257,8 +257,9 @@ class KaminoParticles
 private:
 	fReal radius;
 	std::vector<Eigen::Matrix<fReal, 2, 1>> positions;
+	KaminoSolver* parentSolver;
 public:
-	KaminoParticles(int n, fReal radius);
+	KaminoParticles(int n, fReal radius, KaminoSolver* parentSolver);
 	~KaminoParticles();
 
 	void updatePositions(KaminoQuantity* u, KaminoQuantity* v, fReal deltaT);

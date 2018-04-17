@@ -24,6 +24,7 @@
     <ClCompile Include="src\KaminoFFT.cpp" />
     <ClCompile Include="src\KaminoGeometry.cpp" />
     <ClCompile Include="src\KaminoInit.cpp" />
+    <ClCompile Include="src\KaminoParticles.cpp" />
     <ClCompile Include="src\KaminoProjection.cpp" />
     <ClCompile Include="src\KaminoQuantity.cpp" />
     <ClCompile Include="src\KaminoSolver.cpp" />
