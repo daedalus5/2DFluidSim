@@ -123,10 +123,10 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y, fReal uNorthP[2], fReal uSouthP
 			size_t phiHigher = (phiLower + 1) % nPhi;
 			fReal lowerBelt = KaminoLerp(getValueAt(phiLower, 0), getValueAt(phiHigher, 0), alphaPhi);
 
-			fReal lowerPhi = M_2PI / nPhi * phiLower;
-			fReal higherPhi = M_2PI / nPhi * phiHigher;
-			fReal loweruPhi = uNorthP[0] * std::cos(lowerPhi) + uNorthP[1] * std::sin(lowerPhi);
-			fReal higheruPhi = uNorthP[0] * std::cos(higherPhi) + uNorthP[1] * std::sin(higherPhi);
+			fReal lowerPhi = (phiLower - 0.5) * gridLen;
+			fReal higherPhi = (phiLower + 0.5) * gridLen;
+			fReal loweruPhi = -uNorthP[0] * std::cos(lowerPhi) + uNorthP[1] * std::sin(lowerPhi);
+			fReal higheruPhi = -uNorthP[0] * std::cos(higherPhi) + uNorthP[1] * std::sin(higherPhi);
 			fReal higherBelt = KaminoLerp(loweruPhi, higheruPhi, alphaPhi);
 
 			fReal lerped = KaminoLerp(lowerBelt, higherBelt, alphaTheta);
@@ -156,10 +156,10 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y, fReal uNorthP[2], fReal uSouthP
 			size_t phiHigher = (phiLower + 1) % nPhi;
 			fReal lowerBelt = KaminoLerp(getValueAt(phiLower, thetaIndex), getValueAt(phiHigher, thetaIndex), alphaPhi);
 			
-			fReal lowerPhi = (M_2PI / nPhi) * phiLower;
-			fReal higherPhi = (M_2PI / nPhi) * phiHigher;
-			fReal loweruPhi = -uSouthP[0] * std::cos(lowerPhi) - uSouthP[1] * std::sin(lowerPhi);
-			fReal higheruPhi = -uSouthP[0] * std::cos(higherPhi) - uSouthP[1] * std::sin(higherPhi);
+			fReal lowerPhi = (phiLower - 0.5) * gridLen;
+			fReal higherPhi = (phiLower + 0.5) * gridLen;
+			fReal loweruPhi = -uSouthP[0] * std::cos(lowerPhi) + uSouthP[1] * std::sin(lowerPhi);
+			fReal higheruPhi = -uSouthP[0] * std::cos(higherPhi) + uSouthP[1] * std::sin(higherPhi);
 			fReal higherBelt = KaminoLerp(loweruPhi, higheruPhi, alphaPhi);
 
 			fReal lerped = KaminoLerp(lowerBelt, higherBelt, alphaTheta);
@@ -168,7 +168,7 @@ fReal KaminoQuantity::sampleAt(fReal x, fReal y, fReal uNorthP[2], fReal uSouthP
 		else
 		{
 			//Lower is on this side, higher is to the opposite
-				size_t phiLower = phiIndex % nPhi;
+			size_t phiLower = phiIndex % nPhi;
 			size_t phiHigher = (phiLower + 1) % nPhi;
 			size_t phiLowerOppo = (phiLower + nPhi / 2) % nPhi;
 			size_t phiHigherOppo = (phiHigher + nPhi / 2) % nPhi;
