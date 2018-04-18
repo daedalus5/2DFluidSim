@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     solver.write_data_bgeo(filepath, 0);
 # endif
    
-    KaminoParticles particles(50, radius, &solver);
+    KaminoParticles particles(300, radius, &solver);
     KaminoQuantity* u = solver.getAttributeNamed("u");
     KaminoQuantity* v = solver.getAttributeNamed("v");
 # ifndef _MSC_VER

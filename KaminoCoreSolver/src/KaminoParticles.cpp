@@ -26,11 +26,11 @@ void KaminoParticles::updatePositions(KaminoQuantity* u, KaminoQuantity* v, fRea
         fReal nextTheta;
         // problem at the south pole
         if(positions[i][1] > M_PI - 1E-7 && positions[i][1] < M_PI + 1E-7){
-            nextPhi = positions[i][0] + uPhi * deltaT;
+            nextPhi = positions[i][0] + uPhi * deltaT / (radius * sin(1E-10));
         }
         // problem at the north pole
         else if(positions[i][1] < 1E-7 && positions[i][1] > -1E-7){
-            nextPhi = positions[i][0] + uPhi * deltaT;
+            nextPhi = positions[i][0] + uPhi * deltaT / (radius * sin(1E-10));
         }
         else{
             nextPhi = positions[i][0] + uPhi * deltaT / (radius * sin(positions[i][1]));

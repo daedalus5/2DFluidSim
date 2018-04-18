@@ -56,7 +56,7 @@ fReal KaminoSolver::fPhi(const fReal x)
 fReal KaminoSolver::gTheta(const fReal y)
 {
 	fReal arg = y;
-	return cos(arg) * sin(arg);
+	return cos(arg);
 }
 
 fReal KaminoSolver::lPhi(const fReal x)
