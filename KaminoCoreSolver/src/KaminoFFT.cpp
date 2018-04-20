@@ -93,7 +93,7 @@ void KaminoSolver::transformDivergence()
 				accumulatedImag += fThetaN * std::sin(phase);
 			}
 			accumulatedReal = accumulatedReal / nPhi;
-			accumulatedImag = accumulatedReal / nPhi;
+			accumulatedImag = accumulatedImag / nPhi;
 			fourieredFReal[getIndex(nIndex, thetaI)] = accumulatedReal;
 			fourieredFImag[getIndex(nIndex, thetaI)] = accumulatedImag;
 		}
