@@ -19,6 +19,9 @@ KaminoParticles::~KaminoParticles()
 
 void KaminoParticles::updatePositions(KaminoQuantity* u, KaminoQuantity* v, fReal deltaT)
 {
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
     for(unsigned int i = 0; i < positions.size(); ++i){
         fReal uPhi = u->sampleAt(positions[i][0], positions[i][1], parentSolver->uNorthP, parentSolver->uSouthP);
         fReal uTheta = v->sampleAt(positions[i][0], positions[i][1], parentSolver->uNorthP, parentSolver->uSouthP);

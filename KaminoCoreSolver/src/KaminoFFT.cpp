@@ -1,5 +1,5 @@
 # include "../include/KaminoQuantity.h"
-
+# include <fstream>
 
 void KaminoSolver::fillDivergence()
 {
@@ -9,6 +9,9 @@ void KaminoSolver::fillDivergence()
 	//fReal scaleDiv = density * radius / timeStep;
 	fReal scaleDiv = 1.0;
 	/// TODO: Fill the fourierF buffer with divergence
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
 	for (size_t j = 0; j < nTheta; ++j)
 	{
 		fReal thetaOftheBelt = (j + 0.5) * gridLen;
@@ -77,25 +80,25 @@ void KaminoSolver::fillDivergence()
 
 void KaminoSolver::transformDivergence()
 {
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
 	for (size_t thetaI = 0; thetaI < nTheta; ++thetaI)
 	{
-		for (int nIndex = 0; nIndex < nPhi; ++nIndex)
+		std::vector<std::complex<fReal>> output;
+		std::vector<std::complex<fReal>> input;
+		for (size_t j = 0; j < nPhi; ++j)
 		{
-			int n = nIndex - nPhi / 2;
-			fReal accumulatedReal = 0.0;
-			fReal accumulatedImag = 0.0;
-			for (size_t j = 0; j < nPhi; ++j)
-			{
-				fReal phiJ = (M_2PI / nPhi) * j;
-				fReal phase = -n * phiJ;
-				fReal fThetaN = beffourierF[getIndex(j, thetaI)];
-				accumulatedReal += fThetaN * std::cos(phase);
-				accumulatedImag += fThetaN * std::sin(phase);
-			}
-			accumulatedReal = accumulatedReal / nPhi;
-			accumulatedImag = accumulatedImag / nPhi;
-			fourieredFReal[getIndex(nIndex, thetaI)] = accumulatedReal;
-			fourieredFImag[getIndex(nIndex, thetaI)] = accumulatedImag;
+			input.push_back(std::complex<fReal>(beffourierF[getIndex(j, thetaI)], 0.0));
+		}
+		fft.inv(output, input);
+		for (int naiveIndex = 0; naiveIndex < nPhi; ++naiveIndex)
+		{
+			int fftIndex = nPhi / 2 - naiveIndex;
+			if (fftIndex < 0)
+				fftIndex += nPhi;
+			fourieredFReal[getIndex(naiveIndex, thetaI)] = output.at(fftIndex).real();
+			fourieredFImag[getIndex(naiveIndex, thetaI)] = output.at(fftIndex).imag();
 		}
 	}
 }
@@ -103,30 +106,35 @@ void KaminoSolver::transformDivergence()
 void KaminoSolver::invTransformPressure()
 {
 	KaminoQuantity* p = (*this)["p"];
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
 	for (size_t gTheta = 0; gTheta < nTheta; ++gTheta)
 	{
+		std::vector<std::complex<fReal>> output;
+		std::vector<std::complex<fReal>> input;
+
+		for (size_t j = 0; j < nPhi; ++j)
+		{
+			input.push_back(std::complex<fReal>(fourierUReal[getIndex(j, gTheta)], fourierUImag[getIndex(j, gTheta)]));
+		}
+		fft.fwd(output, input);
+		fReal realNZeroComponent = input.at(nPhi / 2).real();
 		for (size_t gPhi = 0; gPhi < nPhi; ++gPhi)
 		{
-			fReal Phi = M_2PI / nPhi * gPhi;
-			fReal accumulatedPressure = 0.0;
-			for (int nIndex = 0; nIndex < nPhi; ++nIndex)
+			fReal pressure = 0.0;
+			size_t fftIndex = 0;
+			if (gPhi != 0)
+				fftIndex = nPhi - gPhi;
+			if (gPhi % 2 == 0)
 			{
-				int n = nIndex - nPhi / 2;
-				fReal phase = n * Phi;
-				fReal pressureFourierCoefReal = fourierUReal[getIndex(nIndex, gTheta)];
-				if (n == 0)
-					pressureFourierCoefReal = 0.0;
-				fReal pressureFourierCoefImag = fourierUImag[getIndex(nIndex, gTheta)];
-				if (n == 0)
-					pressureFourierCoefImag = 0.0;
-				accumulatedPressure += pressureFourierCoefReal * std::cos(phase);
-				accumulatedPressure -= pressureFourierCoefImag * std::sin(phase);
-				if (abs(accumulatedPressure) > 1e2)
-				{
-					std::cerr << "exp" << std::endl;
-				}
+				pressure = output.at(fftIndex).real() - realNZeroComponent;
 			}
-			p->writeValueTo(gPhi, gTheta, accumulatedPressure);
+			else
+			{
+				pressure = -output.at(fftIndex).real() - realNZeroComponent;
+			}
+			p->writeValueTo(gPhi, gTheta, pressure);
 		}
 	}
 }

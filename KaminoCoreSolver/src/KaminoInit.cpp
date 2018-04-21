@@ -40,7 +40,21 @@ void KaminoSolver::initialize_velocity()
 		}
 	}
 
+	// Heat up the next buffer.
+	for (size_t j = 0; j < u->getNTheta(); ++j) {
+		for (size_t i = 0; i < u->getNPhi(); ++i) {
+			u->writeValueTo(i, j, u->getValueAt(i, j));
+		}
+	}
+	for (size_t j = 1; j < v->getNTheta() - 1; ++j) {
+		for (size_t i = 0; i < v->getNPhi(); ++i) {
+			v->writeValueTo(i, j, v->getValueAt(i, j));
+		}
+	}
+
 	solvePolarVelocities();
+	u->swapBuffer();
+	v->swapBuffer();
 }
 
 

@@ -25,8 +25,11 @@ void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gri
 	fReal muPhi = uPhi->sampleAt(midPhi, midTheta, this->uNorthP, this->uSouthP);
 	fReal muTheta = uTheta->sampleAt(midPhi, midTheta, this->uNorthP, this->uSouthP);
 
-	deltaPhi = muPhi * cofPhi;
-	deltaTheta = muTheta * cofTheta;
+	fReal averuPhi = 0.5 * (muPhi + guPhi);
+	fReal averuTheta = 0.5 * (muPhi + guPhi);
+
+	deltaPhi = averuPhi * cofPhi;
+	deltaTheta = averuTheta * cofTheta;
 
 	fReal pPhi = gPhi - deltaPhi;
 	fReal pTheta = gTheta - deltaTheta;
@@ -91,9 +94,9 @@ void KaminoSolver::solvePolarVelocities()
 	{
 		fReal phi = (M_2PI / nPhi) * gridPhi;
 		fReal northernUTheta = uNorthP[x] * std::cos(phi) + uNorthP[y] * std::sin(phi);
-		uTheta->setValueAt(gridPhi, northernPinch, northernUTheta);
+		uTheta->writeValueTo(gridPhi, northernPinch, northernUTheta);
 		fReal southernUTheta = -uSouthP[x] * std::cos(phi) - uSouthP[y] * std::sin(phi);
-		uTheta->setValueAt(gridPhi, southernPinch, southernUTheta);
+		uTheta->writeValueTo(gridPhi, southernPinch, southernUTheta);
 	}
 }
 
