@@ -105,10 +105,10 @@ void KaminoSolver::transformDivergence()
 
 void KaminoSolver::invTransformPressure()
 {
+	KaminoQuantity* p = (*this)["p"];
 # ifdef OMParallelize
 # pragma omp parallel for
 # endif
-	KaminoQuantity* p = (*this)["p"];
 	for (size_t gTheta = 0; gTheta < nTheta; ++gTheta)
 	{
 		std::vector<std::complex<fReal>> output;
