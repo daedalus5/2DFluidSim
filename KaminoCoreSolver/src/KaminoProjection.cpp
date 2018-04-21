@@ -11,6 +11,9 @@ void KaminoSolver::projection()
 	/// TODO: Perform forward FFT on fourierF to make them fourier coefficients
 	transformDivergence();
 
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
 	for (int nIndex = 0; nIndex < nPhi; ++nIndex)
 	{
 		int n = nIndex - nPhi / 2;
@@ -89,8 +92,11 @@ void KaminoSolver::projection()
 	invTransformPressure();
 	p->swapBuffer();
 
-	// Update velocities accordingly: uPhi
 	fReal factorTheta = -invGridLen;
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
+	// Update velocities accordingly: uPhi
 	for (size_t j = 0; j < u->getNTheta(); ++j)
 	{
 		for (size_t i = 0; i < u->getNPhi(); ++i)
@@ -123,6 +129,9 @@ void KaminoSolver::projection()
 
 	u->swapBuffer();
 
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
 	// Update velocities accordingly: uTheta
 	for (size_t j = 1; j < v->getNTheta() - 1; ++j)
 	{
@@ -173,5 +182,5 @@ void KaminoSolver::projection()
 	solvePolarVelocities();
 	v->swapBuffer();
 
-	fillDivergence();
+	//fillDivergence();
 }

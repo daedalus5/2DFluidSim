@@ -16,6 +16,9 @@ void KaminoSolver::geometric()
 		v->writeValueTo(phiI, southPole, v->getValueAt(phiI, southPole));
 	}
 	/// TODO: Determine the upper and lower bounds
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
 	for (size_t thetaJ = 1; thetaJ < nTheta - 1; ++thetaJ)
 	{
 		for (size_t phiI = 0; phiI < nPhi; ++phiI)

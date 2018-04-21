@@ -9,6 +9,9 @@ void KaminoSolver::fillDivergence()
 	//fReal scaleDiv = density * radius / timeStep;
 	fReal scaleDiv = 1.0;
 	/// TODO: Fill the fourierF buffer with divergence
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
 	for (size_t j = 0; j < nTheta; ++j)
 	{
 		fReal thetaOftheBelt = (j + 0.5) * gridLen;
@@ -77,6 +80,9 @@ void KaminoSolver::fillDivergence()
 
 void KaminoSolver::transformDivergence()
 {
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
 	for (size_t thetaI = 0; thetaI < nTheta; ++thetaI)
 	{
 		std::vector<std::complex<fReal>> output;
@@ -99,6 +105,9 @@ void KaminoSolver::transformDivergence()
 
 void KaminoSolver::invTransformPressure()
 {
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
 	KaminoQuantity* p = (*this)["p"];
 	for (size_t gTheta = 0; gTheta < nTheta; ++gTheta)
 	{
