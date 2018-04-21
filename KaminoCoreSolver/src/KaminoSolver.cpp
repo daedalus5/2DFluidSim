@@ -88,6 +88,7 @@ void KaminoSolver::stepForward(fReal timeStep)
 	projection();
 	//std::cout << "Projection completed" << std::endl;
 	updateTracer();
+	this->timeElapsed += timeStep;
 }
 
 // Phi: 0 - 2pi  Theta: 0 - pi
