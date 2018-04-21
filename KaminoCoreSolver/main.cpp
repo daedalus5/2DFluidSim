@@ -10,6 +10,7 @@ const fReal radius = 5.0;               // radius of sphere
 const float dt = 0.005;                 // simulation time step size
 const float DT = 1.0 / 24.0;            // framerate @ 24 fps = 0.0147
 const int frames = 1000;                  // number of frames to output
+const int numParticles = 100;
 const std::string filepath = "output/frame";
 const std::string tracerPath = "tracer/trace";
 const std::string particlePath = "particles/frame";
@@ -21,7 +22,7 @@ int main(int argc, char** argv)
     solver.write_data_bgeo(filepath, 0);
 # endif
    
-    KaminoParticles particles(100, radius, &solver);
+    KaminoParticles particles(numParticles, radius, &solver);
     KaminoQuantity* u = solver.getAttributeNamed("u");
     KaminoQuantity* v = solver.getAttributeNamed("v");
 # ifndef _MSC_VER

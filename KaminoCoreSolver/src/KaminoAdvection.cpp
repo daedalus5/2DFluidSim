@@ -26,7 +26,7 @@ void KaminoSolver::advectAttrAt(KaminoQuantity* attr, size_t gridPhi, size_t gri
 	fReal muTheta = uTheta->sampleAt(midPhi, midTheta, this->uNorthP, this->uSouthP);
 
 	fReal averuPhi = 0.5 * (muPhi + guPhi);
-	fReal averuTheta = 0.5 * (muPhi + guPhi);
+	fReal averuTheta = 0.5 * (muTheta + guTheta);
 
 	deltaPhi = averuPhi * cofPhi;
 	deltaTheta = averuTheta * cofTheta;

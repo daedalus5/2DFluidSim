@@ -1,5 +1,4 @@
 #include <UT/UT_DSOVersion.h>
-
 #include <UT/UT_Math.h>
 #include <UT/UT_Interrupt.h>
 #include <GU/GU_Detail.h>
@@ -12,7 +11,7 @@
 
 #include <limits.h>
 #include "KaminoPlugin.h"
-using namespace HDK_Sample;
+using namespace HDK_Kamino;
 
 ///
 /// newSopOperator is the hook that Houdini grabs from this dll
@@ -24,13 +23,13 @@ newSopOperator(OP_OperatorTable *table)
 {
     table->addOperator(
 	    new OP_Operator("KaminoPlugin",			// Internal name
-			    "Kamino",			// UI name
-			     SOP_Lsystem::myConstructor,	// How to build the SOP
-			     SOP_Lsystem::myTemplateList,	// My parameters
-			     0,				// Min # of sources
-			     0,				// Max # of sources
-			     SOP_Lsystem::myVariables,	// Local variables
-			     OP_FLAG_GENERATOR)		// Flag it as generator
+			    "Kamino",						// UI name
+			     SOP_Kamino::myConstructor,		// How to build the SOP
+			     SOP_Kamino::myTemplateList,	// My parameters
+			     0,								// Min # of sources
+			     0,								// Max # of sources
+			     SOP_Kamino::myVariables,		// Local variables
+			     OP_FLAG_GENERATOR)				// Flag it as generator
 	    );
 }
 
@@ -53,7 +52,7 @@ static PRM_Default defaultParams[] =
 };
 
 PRM_Template
-SOP_Lsystem::myTemplateList[] = 
+SOP_Kamino::myTemplateList[] = 
 {
 	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + ang, defaultParams + ang, 0),
 	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + step, defaultParams + step, 0),
@@ -70,14 +69,14 @@ enum {
 };
 
 CH_LocalVariable
-SOP_Lsystem::myVariables[] = {
-    { "PT",	VAR_PT, 0 },		// The table provides a mapping
-    { "NPT",	VAR_NPT, 0 },		// from text string to integer token
+SOP_Kamino::myVariables[] = {
+    { "PT", VAR_PT, 0 },		// The table provides a mapping
+    { "NPT", VAR_NPT, 0 },		// from text string to integer token
     { 0, 0, 0 },
 };
 
 bool
-SOP_Lsystem::evalVariableValue(fpreal &val, int index, int thread)
+SOP_Kamino::evalVariableValue(fpreal &val, int index, int thread)
 {
     // myCurrPoint will be negative when we're not cooking so only try to
     // handle the local variables when we have a valid myCurrPoint index.
@@ -102,29 +101,29 @@ SOP_Lsystem::evalVariableValue(fpreal &val, int index, int thread)
 }
 
 OP_Node *
-SOP_Lsystem::myConstructor(OP_Network *net, const char *name, OP_Operator *op)
+SOP_Kamino::myConstructor(OP_Network *net, const char *name, OP_Operator *op)
 {
-    return new SOP_Lsystem(net, name, op);
+    return new SOP_Kamino(net, name, op);
 }
 
-SOP_Lsystem::SOP_Lsystem(OP_Network *net, const char *name, OP_Operator *op)
+SOP_Kamino::SOP_Kamino(OP_Network *net, const char *name, OP_Operator *op)
 	: SOP_Node(net, name, op)
 {
     myCurrPoint = -1;	// To prevent garbage values from being returned
 }
 
-SOP_Lsystem::~SOP_Lsystem() {}
+SOP_Kamino::~SOP_Kamino() {}
 
 unsigned
-SOP_Lsystem::disableParms()
+SOP_Kamino::disableParms()
 {
     return 0;
 }
 
 OP_ERROR
-SOP_Lsystem::cookMySop(OP_Context &context)
+SOP_Kamino::cookMySop(OP_Context &context)
 {
-	fpreal		 now = context.getTime();
+	fpreal now = context.getTime();
 
 	fpreal angle = this->getAngle(now);
 	fpreal step = this->getStepSize(now);
@@ -137,10 +136,10 @@ SOP_Lsystem::cookMySop(OP_Context &context)
     int			 divisions, plane;
     int			 xcoord =0, ycoord = 1, zcoord =2;
     float		 tmp;
-    UT_Vector4		 pos;
-    GU_PrimPoly		*poly;
+    UT_Vector4	 pos;
+    GU_PrimPoly	 *poly;
     int			 i;
-    UT_Interrupt	*boss;
+    UT_Interrupt *boss;
 
     // Since we don't have inputs, we don't need to lock them.
 
