@@ -1,6 +1,6 @@
 #include "include/KaminoQuantity.h"
 
-const size_t nTheta = 50;               // number of grid cells in u direction
+const size_t nTheta = 512;               // number of grid cells in u direction
 const size_t nPhi = 2 * nTheta;         // number of grid cells in v direction
 const fReal gridLen = M_PI / nTheta;    // grid spacing (square in uv plane)
 const fReal radius = 5.0;               // radius of sphere
@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     solver.write_data_bgeo(filepath, 0);
 # endif
    
-    KaminoParticles particles(300, radius, &solver);
+    KaminoParticles particles(5000, radius, &solver);
     KaminoQuantity* u = solver.getAttributeNamed("u");
     KaminoQuantity* v = solver.getAttributeNamed("v");
 # ifndef _MSC_VER
