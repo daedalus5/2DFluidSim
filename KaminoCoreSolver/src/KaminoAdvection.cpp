@@ -91,9 +91,9 @@ void KaminoSolver::solvePolarVelocities()
 	{
 		fReal phi = (M_2PI / nPhi) * gridPhi;
 		fReal northernUTheta = uNorthP[x] * std::cos(phi) + uNorthP[y] * std::sin(phi);
-		uTheta->setValueAt(gridPhi, northernPinch, northernUTheta);
+		uTheta->writeValueTo(gridPhi, northernPinch, northernUTheta);
 		fReal southernUTheta = -uSouthP[x] * std::cos(phi) - uSouthP[y] * std::sin(phi);
-		uTheta->setValueAt(gridPhi, southernPinch, southernUTheta);
+		uTheta->writeValueTo(gridPhi, southernPinch, southernUTheta);
 	}
 }
 

@@ -6,16 +6,6 @@ void KaminoSolver::geometric()
 	KaminoQuantity* u = staggeredAttr["u"];
 	KaminoQuantity* v = staggeredAttr["v"];
 
-	// Poles unshifted
-	for (size_t phiI = 0; phiI < nPhi; ++phiI)
-	{
-		size_t northPole = 0;
-		size_t southPole = v->getNTheta() - 1;
-
-		v->writeValueTo(phiI, northPole, v->getValueAt(phiI, northPole));
-		v->writeValueTo(phiI, southPole, v->getValueAt(phiI, southPole));
-	}
-	/// TODO: Determine the upper and lower bounds
 # ifdef OMParallelize
 # pragma omp parallel for
 # endif
@@ -53,8 +43,6 @@ void KaminoSolver::geometric()
 			v->writeValueTo(phiI, thetaJ, vNext);
 		}
 	}
-	solvePolarVelocities();
-
 	solvePolarVelocities();
 
 	u->swapBuffer();
