@@ -22,7 +22,7 @@ void KaminoSolver::initialize_velocity()
 		for (size_t i = 0; i < sizePhi; ++i) {
 			f = fPhi(i * gridLen);
 			g = gTheta(j * gridLen);
-			u->writeValueTo(i, j, f * g);
+			u->setValueAt(i, j, f * g);
 		}
 	}
 
@@ -36,7 +36,19 @@ void KaminoSolver::initialize_velocity()
 		for (size_t i = 0; i < sizePhi; ++i) {
 			l = lPhi(i * gridLen);
 			m = mTheta(j * gridLen);
-			v->writeValueTo(i, j, l * m);
+			v->setValueAt(i, j, l * m);
+		}
+	}
+
+	// Heat up the next buffer.
+	for (size_t j = 0; j < u->getNTheta(); ++j) {
+		for (size_t i = 0; i < u->getNPhi(); ++i) {
+			u->writeValueTo(i, j, u->getValueAt(i, j));
+		}
+	}
+	for (size_t j = 1; j < v->getNTheta() - 1; ++j) {
+		for (size_t i = 0; i < v->getNPhi(); ++i) {
+			v->writeValueTo(i, j, v->getValueAt(i, j));
 		}
 	}
 

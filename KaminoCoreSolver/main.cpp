@@ -1,6 +1,6 @@
 #include "include/KaminoQuantity.h"
 
-const size_t nTheta = 64;               // number of grid cells in u direction
+const size_t nTheta = 256;               // number of grid cells in u direction
 const size_t nPhi = 2 * nTheta;         // number of grid cells in v direction
 const fReal gridLen = M_PI / nTheta;    // grid spacing (square in uv plane)
 const fReal radius = 5.0;               // radius of sphere
@@ -9,7 +9,7 @@ const fReal radius = 5.0;               // radius of sphere
 
 const float dt = 0.005;                 // simulation time step size
 const float DT = 1.0 / 24.0;            // framerate @ 24 fps = 0.0147
-const int frames = 1000;                  // number of frames to output
+const int frames = 3000;                  // number of frames to output
 const std::string filepath = "output/frame";
 const std::string tracerPath = "tracer/trace";
 const std::string particlePath = "particles/frame";
