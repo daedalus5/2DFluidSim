@@ -1,5 +1,5 @@
 # include "../include/KaminoQuantity.h"
-
+# include <fstream>
 
 void KaminoSolver::fillDivergence()
 {
@@ -77,6 +77,8 @@ void KaminoSolver::fillDivergence()
 
 void KaminoSolver::transformDivergence()
 {
+	/*std::fstream fNaiveFourier;
+	fNaiveFourier.open("./naive.txt", std::ios::out);
 	for (size_t thetaI = 0; thetaI < nTheta; ++thetaI)
 	{
 		for (int nIndex = 0; nIndex < nPhi; ++nIndex)
@@ -96,12 +98,35 @@ void KaminoSolver::transformDivergence()
 			accumulatedImag = accumulatedImag / nPhi;
 			fourieredFReal[getIndex(nIndex, thetaI)] = accumulatedReal;
 			fourieredFImag[getIndex(nIndex, thetaI)] = accumulatedImag;
+			fNaiveFourier << accumulatedReal << " + " << accumulatedImag << "i" << std::endl;
+		}
+	}
+	fNaiveFourier.close();*/
+
+	for (size_t thetaI = 0; thetaI < nTheta; ++thetaI)
+	{
+		std::vector<std::complex<fReal>> output;
+		std::vector<std::complex<fReal>> input;
+		for (size_t j = 0; j < nPhi; ++j)
+		{
+			input.push_back(std::complex<float>(beffourierF[getIndex(j, thetaI)], 0.0));
+		}
+		fft.inv(output, input);
+		for (int naiveIndex = 0; naiveIndex < nPhi; ++naiveIndex)
+		{
+			int fftIndex = nPhi / 2 - naiveIndex;
+			if (fftIndex < 0)
+				fftIndex += nPhi;
+			fourieredFReal[getIndex(naiveIndex, thetaI)] = output.at(fftIndex).real();
+			fourieredFImag[getIndex(naiveIndex, thetaI)] = output.at(fftIndex).imag();
 		}
 	}
 }
 
 void KaminoSolver::invTransformPressure()
 {
+	/*std::fstream fNaive;
+	fNaive.open("./naiveFWD.txt", std::ios::out);
 	KaminoQuantity* p = (*this)["p"];
 	for (size_t gTheta = 0; gTheta < nTheta; ++gTheta)
 	{
@@ -109,6 +134,7 @@ void KaminoSolver::invTransformPressure()
 		{
 			fReal Phi = M_2PI / nPhi * gPhi;
 			fReal accumulatedPressure = 0.0;
+			fReal accumulatedImagPres = 0.0;
 			for (int nIndex = 0; nIndex < nPhi; ++nIndex)
 			{
 				int n = nIndex - nPhi / 2;
@@ -121,12 +147,41 @@ void KaminoSolver::invTransformPressure()
 					pressureFourierCoefImag = 0.0;
 				accumulatedPressure += pressureFourierCoefReal * std::cos(phase);
 				accumulatedPressure -= pressureFourierCoefImag * std::sin(phase);
-				if (abs(accumulatedPressure) > 1e2)
-				{
-					std::cerr << "exp" << std::endl;
-				}
+				accumulatedImagPres += pressureFourierCoefReal * std::sin(phase) + pressureFourierCoefImag * std::cos(phase);
 			}
+			fNaive << accumulatedPressure << " + " << accumulatedImagPres << "i" << std::endl;
 			p->writeValueTo(gPhi, gTheta, accumulatedPressure);
+		}
+	}
+	fNaive.close();*/
+
+	KaminoQuantity* p = (*this)["p"];
+	for (size_t gTheta = 0; gTheta < nTheta; ++gTheta)
+	{
+		std::vector<std::complex<fReal>> output;
+		std::vector<std::complex<fReal>> input;
+
+		for (size_t j = 0; j < nPhi; ++j)
+		{
+			input.push_back(std::complex<float>(fourierUReal[getIndex(j, gTheta)], fourierUImag[getIndex(j, gTheta)]));
+		}
+		fft.fwd(output, input);
+		fReal realNZeroComponent = output.at(nPhi / 2).real();
+		for (size_t gPhi = 0; gPhi < nPhi; ++gPhi)
+		{
+			fReal pressure = 0.0;
+			size_t fftIndex = 0;
+			if (gPhi != 0)
+				fftIndex = nPhi - gPhi;
+			if (gPhi % 2 == 0)
+			{
+				pressure = output.at(fftIndex).real() - realNZeroComponent;
+			}
+			else
+			{
+				pressure = -output.at(fftIndex).real() - realNZeroComponent;
+			}
+			p->writeValueTo(gPhi, gTheta, pressure);
 		}
 	}
 }

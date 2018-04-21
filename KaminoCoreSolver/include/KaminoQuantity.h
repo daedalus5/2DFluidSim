@@ -170,7 +170,7 @@ private:
 
 	tracer trc;
 
-	Eigen::FFT<float> fft;
+	Eigen::FFT<fReal> fft;
 
 	void resetPoleVelocities();
 	void averageVelocities();
