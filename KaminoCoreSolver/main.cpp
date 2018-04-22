@@ -1,6 +1,6 @@
 #include "include/KaminoQuantity.h"
 
-const size_t nTheta = 256;               // number of grid cells in u direction
+const size_t nTheta = 50;               // number of grid cells in u direction
 const size_t nPhi = 2 * nTheta;         // number of grid cells in v direction
 const fReal gridLen = M_PI / nTheta;    // grid spacing (square in uv plane)
 const fReal radius = 5.0;               // radius of sphere
@@ -10,14 +10,19 @@ const fReal radius = 5.0;               // radius of sphere
 const float dt = 0.005;                 // simulation time step size
 const float DT = 1.0 / 24.0;            // framerate @ 24 fps = 0.0147
 const int frames = 1000;                  // number of frames to output
-const int numParticles = 100;
+const int numParticles = 200;
 const std::string filepath = "output/frame";
 const std::string tracerPath = "tracer/trace";
 const std::string particlePath = "particles/frame";
 
 int main(int argc, char** argv)
 {
-    KaminoSolver solver(nPhi, nTheta, radius, gridLen, dt);
+    fReal A1 = -1.0; fReal B1 = 0.5; fReal C1 = 0.5; fReal D1 = -0.9; fReal E1 = 1.0;
+    fReal A2 = 1.0; fReal B2 = -0.3; fReal C2 = -0.7; fReal D2 = 0.8; fReal E2 = -0.8;
+    std::vector<fReal> hSum1 = {A1, B1, C1, D1, E1};
+    std::vector<fReal> hSum2 = {A2, B2, C2, D2, E2};
+
+    KaminoSolver solver(nPhi, nTheta, radius, gridLen, dt, hSum1, hSum2);
 # ifndef _MSC_VER
     solver.write_data_bgeo(filepath, 0);
 # endif

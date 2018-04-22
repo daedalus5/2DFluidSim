@@ -3,10 +3,17 @@
 KaminoParticles::KaminoParticles(int n, fReal radius, KaminoSolver* solver) : radius(radius), parentSolver(solver)
 {
     fReal delta = M_PI / n;
+    fReal halfDelta = delta / 2.0;
     for(unsigned int i = 0; i < 2 * n; ++i){
         for(unsigned int j = 0; j < n; ++j){
-            fReal phi = i * delta;
-            fReal theta = j * delta;
+            fReal signPhi = static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+            signPhi = signPhi >= 0.5 ? 1.0 : -1.0;
+            fReal signTheta = static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+            signTheta = signTheta >= 0.5 ? 1.0 : -1.0; 
+            fReal randPhi = signPhi * halfDelta * static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+            fReal randTheta = signTheta * static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+            fReal phi = i * delta + randPhi;
+            fReal theta = j * delta + randTheta;
             Eigen::Matrix<fReal, 2, 1> pos(phi, theta);
             positions.push_back(pos);
         }

@@ -166,6 +166,10 @@ private:
 	/* Laplacian Matrix */
 	//Eigen::SparseMatrix<fReal> Laplacian;
 
+	/* harmonic coefficients for velocity field initializaton */
+	std::vector<fReal> hSum1;
+	std::vector<fReal> hSum2;
+
 	/* So that it remembers all these attributes within */
 	std::map<std::string, KaminoQuantity*> centeredAttr;
 	std::map<std::string, KaminoQuantity*> staggeredAttr;
@@ -246,7 +250,8 @@ public:
 	//fReal uThetaSouthP[2];
 	fReal uSouthP[2];
 
-	KaminoSolver(size_t nx, size_t ny, fReal radius, fReal gridLength, fReal frameDuration = 1.0 / 30.0);
+	KaminoSolver(size_t nx, size_t ny, fReal radius, fReal gridLength, fReal frameDuration,
+						std::vector<fReal> hSum1, std::vector<fReal> hSum2);
 	~KaminoSolver();
 
 	void stepForward(fReal timeStep);

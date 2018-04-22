@@ -3,9 +3,11 @@
 
 // CONSTRUCTOR / DESTRUCTOR >>>>>>>>>>
 
-KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridLength, fReal frameDuration) :
+KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridLength, fReal frameDuration,
+	std::vector<fReal> hSum1, std::vector<fReal> hSum2) :
 	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), invGridLen(1.0 / gridLength), frameDuration(frameDuration),
-	timeStep(0.0), timeElapsed(0.0), trc(M_PI / 2.0, M_PI / 2.0, radius)
+	timeStep(0.0), timeElapsed(0.0), trc(M_PI / 2.0, M_PI / 2.0, radius),
+	hSum1(hSum1), hSum2(hSum2)
 {
 	this->beffourierF = new fReal[nPhi * nTheta];
 	this->fourieredFReal = new fReal[nPhi * nTheta];

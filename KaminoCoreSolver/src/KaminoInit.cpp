@@ -61,9 +61,11 @@ void KaminoSolver::initialize_velocity()
 fReal KaminoSolver::fPhi(const fReal x)
 {
 	fReal arg = x;
-	fReal a1, b1, c1, d1, e1;
-	a1 = -1.0; b1 = 0.5; c1 = 0.5; d1 = 0.9; e1 = -0.8;
-	fReal sumSin = a1 * sin(arg) + b1 * sin(2 * arg) + c1 * sin(3 * arg) + d1 * sin(4 * arg) + e1 * sin(5 * arg);
+	fReal sumSin = 0.0;
+	for(size_t i = 0; i < hSum1.size(); ++i){
+		int coeff = i + 1;
+		sumSin += hSum1[i] * sin(coeff * arg);
+	}
 	return sumSin;
 }
 
@@ -82,9 +84,11 @@ fReal KaminoSolver::lPhi(const fReal x)
 fReal KaminoSolver::mTheta(const fReal y)
 {
 	fReal arg = y;
-	fReal a1, b1, c1, d1, e1;
-	a1 = 1.0; b1 = -0.1; c1 = -0.5; d1 = 0.8; e1 = 0.8;
-	fReal sumSin = a1 * sin(arg) + b1 * sin(2 * arg) + c1 * sin(3 * arg) + d1 * sin(4 * arg) + e1 * sin(5 * arg);
+	fReal sumSin = 0.0;
+	for(size_t i = 0; i < hSum2.size(); ++i){
+		int coeff = i + 1;
+		sumSin += hSum2[i] * sin(coeff * arg);
+	}
 	return sumSin;
 }
 
