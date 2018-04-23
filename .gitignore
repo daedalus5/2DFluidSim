@@ -10,6 +10,7 @@ Kamino.VC.db
 2DFluidSim
 tracer/
 particles/
+*.bgeo
 
 # User-specific files
 *.suo

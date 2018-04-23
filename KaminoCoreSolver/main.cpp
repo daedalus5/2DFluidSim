@@ -17,16 +17,16 @@ const std::string particlePath = "particles/frame";
 int main(int argc, char** argv)
 {
     KaminoSolver solver(nPhi, nTheta, radius, gridLen, dt);
-# ifndef _MSC_VER
+//# ifndef _MSC_VER
     solver.write_data_bgeo(filepath, 0);
-# endif
+//# endif
    
     KaminoParticles particles(300, radius, &solver);
     KaminoQuantity* u = solver.getAttributeNamed("u");
     KaminoQuantity* v = solver.getAttributeNamed("v");
-# ifndef _MSC_VER
+//# ifndef _MSC_VER
     particles.write_data_bgeo(particlePath, 0);
-# endif
+//# endif
 
     float T = 0.0;              // simulation time
     for(int i = 1; i <= frames; i++){
@@ -38,11 +38,11 @@ int main(int argc, char** argv)
         solver.stepForward(dt + i*DT - T);
         particles.updatePositions(u, v, dt);
         T = i*DT;
-# ifndef _MSC_VER
+//# ifndef _MSC_VER
         solver.write_data_bgeo(filepath, i);
         particles.write_data_bgeo(particlePath, i);
         //solver.write_data_tracer(tracerPath, i);
-# endif
+//# endif
     }
     return 0;
 }

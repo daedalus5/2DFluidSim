@@ -48,7 +48,7 @@ void KaminoParticles::updatePositions(KaminoQuantity* u, KaminoQuantity* v, fRea
 
 void KaminoParticles::write_data_bgeo(const std::string& s, const int frame)
 {
-# ifndef _MSC_VER
+//# ifndef _MSC_VER
     std::string file = s + std::to_string(frame) + ".bgeo";
     //std::cout << "Writing to: " << file << std::endl;
     Partio::ParticlesDataMutable* parts = Partio::create();
@@ -69,7 +69,7 @@ void KaminoParticles::write_data_bgeo(const std::string& s, const int frame)
     }
     Partio::write(file.c_str(), *parts);
     parts->release();
-# endif
+//# endif
 }
 
 void KaminoParticles::mapPToSphere(Eigen::Matrix<float, 3, 1>& pos) const
