@@ -214,6 +214,8 @@ private:
 	void initialize_pressure();
 	/* initialize test case */
 	void initialize_test();
+	/* initialize density distribution */
+	void initialize_density();
 	/* which grids are solid? */
 	void initialize_boundary();
 	/* sum of sine functions for velocity initialization */

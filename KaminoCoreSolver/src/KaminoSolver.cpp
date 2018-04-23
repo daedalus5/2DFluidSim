@@ -24,8 +24,9 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	// Our new staggered grid...
 	addStaggeredAttr("u", -0.5, 0.5);		// u velocity
 	addStaggeredAttr("v", 0.0, 0.0);		// v velocity
-	addCenteredAttr("p", 0.0, 0.5);				// p pressure
-	addCenteredAttr("test", 0.0, 0.5);			// test scalar field
+	addCenteredAttr("p", 0.0, 0.5);			// p pressure
+	addCenteredAttr("test", 0.0, 0.5);		// test scalar field
+	addCenteredAttr("density", 0.0, 0.5);	// density
 
 	this->gridTypes = new gridType[nPhi * nTheta];
 	for (size_t gPhi = 0; gPhi < nPhi; ++gPhi)
@@ -38,6 +39,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	
 	initialize_velocity();
 	initialize_pressure();
+	initialize_density();
 
 	//precomputeLaplacian();
 	initialize_test();

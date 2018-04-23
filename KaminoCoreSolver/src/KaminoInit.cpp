@@ -132,6 +132,17 @@ fReal KaminoSolver::rand(const Eigen::Matrix<fReal, 2, 1> vecA) const {
 	return val - std::floor(val);
 }
 
+void KaminoSolver::initialize_density()
+{
+	for(size_t i = 0; i < nPhi; ++i)
+	{
+		for(size_t j = 0; j < nTheta; ++j)
+		{
+			centeredAttr["density"]->setValueAt(i, j, 0.0);
+		}
+	}
+}
+
 void KaminoSolver::initialize_test()
 {
 	for (size_t i = 0; i < nPhi; ++i) {
