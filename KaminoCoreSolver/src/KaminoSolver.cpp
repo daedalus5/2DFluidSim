@@ -41,7 +41,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 
 	//precomputeLaplacian();
 	initialize_test();
-	//initialize_boundary();
+	initialize_boundary();
 }
 
 KaminoSolver::~KaminoSolver()

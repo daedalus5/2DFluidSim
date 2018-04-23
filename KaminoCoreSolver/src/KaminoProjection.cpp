@@ -112,7 +112,7 @@ void KaminoSolver::projection()
 			if (getGridTypeAt(gridLeftI, j) == SOLIDGRID ||
 				getGridTypeAt(gridRightI, j) == SOLIDGRID)
 			{
-				u->writeValueTo(i, j, uSolid);
+				//u->writeValueTo(i, j, uSolid);
 			}
 			else
 			{
@@ -164,7 +164,7 @@ void KaminoSolver::projection()
 				if (getGridTypeAt(i, gridBelowJ) == SOLIDGRID ||
 					getGridTypeAt(i, gridAboveJ) == SOLIDGRID)
 				{
-					v->writeValueTo(i, j, vSolid);
+					//v->writeValueTo(i, j, vSolid);
 				}
 				else
 				{
