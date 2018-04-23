@@ -176,14 +176,14 @@ void KaminoSolver::initialize_test()
 
 void KaminoSolver::initialize_boundary()
 {
-	/*for (size_t gridX = 0; gridX != this->nPhi; ++gridX)
+	for (size_t gridX = 0; gridX != this->nPhi / 2; ++gridX)
 	{
-	this->gridTypes[getIndex(gridX, nTheta / 2)] = SOLIDGRID;
-	//this->gridTypes[getIndex(gridX, this->nTheta - 1)] = SOLIDGRID;
-	}*/
-	for (size_t gridY = 0; gridY != this->nTheta; ++gridY)
+		this->gridTypes[getIndex(gridX, nTheta / 2)] = SOLIDGRID;
+		//this->gridTypes[getIndex(gridX, this->nTheta - 1)] = SOLIDGRID;
+	}
+	/*for (size_t gridY = 0; gridY != this->nTheta; ++gridY)
 	{
 		this->gridTypes[getIndex(0, gridY)] = SOLIDGRID;
 		this->gridTypes[getIndex(nPhi / 2, gridY)] = SOLIDGRID;
-	}
+	}*/
 }

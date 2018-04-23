@@ -4,9 +4,9 @@
 # include <map>
 # include <iostream>
 # include <vector>
-# ifndef _MSC_VER
+//# ifndef _MSC_VER
 # include "Partio.h"
-# endif
+//# endif
 # include <Eigen/Core>
 # include <Eigen/Dense>
 # include <cmath>
