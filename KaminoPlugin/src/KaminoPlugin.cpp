@@ -37,27 +37,34 @@ static enum Params {ang, step, iter, gram};
 
 static PRM_Name names[] =
 {
-	PRM_Name("ang", "Angle"),
-	PRM_Name("step", "StepSize"),
-	PRM_Name("iter", "Iteration"),
-	PRM_Name("gram", "Grammar")
+	PRM_Name("radius", "Radius"),
+	PRM_Name("nTheta", "Number of Latitudinal Subdivisions"),
+	PRM_Name("particleDensity", "Max Particle Density"),
+	PRM_Name("dt", "Time Step"),
+	PRM_Name("DT", "Frame Rate"),
+	PRM_Name("frames", "Number of Frames"),
 };
 
 static PRM_Default defaultParams[] =
 {
-	PRM_Default(90.0),
-	PRM_Default(1.0),
-	PRM_Default(3),
-	PRM_Default(0.0)
+	PRM_Default(5.0),
+	PRM_Default(64),
+	PRM_Default(100),
+	PRM_Default(0.005),
+	PRM_Default(0.041666667),
+	PRM_Default(1000)
 };
 
 PRM_Template
 SOP_Kamino::myTemplateList[] = 
 {
-	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + ang, defaultParams + ang, 0),
-	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + step, defaultParams + step, 0),
-	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + iter, defaultParams + iter, 0),
-	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + gram, defaultParams + gram, 0),
+	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + radius, defaultParams + radius, 0),
+	PRM_Template(PRM_INT, PRM_Template::PRM_EXPORT_MIN, 1, names + nTheta, defaultParams + nTheta, 0),
+	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + particleDensity, defaultParams + particleDensity, 0),
+	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + dt, defaultParams + dt, 0),
+	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + DT, defaultParams + DT, 0),
+	PRM_Template(PRM_INT, PRM_Template::PRM_EXPORT_MIN, 1, names + frames, defaultParams + frames, 0),
+	//PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + gram, defaultParams + gram, 0),
     PRM_Template()
 };
 

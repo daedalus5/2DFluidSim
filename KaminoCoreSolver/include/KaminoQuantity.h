@@ -251,7 +251,7 @@ private:
 	std::vector<Eigen::Matrix<fReal, 2, 1>> positions;
 	KaminoSolver* parentSolver;
 public:
-	KaminoParticles(int n, fReal particleDensity, fReal radius, KaminoSolver* parentSolver);
+	KaminoParticles(fReal particleDensity, fReal radius, KaminoSolver* parentSolver);
 	~KaminoParticles();
 
 	void updatePositions(KaminoQuantity* u, KaminoQuantity* v, fReal deltaT);

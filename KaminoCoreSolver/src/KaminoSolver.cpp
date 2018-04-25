@@ -258,7 +258,6 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			mapPToSphere(pos);
 
 			pressure = centeredAttr["p"]->getValueAt(i, j);
-			//testVal = centeredAttr["test"]->getValueAt(i, j);
 			
 			int idx = parts->addParticle();
 			float* p = parts->dataWrite<float>(pH, idx);
@@ -267,7 +266,6 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			float* ts = parts->dataWrite<float>(test, idx);
 
 			ps[0] = density * radius * pressure / timeStep;
-			//ts[0] = testVal / 13.0 * 255.0;
 
 			for (int k = 0; k < 3; ++k) {
 				p[k] = pos(k, 0);
