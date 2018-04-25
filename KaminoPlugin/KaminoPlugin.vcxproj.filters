@@ -14,9 +14,48 @@
     <ClInclude Include="include\KaminoPlugin.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\KaminoCoreSolver\include\CubicSolver.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\KaminoCoreSolver\include\Kamino.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\KaminoCoreSolver\include\KaminoQuantity.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\KaminoPlugin.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\KaminoCoreSolver\src\CubicSolver.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\KaminoCoreSolver\src\Kamino.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoAdvection.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoFFT.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoGeometry.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoInit.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoParticles.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoProjection.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoQuantity.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoSolver.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

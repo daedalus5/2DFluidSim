@@ -1,7 +1,7 @@
 # pragma once
 
 # include "KaminoQuantity.h"
-# include <opencv2/opencv.hpp>
+//# include <opencv2/opencv.hpp>
 
 const std::string filepath = "output/frame";
 const std::string particlePath = "particles/frame";

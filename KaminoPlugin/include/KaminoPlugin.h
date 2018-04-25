@@ -2,6 +2,7 @@
 #define __LSYSTEM_PLUGIN_h__
 
 #include <SOP/SOP_Node.h>
+#include "Kamino.h"
 
 namespace HDK_Kamino {
 class SOP_Kamino : public SOP_Node
@@ -40,26 +41,35 @@ protected:
 private:
     /// The following list of accessors simplify evaluating the parameters
     /// of the SOP.
-
-	fpreal getAngle(fpreal t)
+	fpreal getRadius(fpreal t)
 	{
-		return evalFloat("ang", 0, t);
+		return evalFloat("radius", 0, t);
+	}
+	exint getNTheta(fpreal t)
+	{	
+		return evalInt("nTheta", 0, t);
+	}
+	fpreal getDensity(fpreal t)
+	{
+		return evalFloat("particleDensity", 0, t);
+	}
+	fpreal getdt(fpreal t)
+	{
+		return evalFloat("dt", 0, t);
+	}
+	fpreal getDT(fpreal t)
+	{
+		return evalFloat("DT", 0, t);
+	}
+	exint getFrames(fpreal t)
+	{
+		return evalInt("frames", 0, t);
 	}
 
-	fpreal getStepSize(fpreal t)
-	{
-		return evalFloat("step", 0, t);
-	}
-
-	exint getIteration(fpreal t)
-	{
-		return evalInt("iter", 0, t);
-	}
-
-	void getGrammarFile(UT_String& str, fpreal t)
-	{
-		evalString(str, "gram", 0, t);
-	}
+	//void getGrammarFile(UT_String& str, fpreal t)
+	//{
+	//	evalString(str, "gram", 0, t);
+	//}
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 

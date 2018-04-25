@@ -49,7 +49,7 @@ static PRM_Default defaultParams[] =
 {
 	PRM_Default(5.0),
 	PRM_Default(64),
-	PRM_Default(100),
+	PRM_Default(100.0),
 	PRM_Default(0.005),
 	PRM_Default(0.041666667),
 	PRM_Default(1000)
@@ -132,32 +132,26 @@ SOP_Kamino::cookMySop(OP_Context &context)
 {
 	fpreal now = context.getTime();
 
-	fpreal angle = this->getAngle(now);
-	fpreal step = this->getStepSize(now);
-	exint iteration = this->getIteration(now);
-	UT_String grammarFile;
-	this->getGrammarFile(grammarFile, now);
+	fpreal rad = this->getRadius(now);
+	exint ntheta = this->getNTheta(now);
+	fpreal dens = this->getDensity(now);
+	fpreal timestep = this->getdt(now);
+	fpreal frameRate = this->getDT(now);
+	exint frameCount = this->getFrames(now);
 
+	// PUT YOUR CODE HERE
+	int			 divisions;
+	UT_Interrupt	*boss;
+
+	// Since we don't have inputs, we don't need to lock them.
+
+	divisions = 5;				// We need twice our divisions of points
+	myTotalPoints = divisions;	// Set the NPT local variable value
+	myCurrPoint = 0;			// Initialize the PT local variable
 	
-    float		 rad, tx, ty, tz;
-    int			 divisions, plane;
-    int			 xcoord =0, ycoord = 1, zcoord =2;
-    float		 tmp;
-    UT_Vector4	 pos;
-    GU_PrimPoly	 *poly;
-    int			 i;
-    UT_Interrupt *boss;
-
-    // Since we don't have inputs, we don't need to lock them.
-
-    divisions  = 5;	// We need twice our divisions of points
-    myTotalPoints = divisions;		// Set the NPT local variable value
-    myCurrPoint   = 0;			// Initialize the PT local variable
-
-
-    // Check to see that there hasn't been a critical error in cooking the SOP.
-    if (error() < UT_ERROR_ABORT)
-    {
+	// Check to see that there hasn't been a critical error in cooking the SOP.
+	if (error() < UT_ERROR_ABORT)
+	{
 		boss = UTgetInterrupt();
 		if (divisions < 4)
 		{
@@ -170,10 +164,11 @@ SOP_Kamino::cookMySop(OP_Context &context)
 		gdp->clearAndDestroy();
 
 		// Start the interrupt server
-		if (boss->opStart("Building LSYSTEM"))
+		if (boss->opStart("Running Solver"))
 		{
-			rad = 0.1f;
-			float incAng = 2 * 3.1415926535897 / divisions;
+			// PUT YOUR CODE HERE
+
+			////////////////////////////////////////////////////////////////////////////////////////////
 
 			select(GU_SPrimitive);
 		}
@@ -181,9 +176,9 @@ SOP_Kamino::cookMySop(OP_Context &context)
 		// Tell the interrupt server that we've completed. Must do this
 		// regardless of what opStart() returns.
 		boss->opEnd();
-    }
+	}
 
-    myCurrPoint = -1;
+	myCurrPoint = -1;
     return error();
 }
 
