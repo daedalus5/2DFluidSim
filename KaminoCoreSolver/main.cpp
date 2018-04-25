@@ -1,6 +1,7 @@
 #include "include/KaminoQuantity.h"
+#include <opencv2/opencv.hpp>
 
-const size_t nTheta = 256;               // number of grid cells in u direction
+const size_t nTheta = 50;               // number of grid cells in u direction
 const size_t nPhi = 2 * nTheta;         // number of grid cells in v direction
 const fReal gridLen = M_PI / nTheta;    // grid spacing (square in uv plane)
 const fReal radius = 5.0;               // radius of sphere
@@ -9,10 +10,10 @@ const fReal radius = 5.0;               // radius of sphere
 
 const float dt = 0.005;                 // simulation time step size
 const float DT = 1.0 / 24.0;            // framerate @ 24 fps = 0.0147
-const int frames = 1000;                  // number of frames to output
-const int numParticles = 200;
+const int frames = 50;                  // number of frames to output
+const int numParticles = 20000;
+const fReal particleDensity = numParticles / (2 * M_PI * M_PI);
 const std::string filepath = "output/frame";
-const std::string tracerPath = "tracer/trace";
 const std::string particlePath = "particles/frame";
 
 int main(int argc, char** argv)
@@ -27,7 +28,7 @@ int main(int argc, char** argv)
     solver.write_data_bgeo(filepath, 0);
 //# endif
    
-    KaminoParticles particles(numParticles, radius, &solver);
+    KaminoParticles particles(numParticles, particleDensity, radius, &solver);
     KaminoQuantity* u = solver.getAttributeNamed("u");
     KaminoQuantity* v = solver.getAttributeNamed("v");
 //# ifndef _MSC_VER
@@ -47,7 +48,6 @@ int main(int argc, char** argv)
 //# ifndef _MSC_VER
         solver.write_data_bgeo(filepath, i);
         particles.write_data_bgeo(particlePath, i);
-        //solver.write_data_tracer(tracerPath, i);
 //# endif
     }
     return 0;

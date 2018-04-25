@@ -1,17 +1,25 @@
 # include "../include/KaminoQuantity.h"
 
-KaminoParticles::KaminoParticles(int n, fReal radius, KaminoSolver* solver) : radius(radius), parentSolver(solver)
+KaminoParticles::KaminoParticles(int n, fReal particleDensity, fReal radius, KaminoSolver* solver) :
+                            particleDensity(particleDensity), radius(radius), parentSolver(solver)
 {
-    fReal delta = M_PI / n;
+    fReal delta = 1 / particleDensity;
     fReal halfDelta = delta / 2.0;
+    
     for(unsigned int i = 0; i < 2 * n; ++i){
         for(unsigned int j = 0; j < n; ++j){
+            // distribute in phi and theta randomly
+            // +/- is 50/50
             fReal signPhi = static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
             signPhi = signPhi >= 0.5 ? 1.0 : -1.0;
             fReal signTheta = static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
-            signTheta = signTheta >= 0.5 ? 1.0 : -1.0; 
+            signTheta = signTheta >= 0.5 ? 1.0 : -1.0;
+
+            // get random value between 0 and halfDelta in +/- direction
             fReal randPhi = signPhi * halfDelta * static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
-            fReal randTheta = signTheta * static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+            fReal randTheta = signTheta * halfDelta * static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+
+            // assign positions (phi, theta)
             fReal phi = i * delta + randPhi;
             fReal theta = j * delta + randTheta;
             Eigen::Matrix<fReal, 2, 1> pos(phi, theta);

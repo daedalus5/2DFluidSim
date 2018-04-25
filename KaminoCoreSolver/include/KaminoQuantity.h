@@ -109,27 +109,6 @@ public:
 
 bool validatePhiTheta(fReal & phi, fReal & theta);
 
-struct tracer
-{
-	fReal phi;
-	fReal theta;
-	fReal radius;
-	tracer(fReal phi, fReal theta, fReal radius) : phi(phi), theta(theta), radius(radius)
-	{}
-	void tracerStepForward(fReal uPhi, fReal uTheta, fReal timeStep)
-	{
-		this->phi += timeStep * uPhi / (radius);
-		this->theta += timeStep * uTheta / (radius * std::sin(theta));
-		validatePhiTheta(phi, theta);
-	}
-	void getCartesianXYZ(fReal& x, fReal& y, fReal& z)
-	{
-		x = radius * std::sin(theta) * std::cos(phi);
-		z = radius * std::sin(theta) * std::sin(phi);
-		y = radius * std::cos(theta);
-	}
-};
-
 // The solver class.
 class KaminoSolver
 {
@@ -179,8 +158,6 @@ private:
 	fReal timeStep;
 	fReal timeElapsed;
 
-	tracer trc;
-
 	Eigen::FFT<fReal> fft;
 
 	void resetPoleVelocities();
@@ -199,7 +176,6 @@ private:
 	void geometric();
 	void projection();
 	void bodyForce();
-	void updateTracer();
 
 	void fillDivergence();
 	void transformDivergence();
@@ -265,17 +241,17 @@ public:
 	KaminoQuantity* operator[](std::string name);
 
 	void write_data_bgeo(const std::string& s, const int frame);
-	void write_data_tracer(const std::string& s, const int frame);
 };
 
 class KaminoParticles
 {
 private:
+	fReal particleDensity;
 	fReal radius;
 	std::vector<Eigen::Matrix<fReal, 2, 1>> positions;
 	KaminoSolver* parentSolver;
 public:
-	KaminoParticles(int n, fReal radius, KaminoSolver* parentSolver);
+	KaminoParticles(int n, fReal particleDensity, fReal radius, KaminoSolver* parentSolver);
 	~KaminoParticles();
 
 	void updatePositions(KaminoQuantity* u, KaminoQuantity* v, fReal deltaT);

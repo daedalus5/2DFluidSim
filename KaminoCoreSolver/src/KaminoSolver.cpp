@@ -6,7 +6,7 @@
 KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridLength, fReal frameDuration,
 	std::vector<fReal> hSum1, std::vector<fReal> hSum2) :
 	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), invGridLen(1.0 / gridLength), frameDuration(frameDuration),
-	timeStep(0.0), timeElapsed(0.0), trc(M_PI / 2.0, M_PI / 2.0, radius),
+	timeStep(0.0), timeElapsed(0.0),
 	hSum1(hSum1), hSum2(hSum2)
 {
 	this->beffourierF = new fReal[nPhi * nTheta];
@@ -25,7 +25,6 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	addStaggeredAttr("u", -0.5, 0.5);		// u velocity
 	addStaggeredAttr("v", 0.0, 0.0);		// v velocity
 	addCenteredAttr("p", 0.0, 0.5);			// p pressure
-	addCenteredAttr("test", 0.0, 0.5);		// test scalar field
 	addCenteredAttr("density", 0.0, 0.5);	// density
 
 	this->gridTypes = new gridType[nPhi * nTheta];
@@ -42,7 +41,6 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	initialize_density();
 
 	//precomputeLaplacian();
-	initialize_test();
 	initialize_boundary();
 }
 
@@ -71,13 +69,6 @@ KaminoSolver::~KaminoSolver()
 	delete[] this->gridTypes;
 }
 
-void KaminoSolver::updateTracer()
-{
-	fReal uPhi = (*this)["u"]->sampleAt(trc.phi, trc.theta, this->uNorthP, this->uSouthP);
-	fReal uTheta = (*this)["v"]->sampleAt(trc.phi, trc.theta, this->uNorthP, this->uSouthP);
-	trc.tracerStepForward(uPhi, uTheta, timeStep);
-}
-
 void KaminoSolver::stepForward(fReal timeStep)
 {
 	this->timeStep = timeStep;
@@ -91,7 +82,6 @@ void KaminoSolver::stepForward(fReal timeStep)
 	//bodyForce();
 	projection();
 	//std::cout << "Projection completed" << std::endl;
-	updateTracer();
 	this->timeElapsed += timeStep;
 }
 
@@ -284,32 +274,6 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 				v[k] = vel(k, 0);
 			}
 		}
-	}
-
-	Partio::write(file.c_str(), *parts);
-	parts->release();
-//# endif
-}
-
-void KaminoSolver::write_data_tracer(const std::string& s, const int frame)
-{
-//# ifndef _MSC_VER
-	std::string file = s + std::to_string(frame) + ".bgeo";
-
-	Partio::ParticlesDataMutable* parts = Partio::create();	
-	Partio::ParticleAttribute pH, tracer;
-	pH = parts->addAttribute("position", Partio::VECTOR, 3);
-	tracer = parts->addAttribute("tracer", Partio::VECTOR, 3);
-	Eigen::Matrix<fReal, 3, 1> tracerPos;
-
-	int idx = parts->addParticle();
-	trc.getCartesianXYZ(tracerPos[0], tracerPos[1], tracerPos[2]);
-	float *p = parts->dataWrite<float>(pH, idx);
-	float *tr = parts->dataWrite<float>(tracer, idx);
-
-	for(int k = 0; k < 3; ++k){
-		p[k] = 0.0;
-		tr[k] = float (tracerPos(k, 0));
 	}
 
 	Partio::write(file.c_str(), *parts);
