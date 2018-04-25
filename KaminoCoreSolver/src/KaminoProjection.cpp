@@ -130,36 +130,15 @@ void KaminoSolver::projection()
 		for (size_t i = 0; i < v->getNPhi(); ++i)
 		{
 			fReal vBefore = v->getValueAt(i, j);
-			if (j == 0)
-			{
-				size_t thetaLeft = i;
-				size_t thetaRight = (i + 1) % u->getNPhi();
-				// At north pole : duTheta/dTheta = -uPhi
-				fReal diff = u->getValueAt(thetaLeft, j) - u->getValueAt(thetaRight, j);
-				diff *= invGridLen;
-				v->writeValueTo(i, j, diff);
-			}
-			else if (j == v->getNTheta() - 1)
-			{
-				size_t thetaLeft = i;
-				size_t thetaRight = (i + 1) % u->getNPhi();
-				// At south pole : duTheta/dTheta = uPhi
-				fReal diff = u->getValueAt(thetaRight, j - 1) - u->getValueAt(thetaLeft, j - 1);
-				diff *= invGridLen;
-				v->writeValueTo(i, j, diff);
-			}
-			else
-			{
-				size_t gridAboveJ = j;
-				size_t gridBelowJ = j - 1;
-				fReal pressureTheta = 0.0;
-				if (getGridTypeAt(i, gridBelowJ) == FLUIDGRID)
-					pressureTheta -= p->getValueAt(i, gridBelowJ);
-				if (getGridTypeAt(i, gridAboveJ) == FLUIDGRID)
-					pressureTheta += p->getValueAt(i, gridAboveJ);
-				fReal deltauTheta = factorTheta * pressureTheta;
-				v->writeValueTo(i, j, deltauTheta + vBefore);
-			}
+			size_t gridAboveJ = j;
+			size_t gridBelowJ = j - 1;
+			fReal pressureTheta = 0.0;
+			if (getGridTypeAt(i, gridBelowJ) == FLUIDGRID)
+				pressureTheta -= p->getValueAt(i, gridBelowJ);
+			if (getGridTypeAt(i, gridAboveJ) == FLUIDGRID)
+				pressureTheta += p->getValueAt(i, gridAboveJ);
+			fReal deltauTheta = factorTheta * pressureTheta;
+			v->writeValueTo(i, j, deltauTheta + vBefore);
 		}
 	}
 
