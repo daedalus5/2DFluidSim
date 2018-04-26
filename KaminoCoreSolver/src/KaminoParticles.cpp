@@ -10,7 +10,7 @@ KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, K
         fReal delta = M_PI / nTheta / linearDensity;
         fReal halfDelta = delta / 2.0;
 
-        unsigned int numThetaParticles = linearDensity * M_PI;
+        unsigned int numThetaParticles = linearDensity * nTheta;
         unsigned int numPhiParticles = 2 * numThetaParticles;
 
         for(unsigned int i = 0; i < numPhiParticles; ++i){

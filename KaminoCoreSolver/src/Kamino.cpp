@@ -121,7 +121,7 @@ void Kamino::defineCellTypes(gridType* g)
 		for (size_t j = 0; j < nTheta; ++j)
 		{
 			Scalar intensity = image_sized.at<uchar>(Point(i, j));
-			if (intensity.val[0] < 128) {
+			if (intensity.val[0] > 128) {
 				*(g + getIndex(i, j)) = SOLIDGRID;
 			}
 		}
