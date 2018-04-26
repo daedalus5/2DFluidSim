@@ -33,7 +33,7 @@ void Kamino::run()
     gridType* g = solver.getGridTypeHandle();
     defineCellTypes(g);
    
-    KaminoParticles particles(particleDensity, radius, gridLen, &solver, nPhi, nTheta, solidImage);
+    KaminoParticles particles(particleDensity, radius, gridLen, &solver, nPhi, nTheta, densityImage);
     KaminoQuantity* u = solver.getAttributeNamed("u");
     KaminoQuantity* v = solver.getAttributeNamed("v");
 
@@ -64,6 +64,7 @@ void Kamino::initializeDensity(KaminoQuantity* d)
 	if (!image_in.data)
 	{
 		std::cout << "No density image provided. All density values initialized to ZERO.";
+		return;
 	}
 
 	// convert to greyscale
@@ -102,6 +103,7 @@ void Kamino::defineCellTypes(gridType* g)
 	if (!image_in.data)
 	{
 		std::cout << "No grid type image provided. All cells initialized to FLUID" << std::endl;
+		return;
 	}
 
 	//convert to greyscale
