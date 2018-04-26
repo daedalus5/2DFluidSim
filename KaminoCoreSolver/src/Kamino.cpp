@@ -51,7 +51,7 @@ void Kamino::run()
         particles.updatePositions(u, v, dt);
         T = i*DT;
 
-        solver.write_data_bgeo(gridPath, 0);
+        solver.write_data_bgeo(gridPath, i);
         particles.write_data_bgeo(particlePath, i);
     }
 }
