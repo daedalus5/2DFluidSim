@@ -240,6 +240,7 @@ public:
 	KaminoQuantity* getAttributeNamed(std::string name);
 	KaminoQuantity* operator[](std::string name);
 
+	gridType* getGridTypeHandle();
 	void write_data_bgeo(const std::string& s, const int frame);
 };
 

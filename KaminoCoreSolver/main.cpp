@@ -3,7 +3,7 @@
 int main(int argc, char** argv)
 {
     Kamino KaminoInstance;
-    KaminoInstance.run();
+    KaminoInstance.test();
     return 0;
 }
 

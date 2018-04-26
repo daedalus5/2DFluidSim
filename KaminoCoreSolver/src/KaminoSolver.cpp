@@ -28,19 +28,18 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	addCenteredAttr("density", 0.0, 0.5);	// density
 
 	this->gridTypes = new gridType[nPhi * nTheta];
-	for (size_t gPhi = 0; gPhi < nPhi; ++gPhi)
-	{
-		for (size_t gTheta = 0; gTheta < nTheta; ++gTheta)
-		{
-			gridTypes[getIndex(gPhi, gTheta)] = FLUIDGRID;
-		}
-	}
+	// for (size_t gPhi = 0; gPhi < nPhi; ++gPhi)
+	// {
+	// 	for (size_t gTheta = 0; gTheta < nTheta; ++gTheta)
+	// 	{
+	// 		gridTypes[getIndex(gPhi, gTheta)] = FLUIDGRID;
+	// 	}
+	// }
 	
 	initialize_velocity();
-	initialize_pressure();
+	//initialize_pressure();
 	initialize_density();
 
-	//precomputeLaplacian();
 	initialize_boundary();
 }
 
@@ -223,15 +222,15 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 	std::cout << "Writing to: " << file << std::endl;
 
 	Partio::ParticlesDataMutable* parts = Partio::create();
-	Partio::ParticleAttribute pH, vH, psH, test;
+	Partio::ParticleAttribute pH, vH, psH, dens;
 	pH = parts->addAttribute("position", Partio::VECTOR, 3);
 	vH = parts->addAttribute("v", Partio::VECTOR, 3);
 	psH = parts->addAttribute("pressure", Partio::VECTOR, 1);
-	test = parts->addAttribute("test", Partio::VECTOR, 1);
+	dens = parts->addAttribute("density", Partio::VECTOR, 1);
 
 	Eigen::Matrix<float, 3, 1> pos;
 	Eigen::Matrix<float, 3, 1> vel;
-	fReal pressure, testVal;
+	fReal pressure, densityValue;
 	fReal velX, velY;
 
 	KaminoQuantity* u = staggeredAttr["u"];
@@ -258,14 +257,16 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 			mapPToSphere(pos);
 
 			pressure = centeredAttr["p"]->getValueAt(i, j);
+			densityValue = centeredAttr["density"]->getValueAt(i, j);
 			
 			int idx = parts->addParticle();
 			float* p = parts->dataWrite<float>(pH, idx);
 			float* v = parts->dataWrite<float>(vH, idx);
 			float* ps = parts->dataWrite<float>(psH, idx);
-			float* ts = parts->dataWrite<float>(test, idx);
+			float* de = parts->dataWrite<float>(dens, idx);
 
 			ps[0] = density * radius * pressure / timeStep;
+			de[0] = densityValue;
 
 			for (int k = 0; k < 3; ++k) {
 				p[k] = pos(k, 0);
@@ -309,4 +310,9 @@ void KaminoSolver::mapToCylinder(Eigen::Matrix<float, 3, 1>& pos) const
 	pos[0] = radius * cos(phi);
 	pos[1] = radius * sin(phi);
 	pos[2] = z;
+}
+
+gridType* KaminoSolver::getGridTypeHandle()
+{
+	return this->gridTypes;
 }
