@@ -1,11 +1,11 @@
 # include "../include/KaminoQuantity.h"
 
-KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, KaminoSolver* solver, size_t nPhi, size_t nTheta, std::string solidImage) :
+KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, KaminoSolver* solver, size_t nPhi, size_t nTheta, std::string densityImage) :
                             particleDensity(particleDensity), radius(radius), parentSolver(solver)
 {
 
     // default uniform particle initialization
-    if(solidImage == ""){
+    if(densityImage == ""){
         fReal linearDensity = sqrt(particleDensity);
         fReal delta = 1 / linearDensity;
         fReal halfDelta = delta / 2.0;
@@ -51,7 +51,7 @@ KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, K
     }
     // initialize particles according to density image file
     else{
-        KaminoQuantity* d = parentSolver->getAttributeNamed("density");
+        KaminoQuantity* d = solver->getAttributeNamed("density");
         for(size_t i = 0; i < nPhi; ++i)
         {
             for(size_t j = 0; j < nTheta; ++j)
