@@ -2,12 +2,12 @@
 
 Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
         float dt, float DT, int frames,
-        std::string testPath, std::string particlePath,
+        std::string gridPath, std::string particlePath,
         std::string densityImage, std::string solidImage) :
         radius(radius), nTheta(nTheta), nPhi(2 * nTheta), gridLen(M_PI / nTheta),
         particleDensity(particleDensity),
         dt(dt), DT(DT), frames(frames),
-        gridPath(testPath), particlePath(particlePath), densityImage(densityImage), solidImage(solidImage)
+        gridPath(gridPath), particlePath(particlePath), densityImage(densityImage), solidImage(solidImage)
 {
     fReal A1 = -1.0; fReal B1 = 0.5; fReal C1 = 0.5; fReal D1 = -0.9; fReal E1 = 1.0;
     fReal A2 = 1.0; fReal B2 = -0.3; fReal C2 = -0.7; fReal D2 = 0.8; fReal E2 = -0.8;
@@ -17,8 +17,8 @@ Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
     mThetaCoeff = {A2, B2, C2, D2, E2};
 
     // temporary
-    this->densityImage = "images/flower.jpg";
-    this->solidImage = "";
+    this->densityImage = "";
+    this->solidImage = "images/flower.jpg";
 }
 
 Kamino::~Kamino()

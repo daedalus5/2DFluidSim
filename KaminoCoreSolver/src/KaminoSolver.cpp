@@ -209,7 +209,6 @@ void KaminoSolver::swapAttrBuffers()
 
 void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 {
-//# ifndef _MSC_VER
 	std::string file = s + std::to_string(frame) + ".bgeo";
 	std::cout << "Writing to: " << file << std::endl;
 
@@ -269,7 +268,6 @@ void KaminoSolver::write_data_bgeo(const std::string& s, const int frame)
 
 	Partio::write(file.c_str(), *parts);
 	parts->release();
-//# endif
 }
 
 void KaminoSolver::mapPToSphere(Eigen::Matrix<float, 3, 1>& pos) const
