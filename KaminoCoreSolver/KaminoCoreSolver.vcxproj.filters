@@ -23,6 +23,9 @@
     <ClInclude Include="include\CubicSolver.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\Kamino.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\KaminoQuantity.cpp">
@@ -53,6 +56,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\KaminoParticles.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Kamino.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

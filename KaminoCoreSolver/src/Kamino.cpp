@@ -78,33 +78,33 @@ void Kamino::test()
 
 void Kamino::initializeDensity(KaminoQuantity* d)
 {
-    // read in image
-    // Mat image_in;
-    // image_in = imread(densityImage, IMREAD_COLOR);
-    // if(!image_in.data)
-    // {
-    //     std::cout << "error: no image data" << std::endl;
-    //     exit(1);
-    // }
+	// read in image
+	Mat image_in;
+	image_in = imread(densityImage, IMREAD_COLOR);
+	if (!image_in.data)
+	{
+		std::cout << "error: no image data" << std::endl;
+		exit(1);
+	}
 
-    // // convert to greyscale
-    // Mat image_gray; 
-    // cvtColor(image_in, image_gray, COLOR_BGR2GRAY);
+	// convert to greyscale
+	Mat image_gray;
+	cvtColor(image_in, image_gray, COLOR_BGR2GRAY);
 
-    // // resize to Nphi x Ntheta
-    // Mat image_sized;
-    // Size size(nPhi, nTheta);
-    // resize(image_gray, image_sized, size);
+	// resize to Nphi x Ntheta
+	Mat image_sized;
+	Size size(nPhi, nTheta);
+	resize(image_gray, image_sized, size);
 
-    // for(size_t i = 0; i < nPhi; ++i)
-    // {
-    //     for(size_t j = 0; j < nTheta; ++j)
-    //     {
-    //         Scalar intensity = image_sized.at<uchar>(Point(i,j));
-    //         fReal scale = static_cast <fReal> (intensity.val[0]) / 255.0;
-    //         d->setValueAt(i, j, scale);
-    //     }
-    // }
+	for (size_t i = 0; i < nPhi; ++i)
+	{
+		for (size_t j = 0; j < nTheta; ++j)
+		{
+			Scalar intensity = image_sized.at<uchar>(Point(i, j));
+			fReal scale = static_cast <fReal> (intensity.val[0]) / 255.0;
+			d->setValueAt(i, j, scale);
+		}
+	}
 }
 
 void Kamino::defineCellTypes(gridType* g)
@@ -117,35 +117,35 @@ void Kamino::defineCellTypes(gridType* g)
         }
     }
 
-    // // read in image
-    // Mat image_in;
-    // image_in = imread(solidImage, IMREAD_COLOR);
-    // if(!image_in.data)
-    // {
-    //     std::cout << "error: no image data" << std::endl;
-    //     exit(1);
-    // }
+	// // read in image
+	Mat image_in;
+	image_in = imread(solidImage, IMREAD_COLOR);
+	if (!image_in.data)
+	{
+		std::cout << "error: no image data" << std::endl;
+		exit(1);
+	}
 
-    // // convert to greyscale
-    // Mat image_gray; 
-    // cvtColor(image_in, image_gray, COLOR_BGR2GRAY);
+	//convert to greyscale
+	Mat image_gray;
+	cvtColor(image_in, image_gray, COLOR_BGR2GRAY);
 
-    // // resize to Nphi x Ntheta
-    // Mat image_sized;
-    // Size size(nPhi, nTheta);
-    // resize(image_gray, image_sized, size);
+	// resize to Nphi x Ntheta
+	Mat image_sized;
+	Size size(nPhi, nTheta);
+	resize(image_gray, image_sized, size);
 
-    // // define SOLID cells beneath some threshold
-    // for(size_t i = 0; i < nPhi; ++i)
-    // {
-    //     for(size_t j = 0; j < nTheta; ++j)
-    //     {
-    //         Scalar intensity = image_sized.at<uchar>(Point(i,j));
-    //         if(intensity.val[0] < 128){
-    //             *(g + getIndex(i, j)) = SOLIDGRID;
-    //         }
-    //     }
-    // }
+	//define SOLID cells beneath some threshold
+	for (size_t i = 0; i < nPhi; ++i)
+	{
+		for (size_t j = 0; j < nTheta; ++j)
+		{
+			Scalar intensity = image_sized.at<uchar>(Point(i, j));
+			if (intensity.val[0] < 128) {
+				*(g + getIndex(i, j)) = SOLIDGRID;
+			}
+		}
+	}
 }
 
 size_t Kamino::getIndex(size_t x, size_t y)

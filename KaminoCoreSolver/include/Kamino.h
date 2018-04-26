@@ -3,7 +3,7 @@
 # include "KaminoQuantity.h"
 # include <opencv2/opencv.hpp>
 
-//using namespace cv;
+using namespace cv;
 
 class Kamino
 {
