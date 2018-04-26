@@ -30,7 +30,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	this->gridTypes = new gridType[nPhi * nTheta];
 	
 	initialize_velocity();
-	//initialize_pressure();
+	initialize_pressure();
 	initialize_density();
 	//initialize_boundary();
 }

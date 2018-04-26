@@ -215,9 +215,6 @@ private:
 	/*map to cylindrical coordinates*/
 	void mapToCylinder(Eigen::Matrix<float, 3, 1>& pos) const;
 
-	/* Duplicate of quantity's get index */
-	size_t getIndex(size_t x, size_t y);
-
 	/* Tri-diagonal matrix solver */
 	void TDMSolve(fReal* a, fReal* b, fReal* c, fReal* d);
 	
@@ -242,6 +239,9 @@ public:
 
 	gridType* getGridTypeHandle();
 	void write_data_bgeo(const std::string& s, const int frame);
+
+	/* Duplicate of quantity's get index */
+	size_t getIndex(size_t x, size_t y);
 };
 
 class KaminoParticles
@@ -250,12 +250,16 @@ private:
 	fReal particleDensity;
 	fReal radius;
 	std::vector<Eigen::Matrix<fReal, 2, 1>> positions;
+	std::vector<Eigen::Matrix<fReal, 2, 1>> velocities;
 	KaminoSolver* parentSolver;
+
+	void mapPToSphere(Eigen::Matrix<float, 3, 1>& pos) const;
+	void mapVToSphere(Eigen::Matrix<float, 3, 1>& pos, Eigen::Matrix<float, 3, 1>& vel) const;
 public:
-	KaminoParticles(fReal particleDensity, fReal radius, KaminoSolver* parentSolver);
+	KaminoParticles(fReal particleDensity, fReal radius, fReal h, KaminoSolver* parentSolver, size_t nPhi, size_t nTheta, std::string densityImage);
 	~KaminoParticles();
 
 	void updatePositions(KaminoQuantity* u, KaminoQuantity* v, fReal deltaT);
+	void updateVelocities(KaminoQuantity* u, KaminoQuantity* v);
 	void write_data_bgeo(const std::string& s, const int frame);
-	void mapPToSphere(Eigen::Matrix<float, 3, 1>& pos) const;
 };

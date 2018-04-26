@@ -20,7 +20,7 @@ private:
     int frames;                 // number of frames to export
     fReal particleDensity;      // number of particles per unit area on the flat sphere
 
-    std::string testPath;       // folder destination for test bgeo files
+    std::string gridPath;       // folder destination for test bgeo files
     std::string particlePath;   // folder destination for simulation bgeo files
     std::string densityImage;   // file path of density image map
     std::string solidImage;     // file path of SOLIDCELL image map
@@ -42,14 +42,12 @@ private:
     size_t getIndex(size_t x, size_t y);
 
 public:
-    Kamino(fReal radius = 5.0, size_t nTheta = 64, fReal particleDensity = 200.0,
+    Kamino(fReal radius = 5.0, size_t nTheta = 64, fReal particleDensity = 100.0,
         float dt = 0.005, float DT = 1.0 / 24.0, int frames = 1000,
-        std::string testPath = "output/frame", std::string particlePath = "particles/frame",
+        std::string gridPath = "output/frame", std::string particlePath = "particles/frame",
         std::string densityImage = "", std::string solidImage = "");
     ~Kamino();
 
     /* run the solver */
     void run();
-    /* output to test initial velocity field/flow */
-    void test();
 };

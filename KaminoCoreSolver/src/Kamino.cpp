@@ -7,7 +7,7 @@ Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
         radius(radius), nTheta(nTheta), nPhi(2 * nTheta), gridLen(M_PI / nTheta),
         particleDensity(particleDensity),
         dt(dt), DT(DT), frames(frames),
-        testPath(testPath), particlePath(particlePath), densityImage(densityImage), solidImage(solidImage)
+        gridPath(testPath), particlePath(particlePath), densityImage(densityImage), solidImage(solidImage)
 {
     fReal A1 = -1.0; fReal B1 = 0.5; fReal C1 = 0.5; fReal D1 = -0.9; fReal E1 = 1.0;
     fReal A2 = 1.0; fReal B2 = -0.3; fReal C2 = -0.7; fReal D2 = 0.8; fReal E2 = -0.8;
@@ -17,8 +17,8 @@ Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
     mThetaCoeff = {A2, B2, C2, D2, E2};
 
     // temporary
-    densityImage = "images/flower.jpg";
-    solidImage = "images/scriptK.jpg";
+    this->densityImage = "images/flower.jpg";
+    this->solidImage = "";
 }
 
 Kamino::~Kamino()
@@ -33,10 +33,11 @@ void Kamino::run()
     gridType* g = solver.getGridTypeHandle();
     defineCellTypes(g);
    
-    KaminoParticles particles(particleDensity, radius, &solver);
+    KaminoParticles particles(particleDensity, radius, gridLen, &solver, nPhi, nTheta, solidImage);
     KaminoQuantity* u = solver.getAttributeNamed("u");
     KaminoQuantity* v = solver.getAttributeNamed("v");
 
+    solver.write_data_bgeo(gridPath, 0);
     particles.write_data_bgeo(particlePath, 0);
 
     float T = 0.0;              // simulation time
@@ -50,29 +51,8 @@ void Kamino::run()
         particles.updatePositions(u, v, dt);
         T = i*DT;
 
+        solver.write_data_bgeo(gridPath, 0);
         particles.write_data_bgeo(particlePath, i);
-    }
-}
-
-void Kamino::test()
-{
-    KaminoSolver solver(nPhi, nTheta, radius, gridLen, dt, fPhiCoeff, mThetaCoeff);
-    KaminoQuantity *d = solver.getAttributeNamed("density");
-    initializeDensity(d);
-    gridType* g = solver.getGridTypeHandle();
-    defineCellTypes(g);
-
-    solver.write_data_bgeo(testPath, 0);
-
-    float T = 0.0;  // simulation time
-    for(int i = 1; i <= 6; i++){
-        while(T < i*DT){
-            solver.stepForward(dt);
-            T += dt;
-        }
-        solver.stepForward(dt + i*DT - T);
-        T = i*DT;
-        solver.write_data_bgeo(testPath, i);
     }
 }
 
@@ -83,8 +63,7 @@ void Kamino::initializeDensity(KaminoQuantity* d)
 	image_in = imread(densityImage, IMREAD_COLOR);
 	if (!image_in.data)
 	{
-		std::cout << "error: no image data" << std::endl;
-		exit(1);
+		std::cout << "No density image provided. All density values initialized to ZERO.";
 	}
 
 	// convert to greyscale
@@ -122,8 +101,7 @@ void Kamino::defineCellTypes(gridType* g)
 	image_in = imread(solidImage, IMREAD_COLOR);
 	if (!image_in.data)
 	{
-		std::cout << "error: no image data" << std::endl;
-		exit(1);
+		std::cout << "No grid type image provided. All cells initialized to FLUID" << std::endl;
 	}
 
 	//convert to greyscale

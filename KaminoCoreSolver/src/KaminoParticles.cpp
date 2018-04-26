@@ -1,33 +1,105 @@
 # include "../include/KaminoQuantity.h"
 
-KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, KaminoSolver* solver) :
+KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, KaminoSolver* solver, size_t nPhi, size_t nTheta, std::string solidImage) :
                             particleDensity(particleDensity), radius(radius), parentSolver(solver)
 {
-    fReal linearDensity = sqrt(particleDensity);
-    fReal delta = 1 / linearDensity;
-    fReal halfDelta = delta / 2.0;
 
-    unsigned int numThetaParticles = linearDensity * M_PI;
-    unsigned int numPhiParticles = 2 * numThetaParticles;
+    // default uniform particle initialization
+    if(solidImage == ""){
+        fReal linearDensity = sqrt(particleDensity);
+        fReal delta = 1 / linearDensity;
+        fReal halfDelta = delta / 2.0;
 
-    for(unsigned int i = 0; i < numPhiParticles; ++i){
-        for(unsigned int j = 0; j < numThetaParticles; ++j){
-            // distribute in phi and theta randomly
-            // +/- is 50/50
-            fReal signPhi = static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
-            signPhi = signPhi >= 0.5 ? 1.0 : -1.0;
-            fReal signTheta = static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
-            signTheta = signTheta >= 0.5 ? 1.0 : -1.0;
+        unsigned int numThetaParticles = linearDensity * M_PI;
+        unsigned int numPhiParticles = 2 * numThetaParticles;
 
-            // get random value between 0 and halfDelta in +/- direction
-            fReal randPhi = signPhi * halfDelta * static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
-            fReal randTheta = signTheta * halfDelta * static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+        for(unsigned int i = 0; i < numPhiParticles; ++i){
+            for(unsigned int j = 0; j < numThetaParticles; ++j){
+                // distribute in phi and theta randomly
+                // +/- is 50/50
+                fReal signPhi = static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+                signPhi = signPhi >= 0.5 ? 1.0 : -1.0;
+                fReal signTheta = static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+                signTheta = signTheta >= 0.5 ? 1.0 : -1.0;
 
-            // assign positions (phi, theta)
-            fReal phi = i * delta + randPhi;
-            fReal theta = j * delta + randTheta;
-            Eigen::Matrix<fReal, 2, 1> pos(phi, theta);
-            positions.push_back(pos);
+                // get random value between 0 and halfDelta in +/- direction
+                fReal randPhi = signPhi * halfDelta * static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+                fReal randTheta = signTheta * halfDelta * static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+
+                // assign positions (phi, theta)
+                fReal phi = i * delta + randPhi;
+                fReal theta = j * delta + randTheta;
+                
+                // check to make sure particle isn't in a solid cell
+                size_t x = std::floor(phi / h);
+                size_t y = std::floor(theta / h);
+                gridType* cellMap = solver->getGridTypeHandle();
+                gridType type = *(cellMap + solver->getIndex(x, y));
+                if(type == SOLIDGRID){
+                    continue;
+                }
+
+                Eigen::Matrix<fReal, 2, 1> pos(phi, theta);
+                positions.push_back(pos);
+
+                // initialize velocities (0,0)
+                Eigen::Matrix<fReal, 2, 1> vel(0.0, 0.0);
+                velocities.push_back(vel);
+            }
+        }
+
+    }
+    // initialize particles according to density image file
+    else{
+        KaminoQuantity* d = parentSolver->getAttributeNamed("density");
+        for(size_t i = 0; i < nPhi; ++i)
+        {
+            for(size_t j = 0; j < nTheta; ++j)
+            {
+                fReal scale = d->getValueAt(i, j);
+                fReal density = scale * particleDensity;
+                fReal linearDensity = sqrt(density);
+                fReal delta = 1.0 / linearDensity;
+                fReal halfDelta = delta / 2.0;
+
+                unsigned int numThetaParticles = linearDensity * M_PI / nTheta;
+                unsigned int numPhiParticles = numThetaParticles;
+
+                for(unsigned int m = 0; m < numPhiParticles; ++m){
+                    for(unsigned int n = 0; n < numThetaParticles; ++n){
+                        // distribute in phi and theta randomly
+                        // +/- is 50/50
+                        fReal signPhi = static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+                        signPhi = signPhi >= 0.5 ? 1.0 : -1.0;
+                        fReal signTheta = static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+                        signTheta = signTheta >= 0.5 ? 1.0 : -1.0;
+
+                        // get random value between 0 and halfDelta in +/- direction
+                        fReal randPhi = signPhi * halfDelta * static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+                        fReal randTheta = signTheta * halfDelta * static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
+
+                        // assign positions (phi, theta)
+                        fReal phi = i * h + m * delta + randPhi;
+                        fReal theta = j * h + n * delta + randTheta;
+                        
+                        // check to make sure particle isn't in a solid cell
+                        size_t x = std::floor(phi / h);
+                        size_t y = std::floor(theta / h);
+                        gridType* cellMap = solver->getGridTypeHandle();
+                        gridType type = *(cellMap + solver->getIndex(x, y));
+                        if(type == SOLIDGRID){
+                            continue;
+                        }
+
+                        Eigen::Matrix<fReal, 2, 1> pos(phi, theta);
+                        positions.push_back(pos);
+
+                        // initialize velocities (0,0)
+                        Eigen::Matrix<fReal, 2, 1> vel(0.0, 0.0);
+                        velocities.push_back(vel);                       
+                    }
+                }
+            }
         }
     }
 }
@@ -65,9 +137,18 @@ void KaminoParticles::updatePositions(KaminoQuantity* u, KaminoQuantity* v, fRea
     }
 }
 
+void KaminoParticles::updateVelocities(KaminoQuantity* u, KaminoQuantity* v)
+{
+    for(unsigned int i = 0; i < velocities.size(); ++i){
+        fReal uPhi = u->sampleAt(positions[i][0], positions[i][1], parentSolver->uNorthP, parentSolver->uSouthP);
+        fReal uTheta = v->sampleAt(positions[i][0], positions[i][1], parentSolver->uNorthP, parentSolver->uSouthP);
+        velocities[i][0] = uPhi;
+        velocities[i][1] = uTheta;        
+    }
+}
+
 void KaminoParticles::write_data_bgeo(const std::string& s, const int frame)
 {
-//# ifndef _MSC_VER
     std::string file = s + std::to_string(frame) + ".bgeo";
     std::cout << "Writing to: " << file << std::endl;
     Partio::ParticlesDataMutable* parts = Partio::create();
@@ -80,15 +161,16 @@ void KaminoParticles::write_data_bgeo(const std::string& s, const int frame)
         float* p = parts->dataWrite<float>(posH, idx);
         float* v = parts->dataWrite<float>(vH, idx);
         Eigen::Matrix<float, 3, 1> pos(positions[i][0], positions[i][1], 0.0);
+        Eigen::Matrix<float, 3, 1> vel(velocities[i][0], positions[i][1], 0.0);
+        mapVToSphere(pos, vel);
         mapPToSphere(pos);
         for (int k = 0; k < 3; ++k){
             p[k] = pos(k, 0);
-            v[k] = 0.0;
+            v[k] = vel(k, 0);
         }
     }
     Partio::write(file.c_str(), *parts);
     parts->release();
-//# endif
 }
 
 void KaminoParticles::mapPToSphere(Eigen::Matrix<float, 3, 1>& pos) const
@@ -98,4 +180,17 @@ void KaminoParticles::mapPToSphere(Eigen::Matrix<float, 3, 1>& pos) const
     pos[0] = radius * sin(theta) * cos(phi);
     pos[2] = radius * sin(theta) * sin(phi);
     pos[1] = radius * cos(theta);
+}
+
+void KaminoParticles::mapVToSphere(Eigen::Matrix<float, 3, 1>& pos, Eigen::Matrix<float, 3, 1>& vel) const
+{
+    float theta = pos[1];
+    float phi = pos[0];
+
+    float u_theta = vel[1];
+    float u_phi = vel[2];
+
+    vel[0] = cos(theta) * cos(phi) * u_theta - sin(phi) * u_phi;
+    vel[2] = cos(theta) * sin(phi) * u_theta + cos(phi) * u_phi;
+    vel[1] = -sin(theta) * u_theta;
 }
