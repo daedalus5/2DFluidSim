@@ -1,13 +1,17 @@
 # include "../include/KaminoQuantity.h"
 
-KaminoParticles::KaminoParticles(int n, fReal particleDensity, fReal radius, KaminoSolver* solver) :
+KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, KaminoSolver* solver) :
                             particleDensity(particleDensity), radius(radius), parentSolver(solver)
 {
-    fReal delta = 1 / particleDensity;
+    fReal linearDensity = sqrt(particleDensity);
+    fReal delta = 1 / linearDensity;
     fReal halfDelta = delta / 2.0;
-    
-    for(unsigned int i = 0; i < 2 * n; ++i){
-        for(unsigned int j = 0; j < n; ++j){
+
+    unsigned int numThetaParticles = linearDensity * M_PI;
+    unsigned int numPhiParticles = 2 * numThetaParticles;
+
+    for(unsigned int i = 0; i < numPhiParticles; ++i){
+        for(unsigned int j = 0; j < numThetaParticles; ++j){
             // distribute in phi and theta randomly
             // +/- is 50/50
             fReal signPhi = static_cast <fReal> (rand()) / static_cast <fReal> (RAND_MAX);
@@ -65,7 +69,7 @@ void KaminoParticles::write_data_bgeo(const std::string& s, const int frame)
 {
 //# ifndef _MSC_VER
     std::string file = s + std::to_string(frame) + ".bgeo";
-    //std::cout << "Writing to: " << file << std::endl;
+    std::cout << "Writing to: " << file << std::endl;
     Partio::ParticlesDataMutable* parts = Partio::create();
     Partio::ParticleAttribute posH, vH;
     posH = parts->addAttribute("position", Partio::VECTOR, 3);

@@ -143,37 +143,6 @@ void KaminoSolver::initialize_density()
 	}
 }
 
-void KaminoSolver::initialize_test()
-{
-	for (size_t i = 0; i < nPhi; ++i) {
-		for (size_t j = 0; j < nTheta; ++j) {
-			centeredAttr["test"]->setValueAt(i, j, 0.0);
-		}
-	}
-
-	KaminoQuantity* test = centeredAttr["test"];
-	size_t midX = nPhi / 2;
-	size_t midY = nTheta / 2;
-	size_t kernelSize = 11;
-	Eigen::Matrix<fReal, 11, 11> Gaussian;
-	Gaussian << 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-		1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
-		1, 2, 3, 3, 3, 3, 3, 3, 3, 2, 1,
-		1, 2, 3, 5, 5, 5, 5, 5, 3, 2, 1,
-		1, 2, 3, 5, 8, 8, 8, 5, 3, 2, 1,
-		1, 2, 3, 5, 8, 13, 8, 5, 3, 2, 1,
-		1, 2, 3, 5, 8, 8, 8, 5, 3, 2, 1,
-		1, 2, 3, 5, 5, 5, 5, 5, 3, 2, 1,
-		1, 2, 3, 3, 3, 3, 3, 3, 3, 2, 1,
-		1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1;
-	for (size_t i = 0; i < kernelSize; ++i) {
-		for (size_t j = 0; j < kernelSize; ++j) {
-			test->setValueAt(i + midX, j + midY, Gaussian(i, j));
-		}
-	}
-}
-
 void KaminoSolver::initialize_boundary()
 {
 	for (size_t gridX = 0; gridX != this->nPhi / 2; ++gridX)

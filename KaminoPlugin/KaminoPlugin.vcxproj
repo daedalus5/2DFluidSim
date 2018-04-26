@@ -27,9 +27,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\KaminoCoreSolver\include\CubicSolver.h" />
+    <ClInclude Include="..\KaminoCoreSolver\include\Kamino.h" />
+    <ClInclude Include="..\KaminoCoreSolver\include\KaminoQuantity.h" />
     <ClInclude Include="include\KaminoPlugin.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\KaminoCoreSolver\src\CubicSolver.cpp" />
+    <ClCompile Include="..\KaminoCoreSolver\src\Kamino.cpp" />
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoAdvection.cpp" />
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoFFT.cpp" />
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoGeometry.cpp" />
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoInit.cpp" />
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoParticles.cpp" />
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoProjection.cpp" />
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoQuantity.cpp" />
+    <ClCompile Include="..\KaminoCoreSolver\src\KaminoSolver.cpp" />
     <ClCompile Include="src\KaminoPlugin.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -117,7 +130,7 @@
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release64|x64'">
-    <OutDir>C:\Users\GS63VR\Documents\houdini16.5\dso</OutDir>
+    <OutDir>C:\Users\zachc\OneDrive\Documents\houdini16.5\dso</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
