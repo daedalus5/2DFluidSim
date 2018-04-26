@@ -28,19 +28,11 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	addCenteredAttr("density", 0.0, 0.5);	// density
 
 	this->gridTypes = new gridType[nPhi * nTheta];
-	// for (size_t gPhi = 0; gPhi < nPhi; ++gPhi)
-	// {
-	// 	for (size_t gTheta = 0; gTheta < nTheta; ++gTheta)
-	// 	{
-	// 		gridTypes[getIndex(gPhi, gTheta)] = FLUIDGRID;
-	// 	}
-	// }
 	
 	initialize_velocity();
 	//initialize_pressure();
 	initialize_density();
-
-	initialize_boundary();
+	//initialize_boundary();
 }
 
 KaminoSolver::~KaminoSolver()

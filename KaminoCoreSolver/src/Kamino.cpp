@@ -31,7 +31,7 @@ void Kamino::run()
     KaminoQuantity* d = solver.getAttributeNamed("density");
     initializeDensity(d);
     gridType* g = solver.getGridTypeHandle();
-    defineSolidCells(g);
+    defineCellTypes(g);
    
     KaminoParticles particles(particleDensity, radius, &solver);
     KaminoQuantity* u = solver.getAttributeNamed("u");
@@ -60,7 +60,7 @@ void Kamino::test()
     KaminoQuantity *d = solver.getAttributeNamed("density");
     initializeDensity(d);
     gridType* g = solver.getGridTypeHandle();
-    defineSolidCells(g);
+    defineCellTypes(g);
 
     solver.write_data_bgeo(testPath, 0);
 
@@ -107,7 +107,7 @@ void Kamino::initializeDensity(KaminoQuantity* d)
     // }
 }
 
-void Kamino::defineSolidCells(gridType* g)
+void Kamino::defineCellTypes(gridType* g)
 {
     for (size_t gPhi = 0; gPhi < nPhi; ++gPhi)
     {
@@ -116,6 +116,36 @@ void Kamino::defineSolidCells(gridType* g)
             *(g + getIndex(gPhi, gTheta)) = FLUIDGRID;
         }
     }
+
+    // // read in image
+    // Mat image_in;
+    // image_in = imread(solidImage, IMREAD_COLOR);
+    // if(!image_in.data)
+    // {
+    //     std::cout << "error: no image data" << std::endl;
+    //     exit(1);
+    // }
+
+    // // convert to greyscale
+    // Mat image_gray; 
+    // cvtColor(image_in, image_gray, COLOR_BGR2GRAY);
+
+    // // resize to Nphi x Ntheta
+    // Mat image_sized;
+    // Size size(nPhi, nTheta);
+    // resize(image_gray, image_sized, size);
+
+    // // define SOLID cells beneath some threshold
+    // for(size_t i = 0; i < nPhi; ++i)
+    // {
+    //     for(size_t j = 0; j < nTheta; ++j)
+    //     {
+    //         Scalar intensity = image_sized.at<uchar>(Point(i,j));
+    //         if(intensity.val[0] < 128){
+    //             *(g + getIndex(i, j)) = SOLIDGRID;
+    //         }
+    //     }
+    // }
 }
 
 size_t Kamino::getIndex(size_t x, size_t y)

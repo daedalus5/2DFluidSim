@@ -36,8 +36,8 @@ private:
 
     /* initialize density field in solver */
     void initializeDensity(KaminoQuantity* d);
-    /* define the locations of SOLID grid cells */
-    void defineSolidCells(gridType* g);
+    /* define the locations of SOLID and FLUID grid cells */
+    void defineCellTypes(gridType* g);
 
     size_t getIndex(size_t x, size_t y);
 
