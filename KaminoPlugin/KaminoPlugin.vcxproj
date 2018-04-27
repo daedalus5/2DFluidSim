@@ -133,6 +133,7 @@
     <OutDir>$(USERPROFILE)\Documents\houdini16.5\dso</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <LibraryPath>$(SolutionDir)KaminoCoreSolver\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -287,6 +288,7 @@
       <DataExecutionPrevention />
       <TargetMachine>MachineX64</TargetMachine>
       <OutputFile>$(CUSTOM_DSO_PATH)\$(ProjectName)_$(Configuration).dll</OutputFile>
+      <AdditionalDependencies>opencv_highgui2413.lib;opencv_imgproc2413.lib;opencv_core2413.lib;zlibstatic.lib;partio.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
