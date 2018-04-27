@@ -130,7 +130,7 @@
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release64|x64'">
-    <OutDir>C:\Users\zachc\OneDrive\Documents\houdini16.5\dso</OutDir>
+    <OutDir>$(USERPROFILE)\Documents\houdini16.5\dso</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
@@ -267,7 +267,7 @@
 -DMAKING_DSO -DHBOOST_ALL_NO_LIB %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(H16_PATH)\toolkit\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(H16_PATH)\toolkit\include;$(ProjectDir)include;$(SolutionDir)KaminoCoreSolver\include;$(SolutionDir)KaminoCoreSolver\partio_headers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HOUDINI_TEMPLATE_EXPORTS;BOOST_ALL_NO_LIB;_USE_MATH_DEFINES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
