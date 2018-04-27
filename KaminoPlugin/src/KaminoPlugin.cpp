@@ -46,6 +46,9 @@ static PRM_Name names[] =
 	PRM_Name("dt", "Time Step"),
 	PRM_Name("DT", "Frame Rate"),
 	PRM_Name("frames", "Number of Frames"),
+	PRM_Name("densityImage", "Density File"),
+	PRM_Name("solidImage", "Solid File"),
+	PRM_Name("colorImage", "Color Image File"),
 };
 
 static PRM_Default defaultParams[] =
@@ -55,7 +58,10 @@ static PRM_Default defaultParams[] =
 	PRM_Default(100.0),
 	PRM_Default(0.005),
 	PRM_Default(0.041666667),
-	PRM_Default(1000)
+	PRM_Default(1000),
+	PRM_Default(""),
+	PRM_Default(""),
+	PRM_Default(""),
 };
 
 PRM_Template
@@ -67,7 +73,9 @@ SOP_Kamino::myTemplateList[] =
 	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + dt, defaultParams + dt, 0),
 	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + DT, defaultParams + DT, 0),
 	PRM_Template(PRM_INT, PRM_Template::PRM_EXPORT_MIN, 1, names + frames, defaultParams + frames, 0),
-	//PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + gram, defaultParams + gram, 0),
+	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + densityImage, defaultParams + densityImage, 0),
+	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + solidImage, defaultParams + solidImage, 0),
+	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + colorImage, defaultParams + colorImage, 0),
 	//PRM_Template(PRM_CALLBACK, 1, &generateCommandName, 0, 0, 0, Kamino::run),
     PRM_Template()
 };
@@ -142,6 +150,23 @@ SOP_Kamino::cookMySop(OP_Context &context)
 	fpreal timestep = this->getdt(now);
 	fpreal frameRate = this->getDT(now);
 	exint frameCount = this->getFrames(now);
+	
+	UT_String temp = "";
+	this->getDensityFile(temp, now);
+	std::string densityFile = temp.toStdString();
+
+	temp = "";
+	this->getSolidFile(temp, now);
+	std::string solidFile = temp.toStdString();
+
+	temp = "";
+	this->getColorFile(temp, now);
+	std::string colorFile = temp.toStdString();
+
+	Kamino myKamino(rad, ntheta, dens, timestep, frameRate, frameCount,
+		"output/frame", "particles/frame", densityFile, solidFile, colorFile);
+
+
 
 	// PUT YOUR CODE HERE
 	int			 divisions;

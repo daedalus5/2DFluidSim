@@ -65,11 +65,19 @@ private:
 	{
 		return evalInt("frames", 0, t);
 	}
+	void getDensityFile(UT_String& str, fpreal t)
+	{
+		evalString(str, "densityImage", 0, t);
+	}
+	void getSolidFile(UT_String& str, fpreal t)
+	{
+		evalString(str, "solidImage", 0, t);
+	}
+	void getColorFile(UT_String& str, fpreal t)
+	{
+		evalString(str, "colorImage", 0, t);
+	}
 
-	//void getGrammarFile(UT_String& str, fpreal t)
-	//{
-	//	evalString(str, "gram", 0, t);
-	//}
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
