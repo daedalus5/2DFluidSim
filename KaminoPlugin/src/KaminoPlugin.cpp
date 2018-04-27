@@ -33,10 +33,13 @@ newSopOperator(OP_OperatorTable *table)
 	    );
 }
 
-static enum Params {radius, nTheta, particleDensity, dt, DT, frames};
+/*
+* Declare the GUI parameters to the nodes
+*/
 
-static PRM_Name
-generateCommandName("generateCommand", "Generate");
+static enum Params {radius, nTheta, particleDensity, dt, DT, frames, densityImage, solidImage, colorImage};
+
+static PRM_Name generateCommandName("generateCommand", "Run Simulation");
 
 static PRM_Name names[] =
 {
@@ -59,13 +62,12 @@ static PRM_Default defaultParams[] =
 	PRM_Default(0.005),
 	PRM_Default(0.041666667),
 	PRM_Default(1000),
-	PRM_Default(""),
-	PRM_Default(""),
-	PRM_Default(""),
+	PRM_Default(0.0, ""),
+	PRM_Default(0.0, ""),
+	PRM_Default(0.0, ""),
 };
 
-PRM_Template
-SOP_Kamino::myTemplateList[] = 
+PRM_Template SOP_Kamino::myTemplateList[] = 
 {
 	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + radius, defaultParams + radius, 0),
 	PRM_Template(PRM_INT, PRM_Template::PRM_EXPORT_MIN, 1, names + nTheta, defaultParams + nTheta, 0),
