@@ -22,8 +22,10 @@ private:
 
     std::string gridPath;       // folder destination for test bgeo files
     std::string particlePath;   // folder destination for simulation bgeo files
+
     std::string densityImage;   // file path of density image map
     std::string solidImage;     // file path of SOLIDCELL image map
+    std::string colorImage;     // file path of image defining particle color
 
     /* velocity initialization */
     /* u = f(phi) * g(theta) */
@@ -34,10 +36,14 @@ private:
     std::vector<fReal> lPhiCoeff;
     std::vector<fReal> mThetaCoeff;
 
+    Eigen::Matrix<size_t, 3, 1>* colorMap;
+
     /* initialize density field in solver */
     void initializeDensity(KaminoQuantity* d);
     /* define the locations of SOLID and FLUID grid cells */
     void defineCellTypes(gridType* g);
+    /* load color image for particle color initialization */
+    void loadColorImage();
 
     size_t getIndex(size_t x, size_t y);
 
@@ -45,7 +51,7 @@ public:
     Kamino(fReal radius = 5.0, size_t nTheta = 64, fReal particleDensity = 100.0,
         float dt = 0.005, float DT = 1.0 / 24.0, int frames = 1000,
         std::string gridPath = "output/frame", std::string particlePath = "particles/frame",
-        std::string densityImage = "", std::string solidImage = "");
+        std::string densityImage = "", std::string solidImage = "", std::string colorImage = "");
     ~Kamino();
 
     /* run the solver */

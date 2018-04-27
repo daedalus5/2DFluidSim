@@ -3,12 +3,21 @@
 Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
         float dt, float DT, int frames,
         std::string gridPath, std::string particlePath,
-        std::string densityImage, std::string solidImage) :
+        std::string densityImage, std::string solidImage, std::string colorImage) :
         radius(radius), nTheta(nTheta), nPhi(2 * nTheta), gridLen(M_PI / nTheta),
         particleDensity(particleDensity),
         dt(dt), DT(DT), frames(frames),
-        gridPath(gridPath), particlePath(particlePath), densityImage(densityImage), solidImage(solidImage)
+        gridPath(gridPath), particlePath(particlePath),
+        densityImage(densityImage), solidImage(solidImage), colorImage(colorImage)
 {
+	// stores BGR pixel values for an image
+	// all values initialized to WHITE
+	size_t size = nTheta * 2 * nTheta;
+    this->colorMap = new Eigen::Matrix<size_t, 3, 1>[size];
+	for (int i = 0; i < size; ++i) {
+		colorMap[i] = Eigen::Matrix<size_t, 3, 1>(255, 255, 255);
+	}
+
     fReal A1 = -1.0; fReal B1 = 0.5; fReal C1 = 0.5; fReal D1 = -0.9; fReal E1 = 1.0;
     fReal A2 = 1.0; fReal B2 = -0.3; fReal C2 = -0.7; fReal D2 = 0.8; fReal E2 = -0.8;
     fPhiCoeff = {A1, B1, C1, D1, E1};
@@ -19,6 +28,7 @@ Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
     // temporary
     this->densityImage = "";
     this->solidImage = "images/flower.jpg";
+	this->colorImage = "images/flower.jpg";
 }
 
 Kamino::~Kamino()
@@ -32,8 +42,9 @@ void Kamino::run()
     initializeDensity(d);
     gridType* g = solver.getGridTypeHandle();
     defineCellTypes(g);
+	loadColorImage();
    
-    KaminoParticles particles(particleDensity, radius, gridLen, &solver, nPhi, nTheta, densityImage);
+    KaminoParticles particles(particleDensity, radius, gridLen, &solver, nPhi, nTheta, densityImage, colorMap);
     KaminoQuantity* u = solver.getAttributeNamed("u");
     KaminoQuantity* v = solver.getAttributeNamed("v");
 
@@ -53,6 +64,33 @@ void Kamino::run()
 
         solver.write_data_bgeo(gridPath, i);
         particles.write_data_bgeo(particlePath, i);
+    }
+}
+
+void Kamino::loadColorImage()
+{
+    // read in image
+    Mat image_in;
+    image_in = imread(colorImage, IMREAD_COLOR);
+    if(!image_in.data)
+    {
+        std::cout << "No color image provided. Particle color initialized to WHITE";
+        return;
+    }
+
+    // resize to Nphi x Ntheta
+    Mat image_sized;
+    Size size(nPhi, nTheta);
+    resize(image_in, image_sized, size);
+    for(size_t i = 0; i < nPhi; ++i)
+    {
+        for(size_t j = 0; j < nTheta; ++j)
+        {
+            Point3_<uchar>* p = image_sized.ptr<Point3_<uchar>>(j, i);
+            colorMap[getIndex(i, j)][0] = p->x; // B
+            colorMap[getIndex(i, j)][1] = p->y; // G
+            colorMap[getIndex(i, j)][2] = p->z; // R
+        }
     }
 }
 
@@ -127,6 +165,7 @@ void Kamino::defineCellTypes(gridType* g)
 		}
 	}
 }
+
 
 size_t Kamino::getIndex(size_t x, size_t y)
 {

@@ -251,12 +251,13 @@ private:
 	fReal radius;
 	std::vector<Eigen::Matrix<fReal, 2, 1>> positions;
 	std::vector<Eigen::Matrix<fReal, 2, 1>> velocities;
+	std::vector<Eigen::Matrix<size_t, 3, 1>> colors;
 	KaminoSolver* parentSolver;
 
 	void mapPToSphere(Eigen::Matrix<float, 3, 1>& pos) const;
 	void mapVToSphere(Eigen::Matrix<float, 3, 1>& pos, Eigen::Matrix<float, 3, 1>& vel) const;
 public:
-	KaminoParticles(fReal particleDensity, fReal radius, fReal h, KaminoSolver* parentSolver, size_t nPhi, size_t nTheta, std::string densityImage);
+	KaminoParticles(fReal particleDensity, fReal radius, fReal h, KaminoSolver* parentSolver, size_t nPhi, size_t nTheta, std::string densityImage, Eigen::Matrix<size_t, 3, 1>* colorMap);
 	~KaminoParticles();
 
 	void updatePositions(KaminoQuantity* u, KaminoQuantity* v, fReal deltaT);
