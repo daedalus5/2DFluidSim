@@ -9,7 +9,7 @@ void KaminoSolver::geometric()
 # ifdef OMParallelize
 # pragma omp parallel for
 # endif
-	for (size_t thetaJ = 1; thetaJ < nTheta - 1; ++thetaJ)
+	for (int thetaJ = 1; thetaJ < nTheta - 1; ++thetaJ)
 	{
 		for (size_t phiI = 0; phiI < nPhi; ++phiI)
 		{

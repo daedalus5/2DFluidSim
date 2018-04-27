@@ -12,7 +12,7 @@ void KaminoSolver::fillDivergence()
 # ifdef OMParallelize
 # pragma omp parallel for
 # endif
-	for (size_t j = 0; j < nTheta; ++j)
+	for (int j = 0; j < nTheta; ++j)
 	{
 		fReal thetaOftheBelt = (j + 0.5) * gridLen;
 		fReal sine = std::sin(thetaOftheBelt);
@@ -80,9 +80,9 @@ void KaminoSolver::fillDivergence()
 
 void KaminoSolver::transformDivergence()
 {
-# ifdef OMParallelize
+/*# ifdef OMParallelize
 # pragma omp parallel for
-# endif
+# endif*/
 	for (size_t thetaI = 0; thetaI < nTheta; ++thetaI)
 	{
 		std::vector<std::complex<fReal>> output;
@@ -106,9 +106,9 @@ void KaminoSolver::transformDivergence()
 void KaminoSolver::invTransformPressure()
 {
 	KaminoQuantity* p = (*this)["p"];
-# ifdef OMParallelize
+/*# ifdef OMParallelize
 # pragma omp parallel for
-# endif
+# endif*/
 	for (size_t gTheta = 0; gTheta < nTheta; ++gTheta)
 	{
 		std::vector<std::complex<fReal>> output;

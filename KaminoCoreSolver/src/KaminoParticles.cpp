@@ -1,6 +1,6 @@
 # include "../include/KaminoQuantity.h"
 
-KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, KaminoSolver* solver, size_t nPhi, size_t nTheta, std::string densityImage, Eigen::Matrix<size_t, 3, 1>* colorMap) :
+KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, KaminoSolver* solver, size_t nPhi, size_t nTheta, std::string densityImage, Eigen::Matrix<fReal, 3, 1>* colorMap) :
                             particleDensity(particleDensity), radius(radius), parentSolver(solver)
 {
 
@@ -48,7 +48,7 @@ KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, K
                 velocities.push_back(vel);
 
 				// define particle color
-				Eigen::Matrix<size_t, 3, 1> color = *(colorMap + solver->getIndex(x, y));
+				Eigen::Matrix<fReal, 3, 1> color = *(colorMap + solver->getIndex(x, y));
 				colors.push_back(color);
             }
         }
@@ -105,7 +105,7 @@ KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, K
                         velocities.push_back(vel);        
 
 						// define particle color
-						Eigen::Matrix<size_t, 3, 1> color = *(colorMap + solver->getIndex(x, y));
+						Eigen::Matrix<fReal, 3, 1> color = *(colorMap + solver->getIndex(x, y));
 						colors.push_back(color);
                     }
                 }
@@ -123,7 +123,7 @@ void KaminoParticles::updatePositions(KaminoQuantity* u, KaminoQuantity* v, fRea
 # ifdef OMParallelize
 # pragma omp parallel for
 # endif
-    for(unsigned int i = 0; i < positions.size(); ++i){
+    for(int i = 0; i < positions.size(); ++i){
         fReal uPhi = u->sampleAt(positions[i][0], positions[i][1], parentSolver->uNorthP, parentSolver->uSouthP);
         fReal uTheta = v->sampleAt(positions[i][0], positions[i][1], parentSolver->uNorthP, parentSolver->uSouthP);
         fReal nextPhi;
@@ -162,7 +162,7 @@ void KaminoParticles::write_data_bgeo(const std::string& s, const int frame)
     std::string file = s + std::to_string(frame) + ".bgeo";
     std::cout << "Writing to: " << file << std::endl;
     Partio::ParticlesDataMutable* parts = Partio::create();
-	Partio::ParticleAttribute posH, vH, color;
+	Partio::ParticleAttribute posH, vH, col;
     posH = parts->addAttribute("position", Partio::VECTOR, 3);
     vH = parts->addAttribute("v", Partio::VECTOR, 3);
 	col = parts->addAttribute("color", Partio::VECTOR, 3);
@@ -171,7 +171,7 @@ void KaminoParticles::write_data_bgeo(const std::string& s, const int frame)
         int idx = parts->addParticle();
         float* p = parts->dataWrite<float>(posH, idx);
         float* v = parts->dataWrite<float>(vH, idx);
-		int* c = parts->dataWrite<int>(col, idx);
+		float* c = parts->dataWrite<float>(col, idx);
         Eigen::Matrix<float, 3, 1> pos(positions[i][0], positions[i][1], 0.0);
         Eigen::Matrix<float, 3, 1> vel(velocities[i][0], positions[i][1], 0.0);
         mapVToSphere(pos, vel);

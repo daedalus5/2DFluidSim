@@ -68,7 +68,7 @@ SOP_Kamino::myTemplateList[] =
 	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + DT, defaultParams + DT, 0),
 	PRM_Template(PRM_INT, PRM_Template::PRM_EXPORT_MIN, 1, names + frames, defaultParams + frames, 0),
 	//PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + gram, defaultParams + gram, 0),
-	PRM_Template(PRM_CALLBACK, 1, &generateCommandName, 0, 0, 0, Kamino::run),
+	//PRM_Template(PRM_CALLBACK, 1, &generateCommandName, 0, 0, 0, Kamino::run),
     PRM_Template()
 };
 
