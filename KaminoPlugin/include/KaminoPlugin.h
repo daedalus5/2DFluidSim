@@ -78,6 +78,7 @@ private:
 		evalString(str, "colorImage", 0, t);
 	}
 
+	static int generateCallBack(void* data, int index, float time, const PRM_Template*);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -89,6 +90,8 @@ private:
 	// NOTE : You can declare local variables here like this  
     int myCurrPoint;
     int myTotalPoints;
+
+	static Kamino* myKamino;
 };
 } // End HDK_Sample namespace
 

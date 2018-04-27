@@ -13,6 +13,8 @@
 #include "KaminoPlugin.h"
 using namespace HDK_Kamino;
 
+Kamino* SOP_Kamino::myKamino = nullptr;
+
 ///
 /// newSopOperator is the hook that Houdini grabs from this dll
 /// and invokes to register the SOP.  In this case we add ourselves
@@ -78,10 +80,16 @@ PRM_Template SOP_Kamino::myTemplateList[] =
 	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + densityImage, defaultParams + densityImage, 0),
 	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + solidImage, defaultParams + solidImage, 0),
 	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + colorImage, defaultParams + colorImage, 0),
-	//PRM_Template(PRM_CALLBACK, 1, &generateCommandName, 0, 0, 0, Kamino::run),
+	PRM_Template(PRM_CALLBACK, 1, &generateCommandName, 0, 0, 0, SOP_Kamino::generateCallBack),
     PRM_Template()
 };
 
+int SOP_Kamino::generateCallBack(void* data, int index, float time, const PRM_Template*)
+{
+	myKamino->run();
+
+	return 1;
+}
 
 // Here's how we define local variables for the SOP.
 enum {
@@ -165,10 +173,11 @@ SOP_Kamino::cookMySop(OP_Context &context)
 	this->getColorFile(temp, now);
 	std::string colorFile = temp.toStdString();
 
-	Kamino myKamino(rad, ntheta, dens, timestep, frameRate, frameCount,
+	if (myKamino == nullptr)
+		delete myKamino;
+
+	myKamino = new Kamino(rad, ntheta, dens, timestep, frameRate, frameCount,
 		"output/frame", "particles/frame", densityFile, solidFile, colorFile);
-
-
 
 	// PUT YOUR CODE HERE
 	int			 divisions;
