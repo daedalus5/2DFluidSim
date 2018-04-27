@@ -130,7 +130,7 @@
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release64|x64'">
-    <OutDir>$(USERPROFILE)\Documents\houdini16.5\dso</OutDir>
+    <OutDir>$(CUSTOM_DSO_PATH)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <LibraryPath>$(SolutionDir)KaminoCoreSolver\lib;$(LibraryPath)</LibraryPath>

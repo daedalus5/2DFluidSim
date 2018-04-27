@@ -4,6 +4,11 @@
 #include <SOP/SOP_Node.h>
 #include "Kamino.h"
 
+#include <OP/OP_AutoLockInputs.h>
+#include <OP/OP_Director.h>
+#include <OP/OP_Operator.h>
+#include <OP/OP_OperatorTable.h>
+
 namespace HDK_Kamino {
 class SOP_Kamino : public SOP_Node
 {
