@@ -251,6 +251,7 @@ private:
 	fReal radius;
 	std::vector<Eigen::Matrix<fReal, 2, 1>> positions;
 	std::vector<Eigen::Matrix<fReal, 2, 1>> velocities;
+	std::vector<Eigen::Matrix<fReal, 3, 1>> colors;
 	KaminoSolver* parentSolver;
 
 	void mapPToSphere(Eigen::Matrix<float, 3, 1>& pos) const;

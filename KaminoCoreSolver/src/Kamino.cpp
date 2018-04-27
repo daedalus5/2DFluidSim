@@ -2,13 +2,16 @@
 
 Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
         float dt, float DT, int frames,
-        std::string testPath, std::string particlePath,
+        std::string gridPath, std::string particlePath,
         std::string densityImage, std::string solidImage) :
         radius(radius), nTheta(nTheta), nPhi(2 * nTheta), gridLen(M_PI / nTheta),
         particleDensity(particleDensity),
         dt(dt), DT(DT), frames(frames),
-        gridPath(testPath), particlePath(particlePath), densityImage(densityImage), solidImage(solidImage)
+        gridPath(gridPath), particlePath(particlePath), densityImage(densityImage), solidImage(solidImage)
 {
+# ifdef OMParallelize
+	omp_set_num_threads(TOTALThreads);
+# endif
     fReal A1 = -1.0; fReal B1 = 0.5; fReal C1 = 0.5; fReal D1 = -0.9; fReal E1 = 1.0;
     fReal A2 = 1.0; fReal B2 = -0.3; fReal C2 = -0.7; fReal D2 = 0.8; fReal E2 = -0.8;
     fPhiCoeff = {A1, B1, C1, D1, E1};
@@ -18,7 +21,7 @@ Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
 
     // temporary
     this->densityImage = "";
-    this->solidImage = "images/Square.jpg";
+    this->solidImage = "images/World.jpg";
 }
 
 Kamino::~Kamino()
@@ -63,13 +66,15 @@ void Kamino::initializeDensity(KaminoQuantity* d)
 	image_in = imread(densityImage, IMREAD_COLOR);
 	if (!image_in.data)
 	{
-		std::cout << "No density image provided. All density values initialized to ZERO.";
+		std::cout << "No density image provided. All density values initialized to ZERO." << std::endl;
 		return;
 	}
+	Mat image_flipped;
+	cv::flip(image_in, image_flipped, 1);
 
 	// convert to greyscale
 	Mat image_gray;
-	cvtColor(image_in, image_gray, COLOR_BGR2GRAY);
+	cvtColor(image_flipped, image_gray, COLOR_BGR2GRAY);
 
 	// resize to Nphi x Ntheta
 	Mat image_sized;
@@ -97,7 +102,7 @@ void Kamino::defineCellTypes(gridType* g)
         }
     }
 
-	// // read in image
+	// read in image
 	Mat image_in;
 	image_in = imread(solidImage, IMREAD_COLOR);
 	if (!image_in.data)
@@ -105,10 +110,12 @@ void Kamino::defineCellTypes(gridType* g)
 		std::cout << "No grid type image provided. All cells initialized to FLUID" << std::endl;
 		return;
 	}
+	Mat image_flipped;
+	cv::flip(image_in, image_flipped, 1);
 
 	//convert to greyscale
 	Mat image_gray;
-	cvtColor(image_in, image_gray, COLOR_BGR2GRAY);
+	cvtColor(image_flipped, image_gray, COLOR_BGR2GRAY);
 
 	// resize to Nphi x Ntheta
 	Mat image_sized;

@@ -10,7 +10,7 @@ KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, K
         fReal delta = M_PI / nTheta / linearDensity;
         fReal halfDelta = delta / 2.0;
 
-        unsigned int numThetaParticles = linearDensity * M_PI;
+        unsigned int numThetaParticles = linearDensity * nTheta;
         unsigned int numPhiParticles = 2 * numThetaParticles;
 
         for(unsigned int i = 0; i < numPhiParticles; ++i){
@@ -51,7 +51,7 @@ KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, K
     }
     // initialize particles according to density image file
     else{
-        KaminoQuantity* d = parentSolver->getAttributeNamed("density");
+        KaminoQuantity* d = solver->getAttributeNamed("density");
         for(size_t i = 0; i < nPhi; ++i)
         {
             for(size_t j = 0; j < nTheta; ++j)
@@ -113,7 +113,7 @@ void KaminoParticles::updatePositions(KaminoQuantity* u, KaminoQuantity* v, fRea
 # ifdef OMParallelize
 # pragma omp parallel for
 # endif
-    for(unsigned int i = 0; i < positions.size(); ++i){
+    for(int i = 0; i < positions.size(); ++i){
         fReal uPhi = u->sampleAt(positions[i][0], positions[i][1], parentSolver->uNorthP, parentSolver->uSouthP);
         fReal uTheta = v->sampleAt(positions[i][0], positions[i][1], parentSolver->uNorthP, parentSolver->uSouthP);
         fReal nextPhi;

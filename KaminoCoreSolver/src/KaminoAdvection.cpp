@@ -44,7 +44,10 @@ void KaminoSolver::advectionScalar()
 	for (auto quantity : this->centeredAttr)
 	{
 		KaminoQuantity* cenAttr = quantity.second;
-		for (size_t gridTheta = 0; gridTheta < cenAttr->getNTheta(); ++gridTheta)
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
+		for (int gridTheta = 0; gridTheta < cenAttr->getNTheta(); ++gridTheta)
 		{
 			for (size_t gridPhi = 0; gridPhi < cenAttr->getNPhi(); ++gridPhi)
 			{
@@ -104,7 +107,10 @@ void KaminoSolver::advectionSpeed()
 {
 	//Advect as is for uPhi
 	KaminoQuantity* uPhi = (*this)["u"];
-	for (size_t gridTheta = 0; gridTheta < uPhi->getNTheta(); ++gridTheta)
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
+	for (int gridTheta = 0; gridTheta < uPhi->getNTheta(); ++gridTheta)
 	{
 		for (size_t gridPhi = 0; gridPhi < uPhi->getNPhi(); ++gridPhi)
 		{
@@ -115,7 +121,10 @@ void KaminoSolver::advectionSpeed()
 	//Tread carefully for uTheta...
 	KaminoQuantity* uTheta = (*this)["v"];
 	// Apart from the poles...
-	for (size_t gridTheta = 1; gridTheta < uTheta->getNTheta() - 1; ++gridTheta)
+# ifdef OMParallelize
+# pragma omp parallel for
+# endif
+	for (int gridTheta = 1; gridTheta < uTheta->getNTheta() - 1; ++gridTheta)
 	{
 		for (size_t gridPhi = 0; gridPhi < uTheta->getNPhi(); ++gridPhi)
 		{
