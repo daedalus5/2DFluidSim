@@ -11,6 +11,7 @@ Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
 {
 # ifdef OMParallelize
 	omp_set_num_threads(TOTALThreads);
+	Eigen::setNbThreads(TOTALThreads);
 # endif
     fReal A1 = -1.0; fReal B1 = 0.5; fReal C1 = 0.5; fReal D1 = -0.9; fReal E1 = 1.0;
     fReal A2 = 1.0; fReal B2 = -0.3; fReal C2 = -0.7; fReal D2 = 0.8; fReal E2 = -0.8;

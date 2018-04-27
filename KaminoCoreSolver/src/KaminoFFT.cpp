@@ -9,10 +9,10 @@ void KaminoSolver::fillDivergence()
 	//fReal scaleDiv = density * radius / timeStep;
 	fReal scaleDiv = 1.0;
 	/// TODO: Fill the fourierF buffer with divergence
-/*# ifdef OMParallelize
+# ifdef OMParallelize
 # pragma omp parallel for
-# endif*/
-	for (size_t j = 0; j < nTheta; ++j)
+# endif
+	for (int j = 0; j < nTheta; ++j)
 	{
 		fReal thetaOftheBelt = (j + 0.5) * gridLen;
 		fReal sine = std::sin(thetaOftheBelt);

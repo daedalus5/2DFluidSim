@@ -42,7 +42,7 @@ private:
     size_t getIndex(size_t x, size_t y);
 
 public:
-    Kamino(fReal radius = 5.0, size_t nTheta = 256, fReal particleDensity = 100.0,
+    Kamino(fReal radius = 5.0, size_t nTheta = 64, fReal particleDensity = 100.0,
         float dt = 0.005, float DT = 1.0 / 24.0, int frames = 1000,
         std::string gridPath = "output/frame", std::string particlePath = "particles/frame",
         std::string densityImage = "", std::string solidImage = "");
