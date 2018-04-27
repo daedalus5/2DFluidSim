@@ -4,7 +4,7 @@
 #include <SOP/SOP_Node.h>
 #include "Kamino.h"
 
-namespace HDK_Kamino {
+namespace HDK_Sample {
 class SOP_Kamino : public SOP_Node
 {
 public:

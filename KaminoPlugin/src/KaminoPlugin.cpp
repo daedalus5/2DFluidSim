@@ -11,7 +11,7 @@
 
 #include <limits.h>
 #include "KaminoPlugin.h"
-using namespace HDK_Kamino;
+using namespace HDK_Sample;
 
 Kamino* SOP_Kamino::myKamino = nullptr;
 
@@ -41,7 +41,7 @@ newSopOperator(OP_OperatorTable *table)
 
 static enum Params {radius, nTheta, particleDensity, dt, DT, frames, densityImage, solidImage, colorImage};
 
-static PRM_Name generateCommandName("generateCommand", "Run Simulation");
+//static PRM_Name generateCommandName("generateCommand", "Run Simulation");
 
 static PRM_Name names[] =
 {
@@ -80,7 +80,7 @@ PRM_Template SOP_Kamino::myTemplateList[] =
 	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + densityImage, defaultParams + densityImage, 0),
 	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + solidImage, defaultParams + solidImage, 0),
 	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + colorImage, defaultParams + colorImage, 0),
-	PRM_Template(PRM_CALLBACK, 1, &generateCommandName, 0, 0, 0, SOP_Kamino::generateCallBack),
+	//PRM_Template(PRM_CALLBACK, 1, &generateCommandName, 0, 0, 0, SOP_Kamino::generateCallBack),
     PRM_Template()
 };
 
