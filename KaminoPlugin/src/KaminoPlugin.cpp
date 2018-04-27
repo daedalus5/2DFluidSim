@@ -1,4 +1,5 @@
 #include <UT/UT_DSOVersion.h>
+
 #include <UT/UT_Math.h>
 #include <UT/UT_Interrupt.h>
 #include <GU/GU_Detail.h>
@@ -11,7 +12,14 @@
 
 #include <limits.h>
 #include "KaminoPlugin.h"
-using namespace HDK_Sample;
+
+#include <UT/UT_NTStreamUtil.h>
+#include <UT/UT_IStream.h>
+#include <CMD/CMD_Args.h>
+#include <PI/PI_ResourceManager.h>
+#include <MOT/MOT_Director.h>
+
+using namespace HDK_Kamino;
 
 Kamino* SOP_Kamino::myKamino = nullptr;
 
@@ -179,46 +187,13 @@ SOP_Kamino::cookMySop(OP_Context &context)
 	myKamino = new Kamino(rad, ntheta, dens, timestep, frameRate, frameCount,
 		"output/frame", "particles/frame", densityFile, solidFile, colorFile);
 
-	// PUT YOUR CODE HERE
-	int			 divisions;
-	UT_Interrupt	*boss;
+	OP_AutoLockInputs inputs(this);
+	// Check if locking caused an error
+	if (inputs.lock(context) >= UT_ERROR_ABORT)
+		return error();
 
-	// Since we don't have inputs, we don't need to lock them.
+	OP_Node::flags().timeDep = 1;
 
-	divisions = 5;				// We need twice our divisions of points
-	myTotalPoints = divisions;	// Set the NPT local variable value
-	myCurrPoint = 0;			// Initialize the PT local variable
-	
-	// Check to see that there hasn't been a critical error in cooking the SOP.
-	if (error() < UT_ERROR_ABORT)
-	{
-		boss = UTgetInterrupt();
-		if (divisions < 4)
-		{
-			// With the range restriction we have on the divisions, this
-			//	is actually impossible, but it shows how to add an error
-			//	message or warning to the SOP.
-			addWarning(SOP_MESSAGE, "Invalid divisions");
-			divisions = 4;
-		}
-		gdp->clearAndDestroy();
-
-		// Start the interrupt server
-		if (boss->opStart("Running Solver"))
-		{
-			// PUT YOUR CODE HERE
-
-			////////////////////////////////////////////////////////////////////////////////////////////
-
-			select(GU_SPrimitive);
-		}
-
-		// Tell the interrupt server that we've completed. Must do this
-		// regardless of what opStart() returns.
-		boss->opEnd();
-	}
-
-	myCurrPoint = -1;
     return error();
 }
 

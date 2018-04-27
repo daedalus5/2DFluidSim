@@ -31,7 +31,7 @@ private:
     /* u = f(phi) * g(theta) */
     /* v = l(phi) * m(theta) */
     /* coefficients are for Fourier sums representing each of the above functions */
-    std::vector<fReal> fPhiCoeff;
+    std::vector<fReal> fPhiCoeff;   
     std::vector<fReal> gThetaCoeff;
     std::vector<fReal> lPhiCoeff;
     std::vector<fReal> mThetaCoeff;
