@@ -17,8 +17,8 @@ Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
     mThetaCoeff = {A2, B2, C2, D2, E2};
 
     // temporary
-    this->densityImage = "images/flower.jpg";
-    this->solidImage = "";
+    this->densityImage = "";
+    this->solidImage = "images/Square.jpg";
 }
 
 Kamino::~Kamino()
