@@ -32,7 +32,7 @@ Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
 
     // temporary
     this->densityImage = "";
-    this->solidImage = "";
+    this->solidImage = "images/SIGGRAPH_logo.jpg";
 	this->colorImage = "";
 
 }
