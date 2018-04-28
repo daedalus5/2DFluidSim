@@ -97,6 +97,7 @@ private:
     int myTotalPoints;
 
 	//Kamino* pointer2Kamino;
+	static std::string pluginDir;
 };
 } // End HDK_Sample namespace
 

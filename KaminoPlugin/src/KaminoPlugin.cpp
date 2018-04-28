@@ -93,9 +93,8 @@ PRM_Template SOP_Kamino::myTemplateList[] =
     PRM_Template()
 };
 
+std::string SOP_Kamino::pluginDir = std::getenv("CUSTOM_DSO_PATH");
 static CMD_Manager m("Name");
-static UT_String hCmd = "system "
-						"D:/Kamino.bat";
 
 int SOP_Kamino::generateCallBack(void* data, int index, float time, const PRM_Template*)
 {
@@ -103,6 +102,10 @@ int SOP_Kamino::generateCallBack(void* data, int index, float time, const PRM_Te
 	SOP_Kamino* theNode = (SOP_Kamino*)data;
 	//theNode->pointer2Kamino->run();
 	//system("D:/KaminoCoreSolver.exe D:/configKamino.txt");
+	std::string cmd = "system ";
+	cmd = cmd + pluginDir + "/KaminoCoreSolver.exe ";
+	cmd = cmd + pluginDir + "/configKamino.txt";
+	UT_String hCmd = cmd.c_str();
 	OPgetDirector()->getCommandManager()->execute(hCmd);
 	
 	m.execute(hCmd);
@@ -197,15 +200,16 @@ SOP_Kamino::cookMySop(OP_Context &context)
 	pointer2Kamino = new Kamino(rad, ntheta, dens, timestep, frameRate, frameCount,
 		"output/frame", "particles/frame", densityFile, solidFile, colorFile);*/
 	std::fstream fout;
-	fout.open("D:/configKamino.txt", std::ios::out);
+	//std::string dsoPath = std::getenv("CUSTOM_DSO_PATH");
+	fout.open(this->pluginDir + "/configKamino.txt", std::ios::out);
 	fout << rad << std::endl;
 	fout << ntheta << std::endl;
 	fout << dens << std::endl;
 	fout << timestep << std::endl;
 	fout << frameRate << std::endl;
 	fout << frameCount << std::endl;
-	fout << "D:/output/frame" << std::endl;
-	fout << "D:/particles/frame" << std::endl;
+	fout << this->pluginDir + "/output/frame" << std::endl;
+	fout << this->pluginDir + "/particles/frame" << std::endl;
 	if (densityFile.size() == 0)
 	{
 		fout << "null" << std::endl;
