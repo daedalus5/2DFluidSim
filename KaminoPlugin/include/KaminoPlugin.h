@@ -2,7 +2,7 @@
 #define __LSYSTEM_PLUGIN_h__
 
 #include <SOP/SOP_Node.h>
-#include "Kamino.h"
+//#include "Kamino.h"
 
 #include <OP/OP_AutoLockInputs.h>
 #include <OP/OP_Director.h>
@@ -96,7 +96,7 @@ private:
     int myCurrPoint;
     int myTotalPoints;
 
-	static Kamino* myKamino;
+	//Kamino* pointer2Kamino;
 };
 } // End HDK_Sample namespace
 

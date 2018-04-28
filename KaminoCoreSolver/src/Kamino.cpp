@@ -29,12 +29,6 @@ Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
     gThetaCoeff = {0.0};
     lPhiCoeff = {0.0};
     mThetaCoeff = {A2, B2, C2, D2, E2};
-
-    // temporary
-    this->densityImage = "";
-    this->solidImage = "";
-	this->colorImage = "";
-
 }
 
 Kamino::~Kamino()
