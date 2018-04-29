@@ -48,7 +48,7 @@ newSopOperator(OP_OperatorTable *table)
 * Declare the GUI parameters to the nodes
 */
 
-static enum Params {radius, nTheta, particleDensity, dt, DT, frames, densityImage, solidImage, colorImage, spin, uphi, utheta, vphi, vtheta};
+static enum Params {radius, nTheta, particleDensity, dt, DT, frames, spin, uphi, utheta, vphi, vtheta, densityImage, solidImage, colorImage};
 
 static PRM_Name names[] =
 {
@@ -60,7 +60,7 @@ static PRM_Name names[] =
 	PRM_Name("frames", "Number of Frames"),
 	PRM_Name("spin", "Spin Speed"),
 	PRM_Name("uphi", "u Variation in Longitude"),
-	PRM_Name("utheta", "u Variation in latitude"),
+	PRM_Name("utheta", "u Variation in Latitude"),
 	PRM_Name("vphi", "v Variation in Longitude"),
 	PRM_Name("vtheta", "v Variation in Latitude"),
 	PRM_Name("densityImage", "Density File"),
