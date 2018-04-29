@@ -78,10 +78,13 @@ void Kamino::loadColorImage()
         return;
     }
 
+	Mat image_flipped;
+	cv::flip(image_in, image_flipped, 1);
+
     // resize to Nphi x Ntheta
     Mat image_sized;
     Size size(nPhi, nTheta);
-    resize(image_in, image_sized, size);
+    resize(image_flipped, image_sized, size);
     for(size_t i = 0; i < nPhi; ++i)
     {
         for(size_t j = 0; j < nTheta; ++j)
@@ -163,7 +166,7 @@ void Kamino::defineCellTypes(gridType* g)
 		for (size_t j = 0; j < nTheta; ++j)
 		{
 			Scalar intensity = image_sized.at<uchar>(Point(i, j));
-			if (intensity.val[0] < 128) {
+			if (intensity.val[0] > 128) {
 				*(g + getIndex(i, j)) = SOLIDGRID;
 			}
 		}
