@@ -27,22 +27,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\KaminoCoreSolver\include\CubicSolver.h" />
-    <ClInclude Include="..\KaminoCoreSolver\include\Kamino.h" />
-    <ClInclude Include="..\KaminoCoreSolver\include\KaminoQuantity.h" />
     <ClInclude Include="include\KaminoPlugin.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\KaminoCoreSolver\src\CubicSolver.cpp" />
-    <ClCompile Include="..\KaminoCoreSolver\src\Kamino.cpp" />
-    <ClCompile Include="..\KaminoCoreSolver\src\KaminoAdvection.cpp" />
-    <ClCompile Include="..\KaminoCoreSolver\src\KaminoFFT.cpp" />
-    <ClCompile Include="..\KaminoCoreSolver\src\KaminoGeometry.cpp" />
-    <ClCompile Include="..\KaminoCoreSolver\src\KaminoInit.cpp" />
-    <ClCompile Include="..\KaminoCoreSolver\src\KaminoParticles.cpp" />
-    <ClCompile Include="..\KaminoCoreSolver\src\KaminoProjection.cpp" />
-    <ClCompile Include="..\KaminoCoreSolver\src\KaminoQuantity.cpp" />
-    <ClCompile Include="..\KaminoCoreSolver\src\KaminoSolver.cpp" />
     <ClCompile Include="src\KaminoPlugin.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -135,6 +122,7 @@
     <LinkIncremental>false</LinkIncremental>
     <LibraryPath>$(SolutionDir)KaminoCoreSolver\lib;$(LibraryPath)</LibraryPath>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
+    <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -291,6 +279,9 @@
       <OutputFile>$(CUSTOM_DSO_PATH)\$(ProjectName)_$(Configuration).dll</OutputFile>
       <AdditionalDependencies>opencv_highgui2413.lib;opencv_imgproc2413.lib;opencv_core2413.lib;zlibstatic.lib;partio.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

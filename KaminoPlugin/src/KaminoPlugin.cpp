@@ -18,10 +18,11 @@
 #include <CMD/CMD_Args.h>
 #include <PI/PI_ResourceManager.h>
 #include <MOT/MOT_Director.h>
+#include <CMD/CMD_Manager.h>
+
+#include <fstream>
 
 using namespace HDK_Kamino;
-
-Kamino* SOP_Kamino::myKamino = nullptr;
 
 ///
 /// newSopOperator is the hook that Houdini grabs from this dll
@@ -49,8 +50,6 @@ newSopOperator(OP_OperatorTable *table)
 
 static enum Params {radius, nTheta, particleDensity, dt, DT, frames, densityImage, solidImage, colorImage};
 
-static PRM_Name generateCommandName("generateCommand", "Run Simulation");
-
 static PRM_Name names[] =
 {
 	PRM_Name("radius", "Radius"),
@@ -77,6 +76,8 @@ static PRM_Default defaultParams[] =
 	PRM_Default(0.0, ""),
 };
 
+static PRM_Name generateCommandName("generateCommand", "Run");
+
 PRM_Template SOP_Kamino::myTemplateList[] = 
 {
 	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + radius, defaultParams + radius, 0),
@@ -92,9 +93,22 @@ PRM_Template SOP_Kamino::myTemplateList[] =
     PRM_Template()
 };
 
+std::string SOP_Kamino::pluginDir = std::getenv("CUSTOM_DSO_PATH");
+static CMD_Manager m("Name");
+
 int SOP_Kamino::generateCallBack(void* data, int index, float time, const PRM_Template*)
 {
-	myKamino->run();
+	//myKamino->run();
+	SOP_Kamino* theNode = (SOP_Kamino*)data;
+	//theNode->pointer2Kamino->run();
+	//system("D:/KaminoCoreSolver.exe D:/configKamino.txt");
+	std::string cmd = "system ";
+	cmd = cmd + pluginDir + "/KaminoCoreSolver.exe ";
+	cmd = cmd + pluginDir + "/configKamino.txt";
+	UT_String hCmd = cmd.c_str();
+	OPgetDirector()->getCommandManager()->execute(hCmd);
+	
+	m.execute(hCmd);
 	return 1;
 }
 
@@ -143,7 +157,7 @@ SOP_Kamino::myConstructor(OP_Network *net, const char *name, OP_Operator *op)
 }
 
 SOP_Kamino::SOP_Kamino(OP_Network *net, const char *name, OP_Operator *op)
-	: SOP_Node(net, name, op)
+	: SOP_Node(net, name, op)//, pointer2Kamino(nullptr)
 {
     myCurrPoint = -1;	// To prevent garbage values from being returned
 }
@@ -180,12 +194,47 @@ SOP_Kamino::cookMySop(OP_Context &context)
 	this->getColorFile(temp, now);
 	std::string colorFile = temp.toStdString();
 
-	// Bad thing to do as this function gets called each time GUI is refreshed
-	if (myKamino != nullptr)
-		delete myKamino;
+	/*if (pointer2Kamino != nullptr)
+		delete pointer2Kamino;
 
-	myKamino = new Kamino(rad, ntheta, dens, timestep, frameRate, frameCount,
-		"output/frame", "particles/frame", densityFile, solidFile, colorFile);
+	pointer2Kamino = new Kamino(rad, ntheta, dens, timestep, frameRate, frameCount,
+		"output/frame", "particles/frame", densityFile, solidFile, colorFile);*/
+	std::fstream fout;
+	//std::string dsoPath = std::getenv("CUSTOM_DSO_PATH");
+	fout.open(this->pluginDir + "/configKamino.txt", std::ios::out);
+	fout << rad << std::endl;
+	fout << ntheta << std::endl;
+	fout << dens << std::endl;
+	fout << timestep << std::endl;
+	fout << frameRate << std::endl;
+	fout << frameCount << std::endl;
+	fout << this->pluginDir + "/output/frame" << std::endl;
+	fout << this->pluginDir + "/particles/frame" << std::endl;
+	if (densityFile.size() == 0)
+	{
+		fout << "null" << std::endl;
+	}
+	else
+	{
+		fout << densityFile << std::endl;
+	}
+	if (solidFile.size() == 0)
+	{
+		fout << "null" << std::endl;
+	}
+	else
+	{
+		fout << solidFile << std::endl;
+	}
+	if (colorFile.size() == 0)
+	{
+		fout << "null" << std::endl;
+	}
+	else
+	{
+		fout << colorFile << std::endl;
+	}
+	fout.close();
 
 	OP_AutoLockInputs inputs(this);
 	// Check if locking caused an error
