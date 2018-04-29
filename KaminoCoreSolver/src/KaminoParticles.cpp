@@ -29,6 +29,10 @@ KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, K
                 // assign positions (phi, theta)
                 fReal phi = i * delta + randPhi;
                 fReal theta = j * delta + randTheta;
+				if (phi < 0.0)
+					phi = 0.0;
+				if (theta < 0.0)
+					theta = 0.0;
                 
                 // check to make sure particle isn't in a solid cell
                 size_t x = std::floor(phi / h);
@@ -86,6 +90,10 @@ KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, K
                         // assign positions (phi, theta)
                         fReal phi = i * h + m * delta + randPhi;
                         fReal theta = j * h + n * delta + randTheta;
+						if (phi < 0.0)
+							phi = 0.0;
+						if (theta < 0.0)
+							theta = 0.0;
                         
                         // check to make sure particle isn't in a solid cell
                         size_t x = std::floor(phi / h);
