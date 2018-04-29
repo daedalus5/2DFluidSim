@@ -74,7 +74,7 @@ void Kamino::loadColorImage()
     image_in = imread(colorImage, IMREAD_COLOR);
     if(!image_in.data)
     {
-        std::cout << "No color image provided. Particle color initialized to WHITE";
+        std::cout << "No color image provided. Particle color initialized to WHITE" << std::endl;
         return;
     }
 
