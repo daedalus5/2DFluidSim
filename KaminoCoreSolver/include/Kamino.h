@@ -28,13 +28,11 @@ private:
     std::string colorImage;     // file path of image defining particle color
 
     /* velocity initialization */
-    /* u = f(phi) * g(theta) */
-    /* v = l(phi) * m(theta) */
+    /* u = A + sin(B*phi / 2) * sin(C*theta / 2) */
+    /* v = sin(D*phi / 2) * sin(E*theta / 2) */
     /* coefficients are for Fourier sums representing each of the above functions */
-    std::vector<fReal> fPhiCoeff;   
-    std::vector<fReal> gThetaCoeff;
-    std::vector<fReal> lPhiCoeff;
-    std::vector<fReal> mThetaCoeff;
+	fReal A;
+	int B, C, D, E;
 
     Eigen::Matrix<fReal, 3, 1>* colorMap;
 
@@ -50,6 +48,7 @@ private:
 public:
     Kamino(fReal radius = 5.0, size_t nTheta = 128, fReal particleDensity = 200.0,
         float dt = 0.005, float DT = 1.0 / 24.0, int frames = 1000,
+		fReal A = 0.0, int B = 1, int C = 1, int D = 1, int E = 1,
         std::string gridPath = "output/frame", std::string particlePath = "particles/frame",
         std::string densityImage = "", std::string solidImage = "", std::string colorImage = "");
     ~Kamino();

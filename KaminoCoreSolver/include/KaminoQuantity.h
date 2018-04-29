@@ -146,8 +146,8 @@ private:
 	//Eigen::SparseMatrix<fReal> Laplacian;
 
 	/* harmonic coefficients for velocity field initializaton */
-	std::vector<fReal> hSum1;
-	std::vector<fReal> hSum2;
+	fReal A;
+	int B, C, D, E;
 
 	/* So that it remembers all these attributes within */
 	std::map<std::string, KaminoQuantity*> centeredAttr;
@@ -188,8 +188,6 @@ private:
 	void initialize_velocity();
 	/* initialize pressure attribute */
 	void initialize_pressure();
-	/* initialize test case */
-	void initialize_test();
 	/* initialize density distribution */
 	void initialize_density();
 	/* which grids are solid? */
@@ -226,7 +224,7 @@ public:
 	fReal uSouthP[2];
 
 	KaminoSolver(size_t nx, size_t ny, fReal radius, fReal gridLength, fReal frameDuration,
-						std::vector<fReal> hSum1, std::vector<fReal> hSum2);
+				fReal A, int B, int C, int D, int E);
 	~KaminoSolver();
 
 	void stepForward(fReal timeStep);

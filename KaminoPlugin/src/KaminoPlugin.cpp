@@ -48,7 +48,7 @@ newSopOperator(OP_OperatorTable *table)
 * Declare the GUI parameters to the nodes
 */
 
-static enum Params {radius, nTheta, particleDensity, dt, DT, frames, densityImage, solidImage, colorImage};
+static enum Params {radius, nTheta, particleDensity, dt, DT, frames, densityImage, solidImage, colorImage, spin, uphi, utheta, vphi, vtheta};
 
 static PRM_Name names[] =
 {
@@ -58,6 +58,11 @@ static PRM_Name names[] =
 	PRM_Name("dt", "Time Step"),
 	PRM_Name("DT", "Frame Rate"),
 	PRM_Name("frames", "Number of Frames"),
+	PRM_Name("spin", "Spin Speed"),
+	PRM_Name("uphi", "u Variation in Longitude"),
+	PRM_Name("utheta", "u Variation in latitude"),
+	PRM_Name("vphi", "v Variation in Longitude"),
+	PRM_Name("vtheta", "v Variation in Latitude"),
 	PRM_Name("densityImage", "Density File"),
 	PRM_Name("solidImage", "Solid File"),
 	PRM_Name("colorImage", "Color Image File"),
@@ -71,6 +76,11 @@ static PRM_Default defaultParams[] =
 	PRM_Default(0.005),
 	PRM_Default(0.041666667),
 	PRM_Default(1000),
+	PRM_Default(0.0),
+	PRM_Default(1),
+	PRM_Default(1),
+	PRM_Default(1),
+	PRM_Default(1),
 	PRM_Default(0.0, ""),
 	PRM_Default(0.0, ""),
 	PRM_Default(0.0, ""),
@@ -86,6 +96,11 @@ PRM_Template SOP_Kamino::myTemplateList[] =
 	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + dt, defaultParams + dt, 0),
 	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + DT, defaultParams + DT, 0),
 	PRM_Template(PRM_INT, PRM_Template::PRM_EXPORT_MIN, 1, names + frames, defaultParams + frames, 0),
+	PRM_Template(PRM_FLT, PRM_Template::PRM_EXPORT_MIN, 1, names + spin, defaultParams + spin, 0),
+	PRM_Template(PRM_INT, PRM_Template::PRM_EXPORT_MIN, 1, names + uphi, defaultParams + uphi, 0),
+	PRM_Template(PRM_INT, PRM_Template::PRM_EXPORT_MIN, 1, names + utheta, defaultParams + utheta, 0),
+	PRM_Template(PRM_INT, PRM_Template::PRM_EXPORT_MIN, 1, names + vphi, defaultParams + vphi, 0),
+	PRM_Template(PRM_INT, PRM_Template::PRM_EXPORT_MIN, 1, names + vtheta, defaultParams + vtheta, 0),
 	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + densityImage, defaultParams + densityImage, 0),
 	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + solidImage, defaultParams + solidImage, 0),
 	PRM_Template(PRM_STRING, PRM_Template::PRM_EXPORT_MIN, 1, names + colorImage, defaultParams + colorImage, 0),
@@ -98,10 +113,7 @@ static CMD_Manager m("Name");
 
 int SOP_Kamino::generateCallBack(void* data, int index, float time, const PRM_Template*)
 {
-	//myKamino->run();
 	SOP_Kamino* theNode = (SOP_Kamino*)data;
-	//theNode->pointer2Kamino->run();
-	//system("D:/KaminoCoreSolver.exe D:/configKamino.txt");
 	std::string cmd = "system ";
 	cmd = cmd + pluginDir + "/KaminoCoreSolver.exe ";
 	cmd = cmd + pluginDir + "/configKamino.txt";
@@ -181,6 +193,11 @@ SOP_Kamino::cookMySop(OP_Context &context)
 	fpreal timestep = this->getdt(now);
 	fpreal frameRate = this->getDT(now);
 	exint frameCount = this->getFrames(now);
+	fpreal A = this->getA(now);
+	exint B = this->getB(now);
+	exint C = this->getC(now);
+	exint D = this->getD(now);
+	exint E = this->getE(now);
 	
 	UT_String temp = "";
 	this->getDensityFile(temp, now);
@@ -194,11 +211,6 @@ SOP_Kamino::cookMySop(OP_Context &context)
 	this->getColorFile(temp, now);
 	std::string colorFile = temp.toStdString();
 
-	/*if (pointer2Kamino != nullptr)
-		delete pointer2Kamino;
-
-	pointer2Kamino = new Kamino(rad, ntheta, dens, timestep, frameRate, frameCount,
-		"output/frame", "particles/frame", densityFile, solidFile, colorFile);*/
 	std::fstream fout;
 	//std::string dsoPath = std::getenv("CUSTOM_DSO_PATH");
 	fout.open(this->pluginDir + "/configKamino.txt", std::ios::out);
@@ -208,6 +220,11 @@ SOP_Kamino::cookMySop(OP_Context &context)
 	fout << timestep << std::endl;
 	fout << frameRate << std::endl;
 	fout << frameCount << std::endl;
+	fout << A << std::endl;
+	fout << B << std::endl;
+	fout << C << std::endl;
+	fout << D << std::endl;
+	fout << E << std::endl;
 	fout << this->pluginDir + "/output/frame" << std::endl;
 	fout << this->pluginDir + "/particles/frame" << std::endl;
 	if (densityFile.size() == 0)

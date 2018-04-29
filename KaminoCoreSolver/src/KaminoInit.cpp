@@ -22,7 +22,7 @@ void KaminoSolver::initialize_velocity()
 		for (size_t i = 0; i < sizePhi; ++i) {
 			f = fPhi(i * gridLen);
 			g = gTheta(j * gridLen);
-			u->setValueAt(i, j, f * g);
+			u->setValueAt(i, j, A + (f * g));
 		}
 	}
 
@@ -36,7 +36,7 @@ void KaminoSolver::initialize_velocity()
 		for (size_t i = 0; i < sizePhi; ++i) {
 			l = lPhi(i * gridLen);
 			m = mTheta(j * gridLen);
-			v->setValueAt(i, j, l * m);
+			v->setValueAt(i, j, (l * m));
 		}
 	}
 
@@ -61,35 +61,25 @@ void KaminoSolver::initialize_velocity()
 fReal KaminoSolver::fPhi(const fReal x)
 {
 	fReal arg = x;
-	fReal sumSin = 0.0;
-	for(size_t i = 0; i < hSum1.size(); ++i){
-		int coeff = i + 1;
-		sumSin += hSum1[i] * sin(coeff * arg);
-	}
-	return sumSin;
+	return sin(B * arg / 2.0);
 }
 
 fReal KaminoSolver::gTheta(const fReal y)
 {
 	fReal arg = y;
-	return cos(arg);
+	return cos(C * arg / 2.0);
 }
 
 fReal KaminoSolver::lPhi(const fReal x)
 {
 	fReal arg = x;
-	return cos(arg);
+	return cos(D * arg / 2.0);
 }
 
 fReal KaminoSolver::mTheta(const fReal y)
 {
 	fReal arg = y;
-	fReal sumSin = 0.0;
-	for(size_t i = 0; i < hSum2.size(); ++i){
-		int coeff = i + 1;
-		sumSin += hSum2[i] * sin(coeff * arg);
-	}
-	return sumSin;
+	return sin(E * arg / 2.0);
 }
 
 fReal KaminoSolver::FBM(const fReal x, const fReal y) {

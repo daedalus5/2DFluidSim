@@ -70,6 +70,26 @@ private:
 	{
 		return evalInt("frames", 0, t);
 	}
+	fpreal getA(fpreal t)
+	{
+		return evalFloat("spin", 0, t);
+	}
+	exint getB(fpreal t)
+	{
+		return evalInt("uphi", 0, t);
+	}
+	exint getC(fpreal t)
+	{
+		return evalInt("utheta", 0, t);
+	}
+	exint getD(fpreal t)
+	{
+		return evalInt("vphi", 0, t);
+	}
+	exint getE(fpreal t)
+	{
+		return evalInt("vtheta", 0, t);
+	}
 	void getDensityFile(UT_String& str, fpreal t)
 	{
 		evalString(str, "densityImage", 0, t);

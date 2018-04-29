@@ -2,11 +2,13 @@
 
 Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
         float dt, float DT, int frames,
+		fReal A, int B, int C, int D, int E,
         std::string gridPath, std::string particlePath,
         std::string densityImage, std::string solidImage, std::string colorImage) :
         radius(radius), nTheta(nTheta), nPhi(2 * nTheta), gridLen(M_PI / nTheta),
         particleDensity(particleDensity),
         dt(dt), DT(DT), frames(frames),
+		A(A), B(B), C(C), D(D), E(E),
         gridPath(gridPath), particlePath(particlePath),
         densityImage(densityImage), solidImage(solidImage), colorImage(colorImage)
 {
@@ -15,7 +17,7 @@ Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
 	size_t size = nTheta * 2 * nTheta;
     this->colorMap = new Eigen::Matrix<fReal, 3, 1>[size];
 	for (int i = 0; i < size; ++i) {
-		colorMap[i] = Eigen::Matrix<fReal, 3, 1>(255.0, 255.0, 255.0);
+		colorMap[i] = Eigen::Matrix<fReal, 3, 1>(128.0, 128.0, 128.0);
 	}
 
 # ifdef OMParallelize
@@ -23,12 +25,6 @@ Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
 	Eigen::setNbThreads(TOTALThreads);
 # endif
 
-    fReal A1 = -1.0; fReal B1 = 0.5; fReal C1 = 0.5; fReal D1 = -0.9; fReal E1 = 1.0;
-    fReal A2 = 1.0; fReal B2 = -0.3; fReal C2 = -0.7; fReal D2 = 0.8; fReal E2 = -0.8;
-    fPhiCoeff = {A1, B1, C1, D1, E1};
-    gThetaCoeff = {0.0};
-    lPhiCoeff = {0.0};
-    mThetaCoeff = {A2, B2, C2, D2, E2};
 }
 
 Kamino::~Kamino()
@@ -37,7 +33,7 @@ Kamino::~Kamino()
 
 void Kamino::run()
 {
-    KaminoSolver solver(nPhi, nTheta, radius, gridLen, dt, fPhiCoeff, mThetaCoeff);
+    KaminoSolver solver(nPhi, nTheta, radius, gridLen, dt, A, B, C, D, E);
     KaminoQuantity* d = solver.getAttributeNamed("density");
     initializeDensity(d);
     gridType* g = solver.getGridTypeHandle();

@@ -4,10 +4,10 @@
 // CONSTRUCTOR / DESTRUCTOR >>>>>>>>>>
 
 KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridLength, fReal frameDuration,
-	std::vector<fReal> hSum1, std::vector<fReal> hSum2) :
+	fReal A, int B, int C, int D, int E) :
 	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), invGridLen(1.0 / gridLength), frameDuration(frameDuration),
 	timeStep(0.0), timeElapsed(0.0),
-	hSum1(hSum1), hSum2(hSum2)
+	A(A), B(B), C(C), D(D), E(E)
 {
 	this->beffourierF = new fReal[nPhi * nTheta];
 	this->fourieredFReal = new fReal[nPhi * nTheta];
@@ -21,7 +21,6 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	this->dReal = new fReal[nTheta];
 	this->dImag = new fReal[nTheta];
 
-	// Our new staggered grid...
 	addStaggeredAttr("u", -0.5, 0.5);		// u velocity
 	addStaggeredAttr("v", 0.0, 0.0);		// v velocity
 	addCenteredAttr("p", 0.0, 0.5);			// p pressure
