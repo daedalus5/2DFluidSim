@@ -61,25 +61,25 @@ void KaminoSolver::initialize_velocity()
 fReal KaminoSolver::fPhi(const fReal x)
 {
 	fReal arg = x;
-	return sin(B * arg) + 0.2 * sin(3 * arg + 2.0) + 0.2 * sin(5 * arg + 0.3);
+	return sin(arg) + 0.1 * B * std::cos(std::rand());
 }
 
 fReal KaminoSolver::gTheta(const fReal y)
 {
 	fReal arg = y;
-	return cos(C * arg);
+	return cos(arg) + 0.1 * C * std::sin(std::rand());
 }
 
 fReal KaminoSolver::lPhi(const fReal x)
 {
 	fReal arg = x;
-	return cos(D * arg);
+	return cos(arg) + 0.1 * D * std::sin(std::rand());
 }
 
 fReal KaminoSolver::mTheta(const fReal y)
 {
 	fReal arg = y;
-	return sin(E * arg) + 0.2 * sin(2 * arg + 1.7) + 0.2 * sin(4 * arg + 2.2);
+	return sin(arg) + 0.1 * E * std::cos(std::rand());
 }
 
 fReal KaminoSolver::FBM(const fReal x, const fReal y) {
