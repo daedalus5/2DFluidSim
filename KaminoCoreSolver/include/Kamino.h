@@ -46,12 +46,12 @@ private:
     size_t getIndex(size_t x, size_t y);
 
 public:
-    Kamino(fReal radius = 5.0, size_t nTheta = 128, fReal particleDensity = 200.0,
-        float dt = 0.005, float DT = 1.0 / 24.0, int frames = 1000,
+    Kamino(fReal radius = 5.0, size_t nTheta = 256, fReal particleDensity = 10.0,
+        float dt = 0.005, float DT = 1.0 / 24.0, int frames = 2500,
 		fReal A = 0.0, int B = 1, int C = 1, int D = 1, int E = 1,
         std::string gridPath = "output/frame", std::string particlePath = "particles/frame",
         std::string densityImage = "", std::string solidImage = "", std::string colorImage = "");
-    ~Kamino();
+    ~Kamino(); 
 
     /* run the solver */
     void run();
