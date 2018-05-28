@@ -3,6 +3,7 @@
 
 int main(int argc, char** argv)
 {
+	/*
 	std::string configFile = argv[1];
 	std::fstream fin;
 	fin.open(configFile, std::ios::in);
@@ -45,6 +46,8 @@ int main(int argc, char** argv)
     Kamino KaminoInstance(radius, nTheta, particleDensity, dt, DT, frames,
 		A, B, C, D, E,
 		gridPath, particlePath, densityImage, solidImage, colorImage);
+	*/
+	Kamino KaminoInstance;
     KaminoInstance.run();
     return 0;
 }
