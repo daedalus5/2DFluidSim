@@ -50,7 +50,7 @@ public:
         float dt = 0.005, float DT = 1.0 / 24.0, int frames = 500,
 		fReal A = 0.0, int B = 1, int C = 1, int D = 1, int E = 1,
         std::string gridPath = "output/frame", std::string particlePath = "particles/frame",
-        std::string densityImage = "D:/houdiniPlugin/images/global_terrain.jpg", std::string solidImage = "", std::string colorImage = "");
+        std::string densityImage = "D:/houdiniPlugin/images/world.jpg", std::string solidImage = "", std::string colorImage = "");
     ~Kamino(); 
 
     /* run the solver */

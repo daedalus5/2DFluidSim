@@ -33,14 +33,15 @@ Kamino::~Kamino()
 
 void Kamino::run()
 {
-    KaminoSolver solver(nPhi, nTheta, radius, gridLen, dt, A, B, C, D, E);
+    KaminoSolver solver(nPhi, nTheta, radius, M_PI / nTheta, dt, A, B, C, D, E);
     KaminoQuantity* d = solver.getAttributeNamed("density");
     initializeDensity(d);
     gridType* g = solver.getGridTypeHandle();
     defineCellTypes(g);
 	//loadColorImage();
-   
+
     //KaminoParticles particles(particleDensity, radius, gridLen, &solver, nPhi, nTheta, densityImage, colorMap);
+
     KaminoQuantity* u = solver.getAttributeNamed("u");
     KaminoQuantity* v = solver.getAttributeNamed("v");
 
