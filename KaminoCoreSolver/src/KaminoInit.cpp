@@ -43,7 +43,7 @@ void KaminoSolver::initialize_velocity()
 
 	// NEW
 	// set u_phi initial values using FBM curl noise
-	fReal gain = 3;
+	fReal gain = 4096.0 / nPhi;
 
 	for (size_t j = 0; j < u->getNTheta(); ++j)
 	{
