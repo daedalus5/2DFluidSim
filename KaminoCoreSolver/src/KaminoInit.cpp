@@ -61,8 +61,6 @@ void KaminoSolver::initialize_velocity()
 			fReal noise_lr = FBM(lr_x, lr_y);
 			fReal noise_ul = FBM(ul_x, ul_y);
 			fReal noise_ll = FBM(ll_x, ll_y);
-			//fReal noiseDy_l = (noise_ur - noise_lr);
-			//fReal noiseDy_r = (noise_ul - noise_ll);
 			fReal noiseDy_l = (noise_ur - noise_lr) / (radius * gridLen);
 			fReal noiseDy_r = (noise_ul - noise_ll) / (radius * gridLen);
 			fReal avgNoise = (noiseDy_l + noiseDy_r) / 2.0;
@@ -83,8 +81,6 @@ void KaminoSolver::initialize_velocity()
 		fReal noise_lr = FBM(lr_x, lr_y);
 		fReal noise_ul = FBM(ul_x, ul_y);
 		fReal noise_ll = FBM(ll_x, ll_y);
-		//fReal noiseDy_l = (noise_ur - noise_lr);
-		//fReal noiseDy_r = (noise_ul - noise_ll);
 		fReal noiseDy_l = (noise_ur - noise_lr) / (radius * gridLen);
 		fReal noiseDy_r = (noise_ul - noise_ll) / (radius * gridLen);
 		fReal avgNoise = (noiseDy_l + noiseDy_r) / 2.0;
@@ -115,10 +111,6 @@ void KaminoSolver::initialize_velocity()
 			fReal noise_lr = FBM(lr_x, lr_y);
 			fReal noise_ul = FBM(ul_x, ul_y);
 			fReal noise_ll = FBM(ll_x, ll_y);
-			//fReal noiseDy_u = -1 * (noise_ur - noise_ul);
-			//fReal noiseDy_d = -1 * (noise_lr - noise_ll);
-			//fReal noiseDy_u = -1 * (noise_ur - noise_ul) / (radius * gridLen * sin(j * gridLen + gridLen / 2));
-			//fReal noiseDy_d = -1 * (noise_lr - noise_ll) / (radius * gridLen * sin(j * gridLen - gridLen / 2));
 			fReal noiseDy_u = -1 * (noise_ur - noise_ul) / (radius * gridLen);
 			fReal noiseDy_d = -1 * (noise_lr - noise_ll) / (radius * gridLen);
 			fReal avgNoise = (noiseDy_u + noiseDy_d) / 2.0;
