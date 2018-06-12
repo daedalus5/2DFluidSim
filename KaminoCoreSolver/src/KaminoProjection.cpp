@@ -162,5 +162,5 @@ void KaminoSolver::projection()
 	solvePolarVelocities();
 	v->swapBuffer();
 
-	fillDivergence();
+	//fillDivergence();
 }

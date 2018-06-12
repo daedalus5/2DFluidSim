@@ -1,4 +1,5 @@
 # include "../include/Kamino.h"
+# include "../include/KaminoTimer.h"
 
 Kamino::Kamino(fReal radius, size_t nTheta, fReal particleDensity,
         float dt, float DT, int frames,
@@ -49,6 +50,8 @@ void Kamino::run()
     particles.write_data_bgeo(particlePath, 0);
 
     float T = 0.0;              // simulation time
+	KaminoTimer timer;
+	timer.startTimer();
     for(int i = 1; i <= frames; i++){
         while(T < i*DT){
             solver.stepForward(dt);
@@ -62,6 +65,9 @@ void Kamino::run()
         solver.write_data_bgeo(gridPath, i);
         particles.write_data_bgeo(particlePath, i);
     }
+	float cpu_time = timer.stopTimer();
+	std::cout << "Time spent: " << cpu_time << " seconds" << std::endl;
+	std::cout << "Performance: " << frames / cpu_time << " frames per second" << std::endl;
 }
 
 void Kamino::loadColorImage()

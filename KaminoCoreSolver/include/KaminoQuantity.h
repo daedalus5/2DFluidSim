@@ -158,6 +158,10 @@ private:
 	fReal timeStep;
 	fReal timeElapsed;
 
+	float advectionTime;
+	float geometricTime;
+	float projectionTime;
+
 	Eigen::FFT<fReal> fft;
 
 	void resetPoleVelocities();
