@@ -30,7 +30,7 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	this->gridTypes = new gridType[nPhi * nTheta];
 	
 	//initialize_velocity();
-	Eigen::Vector3d omega = Eigen::Vector3d(1.0, 0.0, 0.0);
+	Eigen::Vector3d omega = Eigen::Vector3d(0.2, 0.0, 0.0);
 	initializeVelocityFromOmega(omega);
 	initialize_pressure();
 	initialize_density();

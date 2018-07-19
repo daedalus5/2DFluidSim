@@ -153,7 +153,7 @@ Eigen::Vector3d sphericalCrossProd(const Eigen::Vector3d& omega, const Eigen::Ve
 	//Omega and r are in spherical coordinates. Component order: see the enum above
 	Eigen::Vector3d omegaXyz = spherical2Cartesian(omega);
 	Eigen::Vector3d rXyz = spherical2Cartesian(r);
-	Eigen::Vector3d vel = omega.cross(r);
+	Eigen::Vector3d vel = omegaXyz.cross(rXyz);
 
 	fReal phi = r[phiComp];
 	fReal theta = r[thetaComp];
@@ -167,7 +167,7 @@ Eigen::Vector3d sphericalCrossProd(const Eigen::Vector3d& omega, const Eigen::Ve
 	fReal vTheta = vProj * std::cos(theta) - vz * std::sin(theta);
 	fReal vR = vProj * std::sin(theta) + vz * std::cos(theta);
 
-	Eigen::Vector3d ret;
+	Eigen::Vector3d ret = Eigen::Vector3d::Zero();
 	ret[radiusComp] = vR;
 	ret[phiComp] = vPhi;
 	ret[thetaComp] = vTheta;
@@ -217,7 +217,7 @@ void KaminoSolver::initializeVelocityFromOmega(Eigen::Vector3d omega)
 			u->writeValueTo(i, j, u->getValueAt(i, j));
 		}
 	}
-	for (size_t j = 1; j < v->getNTheta() - 1; ++j)
+	for (size_t j = 0; j < v->getNTheta(); ++j)
 	{
 		for (size_t i = 0; i < v->getNPhi(); ++i)
 		{
