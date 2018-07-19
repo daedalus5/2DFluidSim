@@ -135,6 +135,70 @@ void KaminoSolver::initialize_velocity()
 	v->swapBuffer();
 }
 
+enum components { radius, phi, theta };
+Eigen::Vector3d sphericalCrossProd(const Eigen::Vector3d& omega, const Eigen::Vector3d& r)
+{
+	Eigen::Vector3d ret = Eigen::Vector3d::Zero();
+	ret[phi] = omega[radius] * r[theta] - omega[theta] * r[radius];
+	ret[theta] = omega[phi] * r[radius] - omega[radius] * r[phi];
+
+	return ret;
+}
+
+void KaminoSolver::initializeVelocityFromOmega(Eigen::Vector3d omega)
+{
+	KaminoQuantity* u = this->staggeredAttr["u"];
+	KaminoQuantity* v = this->staggeredAttr["v"];
+
+	for (size_t beltJ = 0; beltJ < this->nTheta; ++beltJ)
+	{
+		fReal beltTheta = (static_cast<fReal>(beltJ) + 0.5) * gridLen;
+		for (size_t gridI = 0; gridI < this->nPhi; ++gridI)
+		{
+			fReal beltPhi = (static_cast<fReal>(gridI)) * gridLen;
+
+			fReal phiLeft = gridI == 0 ? M_2PI - 0.5 * gridLen : beltPhi - 0.5 * gridLen;
+			Eigen::Vector3d r(radius, phiLeft, beltTheta);
+			Eigen::Vector3d vel = sphericalCrossProd(omega, r);
+			u->setValueAt(gridI, beltJ, vel[phi]);
+
+			fReal phiRight = beltPhi + 0.5 * gridLen;
+			r = Eigen::Vector3d(radius, phiRight, beltTheta);
+			vel = sphericalCrossProd(omega, r);
+			u->setValueAt((gridI + 1) % nPhi, beltJ, vel[phi]);
+
+			fReal thetaLower = beltTheta - 0.5 * gridLen;
+			r = Eigen::Vector3d(radius, beltPhi, thetaLower);
+			vel = sphericalCrossProd(omega, r);
+			v->setValueAt(gridI, beltJ, vel[theta]);
+
+			fReal thetaHigher = beltTheta + 0.5 * gridLen;
+			r = Eigen::Vector3d(radius, beltPhi, thetaHigher);
+			vel = sphericalCrossProd(omega, r);
+			v->setValueAt(gridI, beltJ + 1, vel[theta]);
+		}
+	}
+
+	// Heat up the next buffer.
+	for (size_t j = 0; j < u->getNTheta(); ++j)
+	{
+		for (size_t i = 0; i < u->getNPhi(); ++i)
+		{
+			u->writeValueTo(i, j, u->getValueAt(i, j));
+		}
+	}
+	for (size_t j = 1; j < v->getNTheta() - 1; ++j)
+	{
+		for (size_t i = 0; i < v->getNPhi(); ++i)
+		{
+			v->writeValueTo(i, j, v->getValueAt(i, j));
+		}
+	}
+
+	solvePolarVelocities();
+	u->swapBuffer();
+	v->swapBuffer();
+}
 
 fReal KaminoSolver::fPhi(const fReal x)
 {
@@ -203,9 +267,9 @@ fReal KaminoSolver::rand(const Eigen::Matrix<fReal, 2, 1> vecA) const {
 
 void KaminoSolver::initialize_density()
 {
-	for(size_t i = 0; i < nPhi; ++i)
+	for (size_t i = 0; i < nPhi; ++i)
 	{
-		for(size_t j = 0; j < nTheta; ++j)
+		for (size_t j = 0; j < nTheta; ++j)
 		{
 			centeredAttr["density"]->setValueAt(i, j, 0.0);
 		}

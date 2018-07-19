@@ -190,6 +190,8 @@ private:
 
 	/* distribute initial velocity values at grid points */
 	void initialize_velocity();
+	/* This temporary function is for rebuttal phase's steady flow sample*/
+	void initializeVelocityFromOmega(Eigen::Vector3d omega);
 	/* initialize pressure attribute */
 	void initialize_pressure();
 	/* initialize density distribution */
