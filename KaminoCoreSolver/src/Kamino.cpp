@@ -41,13 +41,13 @@ void Kamino::run()
     defineCellTypes(g);
 	loadColorImage();
 
-    KaminoParticles particles(particleDensity, radius, gridLen, &solver, nPhi, nTheta, densityImage, colorMap);
+    //KaminoParticles particles(particleDensity, radius, gridLen, &solver, nPhi, nTheta, densityImage, colorMap);
 
     KaminoQuantity* u = solver.getAttributeNamed("u");
     KaminoQuantity* v = solver.getAttributeNamed("v");
 
     solver.write_data_bgeo(gridPath, 0);
-    particles.write_data_bgeo(particlePath, 0);
+    //particles.write_data_bgeo(particlePath, 0);
 
     float T = 0.0;              // simulation time
 	KaminoTimer timer;
@@ -55,15 +55,15 @@ void Kamino::run()
     for(int i = 1; i <= frames; i++){
         while(T < i*DT){
             solver.stepForward(dt);
-            particles.updatePositions(u, v, dt);
+            //particles.updatePositions(u, v, dt);
             T += dt;
         }
         solver.stepForward(dt + i*DT - T);
-        particles.updatePositions(u, v, dt);
+        //particles.updatePositions(u, v, dt);
         T = i*DT;
 
         solver.write_data_bgeo(gridPath, i);
-        particles.write_data_bgeo(particlePath, i);
+        //particles.write_data_bgeo(particlePath, i);
     }
 	float cpu_time = timer.stopTimer();
 	std::cout << "Time spent: " << cpu_time << " seconds" << std::endl;

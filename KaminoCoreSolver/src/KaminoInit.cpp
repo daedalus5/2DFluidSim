@@ -135,12 +135,42 @@ void KaminoSolver::initialize_velocity()
 	v->swapBuffer();
 }
 
-enum components { radius, phi, theta };
-Eigen::Vector3d sphericalCrossProd(const Eigen::Vector3d& omega, const Eigen::Vector3d& r)
+enum componentsSPHERE { radiusComp, phiComp, thetaComp };
+enum componentsXYZ { xComp, yComp, zComp };
+
+Eigen::Vector3d spherical2Cartesian(const Eigen::Vector3d& input)
 {
 	Eigen::Vector3d ret = Eigen::Vector3d::Zero();
-	ret[phi] = omega[radius] * r[theta] - omega[theta] * r[radius];
-	ret[theta] = omega[phi] * r[radius] - omega[radius] * r[phi];
+	ret[xComp] = input[radiusComp] * std::sin(input[thetaComp]) * std::cos(input[phiComp]);
+	ret[yComp] = input[radiusComp] * std::sin(input[thetaComp]) * std::sin(input[phiComp]);
+	ret[zComp] = input[radiusComp] * std::cos(input[thetaComp]);
+
+	return ret;
+}
+
+Eigen::Vector3d sphericalCrossProd(const Eigen::Vector3d& omega, const Eigen::Vector3d& r)
+{
+	//Omega and r are in spherical coordinates. Component order: see the enum above
+	Eigen::Vector3d omegaXyz = spherical2Cartesian(omega);
+	Eigen::Vector3d rXyz = spherical2Cartesian(r);
+	Eigen::Vector3d vel = omega.cross(r);
+
+	fReal phi = r[phiComp];
+	fReal theta = r[thetaComp];
+	fReal vx = vel[xComp];
+	fReal vy = vel[yComp];
+	fReal vz = vel[zComp];
+
+	fReal vPhi = -vx * std::sin(phi) + vy * std::cos(phi);
+	fReal vProj = vx * std::cos(phi) + vy * std::sin(phi);
+
+	fReal vTheta = vProj * std::cos(theta) - vz * std::sin(theta);
+	fReal vR = vProj * std::sin(theta) + vz * std::cos(theta);
+
+	Eigen::Vector3d ret;
+	ret[radiusComp] = vR;
+	ret[phiComp] = vPhi;
+	ret[thetaComp] = vTheta;
 
 	return ret;
 }
@@ -160,22 +190,22 @@ void KaminoSolver::initializeVelocityFromOmega(Eigen::Vector3d omega)
 			fReal phiLeft = gridI == 0 ? M_2PI - 0.5 * gridLen : beltPhi - 0.5 * gridLen;
 			Eigen::Vector3d r(radius, phiLeft, beltTheta);
 			Eigen::Vector3d vel = sphericalCrossProd(omega, r);
-			u->setValueAt(gridI, beltJ, vel[phi]);
+			u->setValueAt(gridI, beltJ, vel[phiComp]);
 
 			fReal phiRight = beltPhi + 0.5 * gridLen;
 			r = Eigen::Vector3d(radius, phiRight, beltTheta);
 			vel = sphericalCrossProd(omega, r);
-			u->setValueAt((gridI + 1) % nPhi, beltJ, vel[phi]);
+			u->setValueAt((gridI + 1) % nPhi, beltJ, vel[phiComp]);
 
 			fReal thetaLower = beltTheta - 0.5 * gridLen;
 			r = Eigen::Vector3d(radius, beltPhi, thetaLower);
 			vel = sphericalCrossProd(omega, r);
-			v->setValueAt(gridI, beltJ, vel[theta]);
+			v->setValueAt(gridI, beltJ, vel[thetaComp]);
 
 			fReal thetaHigher = beltTheta + 0.5 * gridLen;
 			r = Eigen::Vector3d(radius, beltPhi, thetaHigher);
 			vel = sphericalCrossProd(omega, r);
-			v->setValueAt(gridI, beltJ + 1, vel[theta]);
+			v->setValueAt(gridI, beltJ + 1, vel[thetaComp]);
 		}
 	}
 
