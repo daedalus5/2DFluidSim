@@ -49,18 +49,18 @@ void KaminoSolver::initialize_velocity()
 	{
 		for (size_t i = 1; i < u->getNPhi(); ++i)
 		{
-			fReal ur_x = i * gridLen + gridLen / 2;
+			fReal ur_x = i * gridLen;
 			fReal ur_y = (j + 1) * gridLen;
-			fReal lr_x = i * gridLen + gridLen / 2;
+			fReal lr_x = i * gridLen;
 			fReal lr_y = j * gridLen;
-			fReal ul_x = i * gridLen - gridLen / 2;
+			fReal ul_x = (i - 1) * gridLen;
 			fReal ul_y = (j + 1) * gridLen;
-			fReal ll_x = i * gridLen - gridLen / 2;
+			fReal ll_x = (i - 1) * gridLen;
 			fReal ll_y = j * gridLen;
-			fReal noise_ur = FBM(ur_x, ur_y);
-			fReal noise_lr = FBM(lr_x, lr_y);
-			fReal noise_ul = FBM(ul_x, ul_y);
-			fReal noise_ll = FBM(ll_x, ll_y);
+			fReal noise_ur = FBM(sin(ur_x), ur_y);
+			fReal noise_lr = FBM(sin(lr_x), lr_y);
+			fReal noise_ul = FBM(sin(ul_x), ul_y);
+			fReal noise_ll = FBM(sin(ll_x), ll_y);
 			//fReal noiseDy_l = (noise_ur - noise_lr);
 			//fReal noiseDy_r = (noise_ul - noise_ll);
 			fReal noiseDy_l = (noise_ur - noise_lr) / (radius * gridLen);
@@ -69,20 +69,20 @@ void KaminoSolver::initialize_velocity()
 			u->setValueAt(i, j, avgNoise * gain);
 		}
 	}
-	// phi = 0 seam
+	// 0 index for u_phi
 	for (size_t j = 0; j < u->getNTheta(); ++j){
-		fReal ur_x = gridLen / 2;
+		fReal ur_x = 0;
 		fReal ur_y = (j + 1) * gridLen;
-		fReal lr_x = gridLen / 2;
+		fReal lr_x = 0;
 		fReal lr_y = j * gridLen;
-		fReal ul_x = 2 * M_PI - gridLen / 2;
+		fReal ul_x = 2 * M_PI - gridLen;
 		fReal ul_y = (j + 1) * gridLen;
-		fReal ll_x = 2 * M_PI - gridLen / 2;
+		fReal ll_x = 2 * M_PI - gridLen;
 		fReal ll_y = j * gridLen;
-		fReal noise_ur = FBM(ur_x, ur_y);
-		fReal noise_lr = FBM(lr_x, lr_y);
-		fReal noise_ul = FBM(ul_x, ul_y);
-		fReal noise_ll = FBM(ll_x, ll_y);
+		fReal noise_ur = FBM(sin(ur_x), ur_y);
+		fReal noise_lr = FBM(sin(lr_x), lr_y);
+		fReal noise_ul = FBM(sin(ul_x), ul_y);
+		fReal noise_ll = FBM(sin(ll_x), ll_y);
 		//fReal noiseDy_l = (noise_ur - noise_lr);
 		//fReal noiseDy_r = (noise_ul - noise_ll);
 		fReal noiseDy_l = (noise_ur - noise_lr) / (radius * gridLen);

@@ -11,7 +11,7 @@ KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, K
         fReal halfDelta = delta / 2.0;
 
         unsigned int numThetaParticles = linearDensity * nTheta;
-        unsigned int numPhiParticles = 2 * numThetaParticles;
+        unsigned int numPhiParticles = 2 * numThetaParticles + linearDensity;
 
         for(unsigned int i = 0; i < numPhiParticles; ++i){
             for(unsigned int j = 0; j < numThetaParticles; ++j){
@@ -30,9 +30,12 @@ KaminoParticles::KaminoParticles(fReal particleDensity, fReal radius, fReal h, K
                 fReal phi = i * delta + randPhi;
                 fReal theta = j * delta + randTheta;
 				if (phi < 0.0)
-					phi = 0.0;
+					continue;
+				else if (phi > 2 * M_PI)
+					continue;
 				if (theta < 0.0)
-					theta = 0.0;
+					//theta = 0.0;
+					continue;
                 
                 // check to make sure particle isn't in a solid cell
                 size_t x = std::floor(phi / h);
