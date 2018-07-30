@@ -1,12 +1,13 @@
 # include "../include/KaminoQuantity.h"
 # include "../include/CubicSolver.h"
+# include "../include/KaminoTimer.h"
 
 // CONSTRUCTOR / DESTRUCTOR >>>>>>>>>>
 
 KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridLength, fReal frameDuration,
 	fReal A, int B, int C, int D, int E) :
 	nPhi(nPhi), nTheta(nTheta), radius(radius), gridLen(gridLength), invGridLen(1.0 / gridLength), frameDuration(frameDuration),
-	timeStep(0.0), timeElapsed(0.0),
+	timeStep(0.0), timeElapsed(0.0), advectionTime(0.0f), geometricTime(0.0f), projectionTime(0.0f),
 	A(A), B(B), C(C), D(D), E(E)
 {
 	this->beffourierF = new fReal[nPhi * nTheta];
@@ -57,21 +58,34 @@ KaminoSolver::~KaminoSolver()
 		delete attr.second;
 	}
 	delete[] this->gridTypes;
+
+	float totalTimeUsed = this->advectionTime + this->geometricTime + this->projectionTime;
+	std::cout << "Total time used for advection : " << this->advectionTime << std::endl;
+	std::cout << "Total time used for geometric : " << this->geometricTime << std::endl;
+	std::cout << "Total time used for projection : " << this->projectionTime << std::endl;
+	std::cout << "Percentage of advection : " << advectionTime / totalTimeUsed * 100.0f << "%" << std::endl;
+	std::cout << "Percentage of geometric : " << geometricTime / totalTimeUsed * 100.0f << "%" << std::endl;
+	std::cout << "Percentage of projection : " << projectionTime / totalTimeUsed * 100.0f << "%" << std::endl;
 }
 
 void KaminoSolver::stepForward(fReal timeStep)
 {
 	this->timeStep = timeStep;
-	advectionScalar();
+	//advectionScalar();
+	KaminoTimer timer;
+	timer.startTimer();
 	advectionSpeed();
-	//std::cout << "Advection completed" << std::endl;
+	this->advectionTime += timer.stopTimer();
+	
 	this->swapAttrBuffers();
 
+	timer.startTimer();
 	geometric(); // Buffer is swapped here
-	//std::cout << "Geometric completed" << std::endl;
+	this->geometricTime += timer.stopTimer();
 	//bodyForce();
+	timer.startTimer();
 	projection();
-	//std::cout << "Projection completed" << std::endl;
+	this->projectionTime += timer.stopTimer();
 	this->timeElapsed += timeStep;
 }
 
