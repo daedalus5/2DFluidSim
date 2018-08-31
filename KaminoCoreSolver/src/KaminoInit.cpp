@@ -135,6 +135,100 @@ void KaminoSolver::initialize_velocity()
 	v->swapBuffer();
 }
 
+enum componentsSPHERE { radiusComp, phiComp, thetaComp };
+enum componentsXYZ { xComp, yComp, zComp };
+
+Eigen::Vector3d spherical2Cartesian(const Eigen::Vector3d& input)
+{
+	Eigen::Vector3d ret = Eigen::Vector3d::Zero();
+	ret[xComp] = input[radiusComp] * std::sin(input[thetaComp]) * std::cos(input[phiComp]);
+	ret[yComp] = input[radiusComp] * std::sin(input[thetaComp]) * std::sin(input[phiComp]);
+	ret[zComp] = input[radiusComp] * std::cos(input[thetaComp]);
+
+	return ret;
+}
+
+Eigen::Vector3d sphericalCrossProd(const Eigen::Vector3d& omega, const Eigen::Vector3d& r)
+{
+	//Omega and r are in spherical coordinates. Component order: see the enum above
+	Eigen::Vector3d omegaXyz = spherical2Cartesian(omega);
+	Eigen::Vector3d rXyz = spherical2Cartesian(r);
+	Eigen::Vector3d vel = omegaXyz.cross(rXyz);
+
+	fReal phi = r[phiComp];
+	fReal theta = r[thetaComp];
+	fReal vx = vel[xComp];
+	fReal vy = vel[yComp];
+	fReal vz = vel[zComp];
+
+	fReal vPhi = -vx * std::sin(phi) + vy * std::cos(phi);
+	fReal vProj = vx * std::cos(phi) + vy * std::sin(phi);
+
+	fReal vTheta = vProj * std::cos(theta) - vz * std::sin(theta);
+	fReal vR = vProj * std::sin(theta) + vz * std::cos(theta);
+
+	Eigen::Vector3d ret = Eigen::Vector3d::Zero();
+	ret[radiusComp] = vR;
+	ret[phiComp] = vPhi;
+	ret[thetaComp] = vTheta;
+
+	return ret;
+}
+
+void KaminoSolver::initializeVelocityFromOmega(Eigen::Vector3d omega)
+{
+	KaminoQuantity* u = this->staggeredAttr["u"];
+	KaminoQuantity* v = this->staggeredAttr["v"];
+
+	for (size_t beltJ = 0; beltJ < this->nTheta; ++beltJ)
+	{
+		fReal beltTheta = (static_cast<fReal>(beltJ) + 0.5) * gridLen;
+		for (size_t gridI = 0; gridI < this->nPhi; ++gridI)
+		{
+			fReal beltPhi = (static_cast<fReal>(gridI)) * gridLen;
+
+			fReal phiLeft = gridI == 0 ? M_2PI - 0.5 * gridLen : beltPhi - 0.5 * gridLen;
+			Eigen::Vector3d r(radius, phiLeft, beltTheta);
+			Eigen::Vector3d vel = sphericalCrossProd(omega, r);
+			u->setValueAt(gridI, beltJ, vel[phiComp]);
+
+			fReal phiRight = beltPhi + 0.5 * gridLen;
+			r = Eigen::Vector3d(radius, phiRight, beltTheta);
+			vel = sphericalCrossProd(omega, r);
+			u->setValueAt((gridI + 1) % nPhi, beltJ, vel[phiComp]);
+
+			fReal thetaLower = beltTheta - 0.5 * gridLen;
+			r = Eigen::Vector3d(radius, beltPhi, thetaLower);
+			vel = sphericalCrossProd(omega, r);
+			v->setValueAt(gridI, beltJ, vel[thetaComp]);
+
+			fReal thetaHigher = beltTheta + 0.5 * gridLen;
+			r = Eigen::Vector3d(radius, beltPhi, thetaHigher);
+			vel = sphericalCrossProd(omega, r);
+			v->setValueAt(gridI, beltJ + 1, vel[thetaComp]);
+		}
+	}
+
+	// Heat up the next buffer.
+	for (size_t j = 0; j < u->getNTheta(); ++j)
+	{
+		for (size_t i = 0; i < u->getNPhi(); ++i)
+		{
+			u->writeValueTo(i, j, u->getValueAt(i, j));
+		}
+	}
+	for (size_t j = 0; j < v->getNTheta(); ++j)
+	{
+		for (size_t i = 0; i < v->getNPhi(); ++i)
+		{
+			v->writeValueTo(i, j, v->getValueAt(i, j));
+		}
+	}
+
+	solvePolarVelocities();
+	u->swapBuffer();
+	v->swapBuffer();
+}
 
 fReal KaminoSolver::fPhi(const fReal x)
 {
@@ -203,9 +297,9 @@ fReal KaminoSolver::rand(const Eigen::Matrix<fReal, 2, 1> vecA) const {
 
 void KaminoSolver::initialize_density()
 {
-	for(size_t i = 0; i < nPhi; ++i)
+	for (size_t i = 0; i < nPhi; ++i)
 	{
-		for(size_t j = 0; j < nTheta; ++j)
+		for (size_t j = 0; j < nTheta; ++j)
 		{
 			centeredAttr["density"]->setValueAt(i, j, 0.0);
 		}
