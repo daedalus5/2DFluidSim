@@ -1,8 +1,10 @@
 # include "include/Kamino.h"
+# include "include/HH16Sphere.h"
 # include <fstream>
 
 int main(int argc, char** argv)
 {
+	/*
 	if (argc == 2)
 	{
 		std::string configFile = argv[1];
@@ -59,4 +61,8 @@ int main(int argc, char** argv)
 		std::cout << "Configuration file was missing, exiting." << std::endl;
 		return -1;
 	}
+	*/
+	HH16Sphere sim;
+	sim.run();
+	return 0;
 }
