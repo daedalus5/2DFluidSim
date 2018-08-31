@@ -192,8 +192,6 @@ private:
 	void initialize_velocity();
 	/* This temporary function is for rebuttal phase's steady flow sample*/
 	void initializeVelocityAlpha(Eigen::Vector3d omega);
-	/* Localized flow initialized on a dot on the sphere */
-	void initializeVelocityBeta(Eigen::Vector3d omega);
 	/* initialize pressure attribute */
 	void initialize_pressure();
 	/* initialize density distribution */
@@ -245,6 +243,9 @@ public:
 
 	gridType* getGridTypeHandle();
 	void write_data_bgeo(const std::string& s, const int frame);
+
+	/* Localized flow initialized on a dot on the sphere */
+	void initializeVelocityBeta(Eigen::Vector3d omega);
 
 	/* Duplicate of quantity's get index */
 	size_t getIndex(size_t x, size_t y);
