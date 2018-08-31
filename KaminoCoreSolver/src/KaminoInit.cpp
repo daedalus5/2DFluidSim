@@ -175,7 +175,7 @@ Eigen::Vector3d sphericalCrossProd(const Eigen::Vector3d& omega, const Eigen::Ve
 	return ret;
 }
 
-void KaminoSolver::initializeVelocityFromOmega(Eigen::Vector3d omega)
+void KaminoSolver::initializeVelocityAlpha(Eigen::Vector3d omega)
 {
 	KaminoQuantity* u = this->staggeredAttr["u"];
 	KaminoQuantity* v = this->staggeredAttr["v"];
@@ -206,6 +206,65 @@ void KaminoSolver::initializeVelocityFromOmega(Eigen::Vector3d omega)
 			r = Eigen::Vector3d(radius, beltPhi, thetaHigher);
 			vel = sphericalCrossProd(omega, r);
 			v->setValueAt(gridI, beltJ + 1, vel[thetaComp]);
+		}
+	}
+
+	// Heat up the next buffer.
+	for (size_t j = 0; j < u->getNTheta(); ++j)
+	{
+		for (size_t i = 0; i < u->getNPhi(); ++i)
+		{
+			u->writeValueTo(i, j, u->getValueAt(i, j));
+		}
+	}
+	for (size_t j = 0; j < v->getNTheta(); ++j)
+	{
+		for (size_t i = 0; i < v->getNPhi(); ++i)
+		{
+			v->writeValueTo(i, j, v->getValueAt(i, j));
+		}
+	}
+
+	solvePolarVelocities();
+	u->swapBuffer();
+	v->swapBuffer();
+}
+
+void KaminoSolver::initializeVelocityBeta(Eigen::Vector3d omega)
+{
+	KaminoQuantity* u = this->staggeredAttr["u"];
+	KaminoQuantity* v = this->staggeredAttr["v"];
+	KaminoQuantity* d = this->centeredAttr["density"];
+
+	for (size_t beltJ = 0; beltJ < this->nTheta; ++beltJ)
+	{
+		fReal beltTheta = (static_cast<fReal>(beltJ) + 0.5) * gridLen;
+		for (size_t gridI = 0; gridI < this->nPhi; ++gridI)
+		{
+			if (d->getValueAt(gridI, beltJ) != 0.0)
+			{
+				fReal beltPhi = (static_cast<fReal>(gridI)) * gridLen;
+
+				fReal phiLeft = gridI == 0 ? M_2PI - 0.5 * gridLen : beltPhi - 0.5 * gridLen;
+				Eigen::Vector3d r(radius, phiLeft, beltTheta);
+				Eigen::Vector3d vel = sphericalCrossProd(omega, r);
+				u->setValueAt(gridI, beltJ, vel[phiComp]);
+
+				fReal phiRight = beltPhi + 0.5 * gridLen;
+				r = Eigen::Vector3d(radius, phiRight, beltTheta);
+				vel = sphericalCrossProd(omega, r);
+				u->setValueAt((gridI + 1) % nPhi, beltJ, vel[phiComp]);
+
+				fReal thetaLower = beltTheta - 0.5 * gridLen;
+				r = Eigen::Vector3d(radius, beltPhi, thetaLower);
+				vel = sphericalCrossProd(omega, r);
+				v->setValueAt(gridI, beltJ, vel[thetaComp]);
+
+				fReal thetaHigher = beltTheta + 0.5 * gridLen;
+				r = Eigen::Vector3d(radius, beltPhi, thetaHigher);
+				vel = sphericalCrossProd(omega, r);
+				v->setValueAt(gridI, beltJ + 1, vel[thetaComp]);
+			}
 		}
 	}
 

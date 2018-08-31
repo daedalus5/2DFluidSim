@@ -31,7 +31,8 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	
 	//initialize_velocity();
 	Eigen::Vector3d omega = Eigen::Vector3d(0.8, 0.0, 0.4);
-	initializeVelocityFromOmega(omega);
+	//initializeVelocityAlpha(omega);
+	initializeVelocityBeta(omega);
 	initialize_pressure();
 	initialize_density();
 	//initialize_boundary();
