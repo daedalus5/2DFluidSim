@@ -38,8 +38,8 @@ void Kamino::run()
     KaminoQuantity* d = solver.getAttributeNamed("density");
     initializeDensity(d);
 
-	Eigen::Vector3d omega = Eigen::Vector3d(0.8, 0.0, 0.4);
-	solver.initializeVelocityBeta(omega);
+	Eigen::Vector3d omega = Eigen::Vector3d(0.8, 0.5, 0.0);
+	solver.initializeVelocityAlpha(omega);
 
     gridType* g = solver.getGridTypeHandle();
     defineCellTypes(g);

@@ -175,7 +175,7 @@ Eigen::Vector3d sphericalCrossProd(const Eigen::Vector3d& omega, const Eigen::Ve
 	return ret;
 }
 
-void KaminoSolver::initializeVelocityAlpha(Eigen::Vector3d omega)
+void KaminoSolver::initializeVelocityBeta(Eigen::Vector3d omega)
 {
 	KaminoQuantity* u = this->staggeredAttr["u"];
 	KaminoQuantity* v = this->staggeredAttr["v"];
@@ -230,7 +230,7 @@ void KaminoSolver::initializeVelocityAlpha(Eigen::Vector3d omega)
 	v->swapBuffer();
 }
 
-void KaminoSolver::initializeVelocityBeta(Eigen::Vector3d omega)
+void KaminoSolver::initializeVelocityAlpha(Eigen::Vector3d omega)
 {
 	KaminoQuantity* u = this->staggeredAttr["u"];
 	KaminoQuantity* v = this->staggeredAttr["v"];
