@@ -1,14 +1,5 @@
 # include "../include/HH16Quantity.h"
 
-void HH16Solver::initialize_pressure()
-{
-    for (size_t i = 0; i < nPhi; ++i) {
-        for (size_t j = 0; j < nTheta; ++j) {
-            attr["p"]->setValueAt(i, j, 0.0);
-        }
-    }
-}
-
 void HH16Solver::initialize_velocity()
 {
     HH16Quantity* u = this->attr["u"];
@@ -60,6 +51,7 @@ void HH16Solver::initialize_velocity()
     }
 
     // u_theta at poles is set to zero
+	// NOTE : could be problematic...
     for(size_t i = 0; i < v->getNPhi(); ++i)
     {
         v->setValueAt(i, 0, 0);
@@ -102,7 +94,7 @@ void HH16Solver::initialize_velocity()
         }
     }
 
-    solvePolarVelocities();
+    //solvePolarVelocities(); // no longer relevant to HH16... need something else here
     u->swapBuffer();
     v->swapBuffer();
 }
@@ -152,9 +144,22 @@ void HH16Solver::initialize_density()
 {
     for(size_t i = 0; i < nPhi; ++i)
     {
-        for(size_t j = 0; j < nTheta; ++j)
+        for(size_t j = 0; j < nTheta / 2; ++j)
         {
-            attr["density"]->setValueAt(i, j, 0.0);
+            attr["density"]->setValueAt(i, j, 1.0);
         }
+		for (size_t j = nTheta / 2; j < nTheta; ++j)
+		{
+			attr["density"]->setValueAt(i, j, 0.0);
+		}
     }
+}
+
+void HH16Solver::initialize_pressure()
+{
+	for (size_t i = 0; i < nPhi; ++i) {
+		for (size_t j = 0; j < nTheta; ++j) {
+			attr["pressure"]->setValueAt(i, j, 0.0);
+		}
+	}
 }

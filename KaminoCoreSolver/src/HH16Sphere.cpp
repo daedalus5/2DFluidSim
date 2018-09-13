@@ -4,7 +4,7 @@
 HH16Sphere::HH16Sphere(fReal radius, size_t nTheta,
         float dt, float DT, int frames,
         std::string gridPath) :
-        radius(radius), nTheta(nTheta), nPhi(2 * nTheta), gridLen(M_PI / nTheta),
+        radius(radius), nTheta(nTheta + 1), nPhi(2 * nTheta), gridLen(M_PI / nTheta),
         dt(dt), DT(DT), frames(frames),
         gridPath(gridPath)
 {
@@ -16,7 +16,7 @@ HH16Sphere::~HH16Sphere()
 
 void HH16Sphere::run()
 {
-    HH16Solver solver(nPhi, nTheta, radius, M_PI / nTheta, dt);
+    HH16Solver solver(nPhi, nTheta, radius, M_2PI / nPhi, dt);
 
     HH16Quantity* u = solver.getAttributeNamed("u");
     HH16Quantity* v = solver.getAttributeNamed("v");

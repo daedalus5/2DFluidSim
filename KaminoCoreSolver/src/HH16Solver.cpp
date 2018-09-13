@@ -10,11 +10,14 @@ HH16Solver::HH16Solver(size_t nPhi, size_t nTheta, fReal radius, fReal gridLengt
 {
     addAttr("u");         // u velocity
     addAttr("v");         // v velocity
-    addAttr("p");         // p pressure
+	addAttr("pressure");  // pressure
     addAttr("density");   // density
     
+	NPBuffer = new fReal[nPhi];
+	SPBuffer = new fReal[nPhi];
+
     initialize_velocity();
-    initialize_pressure();
+	initialize_pressure();
     initialize_density();
 }
 
@@ -24,6 +27,9 @@ HH16Solver::~HH16Solver()
     {
         delete attr.second;
     }
+
+	delete NPBuffer;
+	delete SPBuffer;
 
     float totalTimeUsed = this->advectionTime + this->geometricTime + this->projectionTime;
     std::cout << "Total time used for advection : " << this->advectionTime << std::endl;
@@ -37,49 +43,35 @@ HH16Solver::~HH16Solver()
 void HH16Solver::stepForward(fReal timeStep)
 {
     this->timeStep = timeStep;
-    //advectionScalar();
+
+	// ADVECTION
+	
     KaminoTimer timer;
     timer.startTimer();
-    advectionSpeed();
+    advection();
     this->advectionTime += timer.stopTimer();
-    
     this->swapAttrBuffers();
 
+	// GEOMETRIC
+	
     timer.startTimer();
     geometric(); // Buffer is swapped here
     this->geometricTime += timer.stopTimer();
+
+	/*
+
+	// BODY FORCES
+
     //bodyForce();
+
+	// PROJECTION
+
     timer.startTimer();
     projection();
     this->projectionTime += timer.stopTimer();
     this->timeElapsed += timeStep;
+	*/
 }
-
-// In KaminoSolver.cpp
-/*
-// Phi: 0 - 2pi  Theta: 0 - pi
-bool validatePhiTheta(fReal & phi, fReal & theta)
-{
-    int loops = static_cast<int>(std::floor(theta / M_2PI));
-    theta = theta - loops * M_2PI;
-    // Now theta is in 0-2pi range
-
-    bool isFlipped = false;
-    
-    if (theta > M_PI)
-    {
-        theta = M_2PI - theta;
-        phi += M_PI;
-        isFlipped = true;
-    }
-
-    loops = static_cast<int>(std::floor(phi / M_2PI));
-    phi = phi - loops * M_2PI;
-    // Now phi is in 0-2pi range
-
-    return isFlipped;
-}
-*/
 
 void HH16Solver::bodyForce()
 {
@@ -145,15 +137,14 @@ void HH16Solver::write_data_bgeo(const std::string& s, const int frame)
     std::cout << "Writing to: " << file << std::endl;
 
     Partio::ParticlesDataMutable* parts = Partio::create();
-    Partio::ParticleAttribute pH, vH, psH, dens;
+    Partio::ParticleAttribute pH, vH, dens;
     pH = parts->addAttribute("position", Partio::VECTOR, 3);
     vH = parts->addAttribute("v", Partio::VECTOR, 3);
-    psH = parts->addAttribute("pressure", Partio::VECTOR, 1);
     dens = parts->addAttribute("density", Partio::VECTOR, 1);
 
     Eigen::Matrix<float, 3, 1> pos;
     Eigen::Matrix<float, 3, 1> vel;
-    fReal pressure, densityValue;
+    fReal densityValue;
     fReal velX, velY;
 
     HH16Quantity* u = attr["u"];
@@ -179,16 +170,13 @@ void HH16Solver::write_data_bgeo(const std::string& s, const int frame)
             mapVToSphere(pos, vel);
             mapPToSphere(pos);
 
-            pressure = attr["p"]->getValueAt(i, j);
             densityValue = attr["density"]->getValueAt(i, j);
             
             int idx = parts->addParticle();
             float* p = parts->dataWrite<float>(pH, idx);
             float* v = parts->dataWrite<float>(vH, idx);
-            float* ps = parts->dataWrite<float>(psH, idx);
             float* de = parts->dataWrite<float>(dens, idx);
 
-            ps[0] = 1000.0 * radius * pressure / timeStep;
             de[0] = densityValue;
 
             for (int k = 0; k < 3; ++k) {

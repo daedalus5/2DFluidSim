@@ -52,12 +52,6 @@ fReal& HH16Quantity::accessValueAt(size_t x, size_t y)
 
 void HH16Quantity::writeValueTo(size_t x, size_t y, fReal val)
 {
-/*# ifdef DEBUGBUILD
-    if (val > 1e4)
-    {
-        std::cerr << "Explosion detected " << std::endl;
-    }
-# endif*/
     this->nextStep[getIndex(x, y)] = val;
 }
 
@@ -101,23 +95,35 @@ Bilinear interpolated for now.
 */
 fReal HH16Quantity::sampleAt(fReal x, fReal y, fReal uNorthP[2], fReal uSouthP[2])
 {
-    return 0;
-    //TODO According to HH16
-
-    /*
     fReal phi = x;
     fReal theta = y;
-    // Phi and Theta are now shifted back to origin
 
+	// should restore phi and theta that are out of bounds
     bool isFlippedPole = validatePhiTheta(phi, theta);
+
+	// get phi/theta indices
     fReal normedPhi = phi * invGridLen;
     fReal normedTheta = theta * invGridLen;
 
     int phiIndex = static_cast<int>(std::floor(normedPhi));
     int thetaIndex = static_cast<int>(std::floor(normedTheta));
+
+	// fractional distance vals for bilinear interpolation
     fReal alphaPhi = normedPhi - static_cast<fReal>(phiIndex);
     fReal alphaTheta = normedTheta - static_cast<fReal>(thetaIndex);
 
+	size_t phiLower = phiIndex % nPhi;
+	size_t phiHigher = (phiLower + 1) % nPhi;
+	size_t thetaLower = thetaIndex;
+	size_t thetaHigher = thetaIndex + 1;
+
+	fReal lowerBelt = Lerp<fReal>(getValueAt(phiLower, thetaLower), getValueAt(phiHigher, thetaLower), alphaPhi);
+	fReal higherBelt = Lerp<fReal>(getValueAt(phiLower, thetaHigher), getValueAt(phiHigher, thetaHigher), alphaPhi);
+
+	fReal lerped = Lerp<fReal>(lowerBelt, higherBelt, alphaTheta);
+	return lerped;
+
+	/*
     if (thetaIndex == 0 && isFlippedPole) // If it's not flipped the theta+1 belt would just be belt 1
     {
         if (attrName == "u")
@@ -197,5 +203,28 @@ fReal HH16Quantity::sampleAt(fReal x, fReal y, fReal uNorthP[2], fReal uSouthP[2
         fReal lerped = Lerp<fReal>(lowerBelt, higherBelt, alphaTheta);
         return lerped;
     }
-    */
+	*/
+}
+
+// Phi: 0 - 2pi  Theta: 0 - pi
+bool HH16Quantity::validatePhiTheta(fReal & phi, fReal & theta)
+{
+	int loops = static_cast<int>(std::floor(theta / M_2PI));
+	theta = theta - loops * M_2PI;
+	// Now theta is in 0-2pi range
+
+	bool isFlipped = false;
+
+	if (theta > M_PI)
+	{
+		theta = M_2PI - theta;
+		phi += M_PI;
+		isFlipped = true;
+	}
+
+	loops = static_cast<int>(std::floor(phi / M_2PI));
+	phi = phi - loops * M_2PI;
+	// Now phi is in 0-2pi range
+
+	return isFlipped;
 }

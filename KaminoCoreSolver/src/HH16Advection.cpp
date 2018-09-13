@@ -3,8 +3,6 @@
 
 void HH16Solver::advectAttrAt(HH16Quantity* attr, size_t gridPhi, size_t gridTheta)
 {
-    // TODO according to HH16
-    /*
     HH16Quantity* uPhi = (*this)["u"];
     HH16Quantity* uTheta = (*this)["v"];
 
@@ -39,112 +37,104 @@ void HH16Solver::advectAttrAt(HH16Quantity* attr, size_t gridPhi, size_t gridThe
     fReal advectedVal = attr->sampleAt(pPhi, pTheta, this->uNorthP, this->uSouthP);
     
     attr->writeValueTo(gridPhi, gridTheta, advectedVal);
-    */
 }
 
-void HH16Solver::advectionScalar()
+void HH16Solver::advection()
 {
-    // TODO according to HH16
-    /*
-    for (auto quantity : this->centeredAttr)
+    for (auto quantity : this->attr)
     {
-        HH16Quantity* cenAttr = quantity.second;
-# ifdef OMParallelize
-# pragma omp parallel for
-# endif
-        for (int gridTheta = 0; gridTheta < cenAttr->getNTheta(); ++gridTheta)
+        HH16Quantity* scalarAttr = quantity.second;
+
+        for (size_t gridTheta = 1; gridTheta < scalarAttr->getNTheta() - 1; ++gridTheta)
         {
-            for (size_t gridPhi = 0; gridPhi < cenAttr->getNPhi(); ++gridPhi)
+            for (size_t gridPhi = 0; gridPhi < scalarAttr->getNPhi(); ++gridPhi)
             {
-                advectAttrAt(cenAttr, gridPhi, gridTheta);
+                advectAttrAt(scalarAttr, gridPhi, gridTheta);
             }
         }
     }
-    */
+
+	solvePolarVelocities();
+	solvePolarScalars();
 }
 
 void HH16Solver::solvePolarVelocities()
 {
-    // TODO according to HH16
-    /*
-    HH16Quantity* uPhi = (*this)["u"];
-    HH16Quantity* uTheta = (*this)["v"];
+	HH16Quantity* uPhi = (*this)["u"];
+	HH16Quantity* uTheta = (*this)["v"];
 
-    // First we derive velocity at the poles...
-    size_t northernBelt = 0;
-    size_t southernBelt = uPhi->getNTheta() - 1; // uTheta->getNTheta() - 2
-    size_t northernPinch = 0;
-    size_t southernPinch = uTheta->getNTheta() - 1;
-    resetPoleVelocities();
-    for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi)
-    {
-        fReal phi = (M_2PI / nPhi) * gridPhi;
+	// HH16 central differencing scheme
 
-        size_t gridPhiP1 = (gridPhi + 1) % nPhi;
-        fReal ootBeltUPhi = KaminoLerp(uPhi->getValueAt(gridPhi, northernBelt), uPhi->getValueAt(gridPhiP1, northernBelt), 0.5);
-        fReal totBeltUPhi = KaminoLerp(uPhi->getValueAt(gridPhi, northernBelt + 1), uPhi->getValueAt(gridPhiP1, northernBelt + 1), 0.5);
-        fReal uPhiLatLine = KaminoLerp(ootBeltUPhi, totBeltUPhi, 0.5);
-        fReal uThetaLatLine = uTheta->getValueAt(gridPhi, northernPinch + 1);
+	for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi)
+	{
+		size_t gridShift = (gridPhi + nPhi / 2) % nPhi;
 
-        uNorthP[x] += uThetaLatLine * std::cos(phi) - uPhiLatLine * std::sin(phi);
-        uNorthP[y] += uThetaLatLine * std::sin(phi) + uPhiLatLine * std::cos(phi);
+		// North pole
+		fReal u_n = uTheta->getValueAt(gridPhi, 0);
+		fReal u_down = uTheta->getValueAt(gridPhi, 1);
+		fReal u_up = uTheta->getValueAt(gridShift, 1);
+		fReal u_star = u_n + timeStep * (u_n / radius) * ((u_up - u_down) / (2.0 * gridLen));
+		this->NPBuffer[gridPhi] = u_star;
+		
+		// South pole
+		u_n = uTheta->getValueAt(gridPhi, nTheta - 1);
+		u_down = uTheta->getValueAt(gridPhi, nTheta - 2);
+		u_up = uTheta->getValueAt(gridShift, nTheta - 2);
+		u_star = u_n + timeStep * (u_n / radius) * ((u_up - u_down) / (2.0 * gridLen));
+		this->SPBuffer[gridPhi] = u_star;
+	}
 
+	// calculates u_x and u_y at the poles
+	spectralFilter();
 
-        ootBeltUPhi = KaminoLerp(uPhi->getValueAt(gridPhi, southernBelt), uPhi->getValueAt(gridPhiP1, southernBelt), 0.5);
-        totBeltUPhi = KaminoLerp(uPhi->getValueAt(gridPhi, southernBelt - 1), uPhi->getValueAt(gridPhiP1, southernBelt - 1), 0.5);
-        uPhiLatLine = KaminoLerp(ootBeltUPhi, totBeltUPhi, 0.5);
-        uThetaLatLine = uTheta->getValueAt(gridPhi, southernPinch - 1);
+	// assign polar velocities to next buffer
+	for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi)
+	{
+		fReal s = sin(gridLen * gridPhi);
+		fReal c = cos(gridLen * gridPhi);
 
+		fReal u_theta_NP = uNorthP[0] * c + uNorthP[1] * s;
+		fReal u_phi_NP = -uNorthP[0] * s + uNorthP[1] * c;
+		fReal u_theta_SP = uSouthP[0] * c + uSouthP[1] * s;
+		fReal u_phi_SP = -uSouthP[0] * s + uSouthP[1] * c;
 
-        uSouthP[x] += -uThetaLatLine * std::cos(phi) - uPhiLatLine * std::sin(phi);
-        uSouthP[y] += -uThetaLatLine * std::sin(phi) + uPhiLatLine * std::cos(phi);
-    }
-    averageVelocities();
-    //Now we have the projected x, y components at polars
-    for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi)
-    {
-        fReal phi = (M_2PI / nPhi) * gridPhi;
-        fReal northernUTheta = uNorthP[x] * std::cos(phi) + uNorthP[y] * std::sin(phi);
-        uTheta->writeValueTo(gridPhi, northernPinch, northernUTheta);
-        fReal southernUTheta = -uSouthP[x] * std::cos(phi) - uSouthP[y] * std::sin(phi);
-        uTheta->writeValueTo(gridPhi, southernPinch, southernUTheta);
-    }
-    */
+		uTheta->writeValueTo(gridPhi, 0, u_theta_NP);
+		uPhi->writeValueTo(gridPhi, 0, u_phi_NP);
+		uTheta->writeValueTo(gridPhi, nTheta - 1, u_theta_SP);
+		uPhi->writeValueTo(gridPhi, nTheta - 1, u_phi_SP);
+	}
 }
 
-void HH16Solver::advectionSpeed()
+void HH16Solver::solvePolarScalars()
 {
-    // TODO According to HH16
-    /*
-    //Advect as is for uPhi
-    HH16Quantity* uPhi = (*this)["u"];
-# ifdef OMParallelize
-# pragma omp parallel for
-# endif
-    for (int gridTheta = 0; gridTheta < uPhi->getNTheta(); ++gridTheta)
-    {
-        for (size_t gridPhi = 0; gridPhi < uPhi->getNPhi(); ++gridPhi)
-        {
-            advectAttrAt(uPhi, gridPhi, gridTheta);
-        }
-    }
+	// HH16 central differencing scheme
 
-    //Tread carefully for uTheta...
-    HH16Quantity* uTheta = (*this)["v"];
-    // Apart from the poles...
-# ifdef OMParallelize
-# pragma omp parallel for
-# endif
-    for (int gridTheta = 1; gridTheta < uTheta->getNTheta() - 1; ++gridTheta)
-    {
-        for (size_t gridPhi = 0; gridPhi < uTheta->getNPhi(); ++gridPhi)
-        {
-            advectAttrAt(uTheta, gridPhi, gridTheta);
-        }
-    }
-    /// TODO
-    solvePolarVelocities();
-    */
+	HH16Quantity* d = (*this)["density"];
+
+	// North pole
+	size_t phi_NP = std::floor(atan2(uNorthP[1], uNorthP[0]));
+	size_t gridShift = (phi_NP + nPhi / 2) % nPhi;
+	fReal d_n = d->getValueAt(phi_NP, 0);
+	fReal d_down = d->getValueAt(phi_NP, 1);
+	fReal d_up = d->getValueAt(gridShift, 1);
+	fReal coeff = sqrt(uNorthP[0] * uNorthP[0] + uNorthP[1] * uNorthP[1]);
+	fReal d_star = d_n + timeStep * (coeff / radius) * ((d_up - d_down) / (2.0 * gridLen));
+
+	// South pole
+	size_t phi_SP = std::floor(atan2(uSouthP[1], uSouthP[0]));
+	gridShift = (phi_SP + nPhi / 2) % nPhi;
+	d_n = d->getValueAt(phi_SP, nTheta - 1);
+	d_down = d->getValueAt(phi_SP, nTheta - 2);
+	d_up = d->getValueAt(gridShift, nTheta - 2);
+	coeff = sqrt(uSouthP[0] * uSouthP[0] + uSouthP[1] * uSouthP[1]);
+	d_star = d_n + timeStep * (coeff / radius) * ((d_up - d_down) / (2.0 * gridLen));
+
+	// all pole grid points get same density value
+	for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi)
+	{
+		d->writeValueTo(gridPhi, 0, d_star);
+		d->writeValueTo(gridPhi, nTheta - 1, d_star);
+	}
 }
 
 void HH16Solver::resetPoleVelocities()
@@ -156,13 +146,27 @@ void HH16Solver::resetPoleVelocities()
     }
 }
 
-void HH16Solver::averageVelocities()
+void HH16Solver::spectralFilter()
 {
-    /*
-    for (unsigned i = 0; i < 2; ++i)
-    {
-        uNorthP[i] /= this->nPhi;
-        uSouthP[i] /= this->nPhi;
-    }
-    */
+	HH16Quantity* uPhi = (*this)["u"];
+	HH16Quantity* uTheta = (*this)["v"];
+
+	fReal u_coeff = (2.0 / uTheta->getNTheta());
+	fReal sum_x_NP = 0;
+	fReal sum_y_NP = 0;
+	fReal sum_x_SP = 0;
+	fReal sum_y_SP = 0;
+
+	for (size_t gridPhi = 0; gridPhi < uTheta->getNPhi(); ++gridPhi)
+	{
+		sum_x_NP += this->NPBuffer[gridPhi] * cos(gridLen * gridPhi);
+		sum_y_NP += this->NPBuffer[gridPhi] * sin(gridLen * gridPhi);
+		sum_x_SP += this->SPBuffer[gridPhi] * cos(gridLen * gridPhi);
+		sum_y_SP += this->SPBuffer[gridPhi] * sin(gridLen * gridPhi);
+	}
+
+	uNorthP[0] = u_coeff * sum_x_NP;
+	uNorthP[1] = u_coeff * sum_y_NP;
+	uSouthP[0] = u_coeff * sum_x_SP;
+	uSouthP[1] = u_coeff * sum_y_SP;
 }

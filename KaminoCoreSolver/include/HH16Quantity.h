@@ -11,6 +11,12 @@
 # include <Eigen/Core>
 # include <Eigen/Dense>
 # include <cmath>
+# include <stdio.h>
+# include <stdlib.h>
+# include <math.h>
+# include "mkl_service.h"
+/* Include Poisson Library header files */
+# include "mkl_poisson.h"
 
 # define OMParallelize
 
@@ -85,9 +91,9 @@ public:
     /* And given world coordinates, show its index backwards... */
     size_t getPhiIndexAtCoord(fReal phi);
     size_t getThetaIndexAtCoord(fReal theta);
+	/* Wrap phi and theta coordinates */
+	bool validatePhiTheta(fReal & phi, fReal & theta);
 };
-
-bool validatePhiTheta(fReal & phi, fReal & theta);
 
 // The solver class.
 class HH16Solver
@@ -116,14 +122,13 @@ private:
     float projectionTime;
 
     void resetPoleVelocities();
-    void averageVelocities();
+    void spectralFilter();
     void solvePolarVelocities();
+	void solvePolarScalars(); // currently only handles density
 
     // We only have to treat uTheta differently
     void advectAttrAt(HH16Quantity* attr, size_t gridPhi, size_t gridTheta);
-
-    void advectionScalar();
-    void advectionSpeed();
+    void advection();
 
     void geometric();
     void projection();
@@ -154,11 +159,15 @@ private:
     void mapVToSphere(Eigen::Matrix<float, 3, 1>& pos, Eigen::Matrix<float, 3, 1>& vel) const;
     /*map to cylindrical coordinates*/
     void mapToCylinder(Eigen::Matrix<float, 3, 1>& pos) const;
+
+	// Vector buffers for advection scheme
+	fReal* NPBuffer;
+	fReal* SPBuffer;
     
 public:
     // Velocities at poles in xyz cartesian coordinates
-    fReal uNorthP[2];
-    fReal uSouthP[2];
+    fReal uNorthP[2]; // (u_x, u_y) @ NP
+    fReal uSouthP[2]; // (u_x, u_y) @ SP
 
     HH16Solver(size_t nx, size_t ny, fReal radius, fReal gridLength, fReal frameDuration);
     ~HH16Solver();
