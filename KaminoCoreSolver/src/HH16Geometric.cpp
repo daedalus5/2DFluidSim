@@ -43,7 +43,7 @@ void HH16Solver::geometric()
             v->writeValueTo(phiI, thetaJ, vNext);
         }
     }
-    solvePolarVelocities();
+    applyPolarBoundaryCondition();
 
     u->swapBuffer();
     v->swapBuffer();

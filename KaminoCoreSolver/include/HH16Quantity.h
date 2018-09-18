@@ -122,11 +122,13 @@ private:
     float projectionTime;
 
     void resetPoleVelocities();
+	void applyPolarBoundaryCondition();
     void spectralFilter();
-    void solvePolarVelocities();
-	void solvePolarScalars(); // currently only handles density
 
-    // We only have to treat uTheta differently
+    void solvePolarVelocitiesAdvection();
+	void solvePolarScalarsAdvection(); // currently only handles density
+	void solvePolarVelocitiesProjection();
+
     void advectAttrAt(HH16Quantity* attr, size_t gridPhi, size_t gridTheta);
     void advection();
 

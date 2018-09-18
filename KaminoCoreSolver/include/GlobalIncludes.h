@@ -13,5 +13,7 @@
 # define M_2PI          6.28318530717958647692  /* 2pi */
 # define M_hPI          1.57079632679489661923  /* pi / 2 */
 
+# define rho			1000.0;
+
 // to switch between double and float
 typedef double fReal;

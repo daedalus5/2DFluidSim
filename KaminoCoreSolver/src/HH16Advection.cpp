@@ -54,11 +54,11 @@ void HH16Solver::advection()
         }
     }
 
-	solvePolarVelocities();
-	solvePolarScalars();
+	solvePolarVelocitiesAdvection();
+	solvePolarScalarsAdvection();
 }
 
-void HH16Solver::solvePolarVelocities()
+void HH16Solver::solvePolarVelocitiesAdvection()
 {
 	HH16Quantity* uPhi = (*this)["u"];
 	HH16Quantity* uTheta = (*this)["v"];
@@ -75,7 +75,7 @@ void HH16Solver::solvePolarVelocities()
 		fReal u_up = uTheta->getValueAt(gridShift, 1);
 		fReal u_star = u_n + timeStep * (u_n / radius) * ((u_up - u_down) / (2.0 * gridLen));
 		this->NPBuffer[gridPhi] = u_star;
-		
+
 		// South pole
 		u_n = uTheta->getValueAt(gridPhi, nTheta - 1);
 		u_down = uTheta->getValueAt(gridPhi, nTheta - 2);
@@ -84,28 +84,10 @@ void HH16Solver::solvePolarVelocities()
 		this->SPBuffer[gridPhi] = u_star;
 	}
 
-	// calculates u_x and u_y at the poles
-	spectralFilter();
-
-	// assign polar velocities to next buffer
-	for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi)
-	{
-		fReal s = sin(gridLen * gridPhi);
-		fReal c = cos(gridLen * gridPhi);
-
-		fReal u_theta_NP = uNorthP[0] * c + uNorthP[1] * s;
-		fReal u_phi_NP = -uNorthP[0] * s + uNorthP[1] * c;
-		fReal u_theta_SP = uSouthP[0] * c + uSouthP[1] * s;
-		fReal u_phi_SP = -uSouthP[0] * s + uSouthP[1] * c;
-
-		uTheta->writeValueTo(gridPhi, 0, u_theta_NP);
-		uPhi->writeValueTo(gridPhi, 0, u_phi_NP);
-		uTheta->writeValueTo(gridPhi, nTheta - 1, u_theta_SP);
-		uPhi->writeValueTo(gridPhi, nTheta - 1, u_phi_SP);
-	}
+	applyPolarBoundaryCondition();
 }
 
-void HH16Solver::solvePolarScalars()
+void HH16Solver::solvePolarScalarsAdvection()
 {
 	// HH16 central differencing scheme
 
@@ -144,29 +126,4 @@ void HH16Solver::resetPoleVelocities()
         uNorthP[i] = 0.0;
         uSouthP[i] = 0.0;
     }
-}
-
-void HH16Solver::spectralFilter()
-{
-	HH16Quantity* uPhi = (*this)["u"];
-	HH16Quantity* uTheta = (*this)["v"];
-
-	fReal u_coeff = (2.0 / uTheta->getNTheta());
-	fReal sum_x_NP = 0;
-	fReal sum_y_NP = 0;
-	fReal sum_x_SP = 0;
-	fReal sum_y_SP = 0;
-
-	for (size_t gridPhi = 0; gridPhi < uTheta->getNPhi(); ++gridPhi)
-	{
-		sum_x_NP += this->NPBuffer[gridPhi] * cos(gridLen * gridPhi);
-		sum_y_NP += this->NPBuffer[gridPhi] * sin(gridLen * gridPhi);
-		sum_x_SP += this->SPBuffer[gridPhi] * cos(gridLen * gridPhi);
-		sum_y_SP += this->SPBuffer[gridPhi] * sin(gridLen * gridPhi);
-	}
-
-	uNorthP[0] = u_coeff * sum_x_NP;
-	uNorthP[1] = u_coeff * sum_y_NP;
-	uSouthP[0] = u_coeff * sum_x_SP;
-	uSouthP[1] = u_coeff * sum_y_SP;
 }

@@ -6,14 +6,14 @@ void HH16Solver::projection()
     HH16Quantity* v = attr["v"];
     HH16Quantity* p = attr["pressure"];
 
-    // TODO: Run MKL routine to solve for pressure values
-
+    // fills LHS divergence values for Poisson solver (includes poles)
 	// updates pressure buffer 
     MKLSphericalPoisson();
 
     p->swapBuffer();
 
 	fReal invRad = 1.0 / radius;
+	fReal invDens = 1.0 / rho;
 
     // Update velocities accordingly: uPhi
     for (size_t j = 1; j < u->getNTheta() - 1; ++j)
@@ -23,7 +23,7 @@ void HH16Solver::projection()
             fReal uBefore = u->getValueAt(i, j);
             fReal thetaBelt = j * gridLen;
             fReal invSine = 1.0 / std::sin(thetaBelt);
-            fReal factorPhi = -invGridLen * invRad * invSine;
+            fReal factorPhi = -timeStep * invGridLen * invRad * invSine * invDens * 0.5;
 
             size_t gridLeftI = (i == 0 ? u->getNPhi() - 1 : i - 1);
 			size_t gridRightI = (i == u->getNPhi() - 1 ? 0 : i + 1);
@@ -33,18 +33,6 @@ void HH16Solver::projection()
 			u->writeValueTo(i, j, uBefore + deltauPhi);
         }
     }
-	
-	// pressure is a scalar and so should be singularly defined at the poles
-	// this means that there won't be a pressure gradient in the u direction 
-	for (size_t i = 0; i < u->getNPhi(); ++i)
-	{
-		fReal uBefore_NP = u->getValueAt(i, 0);
-		fReal uBefore_SP = u->getValueAt(i, u->getNTheta() - 1);
-		u->writeValueTo(i, 0, uBefore_NP);
-		u->writeValueTo(i, u->getNTheta() - 1, uBefore_SP);
-	}
-
-    u->swapBuffer();
 
     // Update velocities accordingly: uTheta
     for (size_t j = 1; j < v->getNTheta() - 1; ++j)
@@ -52,7 +40,7 @@ void HH16Solver::projection()
         for (size_t i = 0; i < v->getNPhi(); ++i)
         {
             fReal vBefore = v->getValueAt(i, j);
-			fReal factorTheta = -invGridLen * invRad;
+			fReal factorTheta = -timeStep * invGridLen * invRad * invDens * 0.5;
 
 			size_t gridAboveJ = j + 1;
             size_t gridBelowJ = j - 1;
@@ -63,28 +51,44 @@ void HH16Solver::projection()
         }
     }
 
-	for (size_t i = 0; i < v->getNPhi(); ++i)
-	{
-		// North Pole
-		fReal vBefore = v->getValueAt(i, 0);
-		fReal factorTheta = -invGridLen * invRad;
+	solvePolarVelocitiesProjection();
 
-		size_t gridShift = (i + nPhi / 2) % nPhi;
-		fReal pressureGrad = p->getValueAt(i, 1) - p->getValueAt(gridShift, 1);
-		fReal deltauTheta = factorTheta * pressureGrad;
-		v->writeValueTo(i, 0, deltauTheta + vBefore);
-
-		// South Pole
-		vBefore = v->getValueAt(i, v->getNTheta() - 1);
-		pressureGrad = p->getValueAt(i, v->getNTheta() - 1) - p->getValueAt(gridShift, v->getNTheta() - 1);
-		deltauTheta = factorTheta * pressureGrad;
-		v->writeValueTo(i, v->getNTheta() - 1, vBefore + deltauTheta);
-	}
-
-	// uPhi vals at poles calculated using BCs
+	u->swapBuffer();
     v->swapBuffer();
 }
 
+void HH16Solver::solvePolarVelocitiesProjection() {
+	HH16Quantity* uPhi = (*this)["u"];
+	HH16Quantity* uTheta = (*this)["v"];
+	HH16Quantity* p = attr["pressure"];
+
+	fReal invRad = 1.0 / radius;
+	fReal invDens = 1.0 / rho;
+
+	for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi)
+	{
+		size_t gridShift = (gridPhi + nPhi / 2) % nPhi;
+
+		// North pole
+		fReal u_n = uTheta->getValueAt(gridPhi, 0);
+		fReal p_down = p->getValueAt(gridPhi, 1);
+		fReal p_up = p->getValueAt(gridShift, 1);
+		fReal factor = -timeStep * invDens * invRad * invGridLen * 0.5;
+		fReal deltaUThetaNP = factor * (p_up - p_down);
+		fReal u_star = u_n + deltaUThetaNP;
+		this->NPBuffer[gridPhi] = u_star;
+
+		// South pole
+		u_n = uTheta->getValueAt(gridPhi, nTheta - 1);
+		p_down = p->getValueAt(gridPhi, nTheta - 2);
+		p_up = p->getValueAt(gridShift, nTheta - 2);
+		fReal deltaUThetaSP = factor * (p_up - p_down);
+		u_star = u_n + deltaUThetaSP;
+		this->SPBuffer[gridPhi] = u_star;
+	}
+
+	applyPolarBoundaryCondition();
+}
 
 /*******************************************************************************
 * Copyright 2006-2018 Intel Corporation.
@@ -115,11 +119,17 @@ void HH16Solver::MKLSphericalPoisson()
 	//		 nTheta is the number of cells in the theta direction
 	// hence, mesh grid is size (nt + 1) x (np + 1)
 
+	HH16Quantity* uPhi = (*this)["u"];
+	HH16Quantity* uTheta = (*this)["v"];
+	HH16Quantity* p = attr["pressure"];
+
 	MKL_INT np = nPhi, nt = nTheta - 1;
+	MKL_INT gridShift;
+	double invRad = 1.0 / radius;
 
 	MKL_INT ip, it, i, stat;
 	MKL_INT ipar[128];
-	double ap, bp, at, bt, lp, lt, hp, ht, theta_i, ct, c1;
+	double ap, bp, at, bt, lp, lt, hp, ht, theta_i, theta_up, theta_down, invSin, sin_up, sin_down, c1;
 	double *dpar = NULL, *f = NULL, *u = NULL;
 	double q;
 	DFTI_DESCRIPTOR_HANDLE handle_s = 0;
@@ -156,21 +166,62 @@ void HH16Solver::MKLSphericalPoisson()
 	ht = lt / nt;
 
 	/* 
-	Filling in the right-hand side f(p,t)=(2+q)*cos(t)
+	Filling in the right-hand side
 	in the mesh points into the array f.
-	We choose the right-hand side to correspond to the TRUE solution
-	of Helmholtz equation on a sphere.
-	Here we are using the mesh sizes hp and ht computed before to compute
-	the coordinates (phi_i,theta_i) of the mesh points */
-	for (it = 0; it <= nt; it++)
+	*/
+
+	// interior of grid
+	for (it = 1; it < nt; it++)
 	{
-		for (ip = 0; ip <= np; ip++)
+		for (ip = 1; ip < np; ip++)
 		{
 			theta_i = ht*it;
-			ct = cos(theta_i);
-			f[ip + it*(np + 1)] = ct*(2. + q);
+			theta_up = ht*(it + 1);
+			theta_down = ht*(it - 1);
+			invSin = 1.0 / sin(theta_i);
+			sin_up = sin(theta_up);
+			sin_down = sin(theta_down);
+			double factor = invRad * 0.5 * invGridLen * invSin;
+			fReal u_left = uPhi->getValueAt(ip - 1, it);
+			fReal u_right = uPhi->getValueAt(ip + 1, it);
+			fReal u_up = uTheta->getValueAt(ip, it + 1);
+			fReal u_down = uTheta->getValueAt(ip, it - 1);
+			f[ip + it*(np + 1)] = factor * (u_right - u_left + u_up * sin_up - u_down * sin_down);
 		}
 	}
+
+	// phi = 0, 2Pi seam
+	for (it = 1; it < nt; it++) {
+		theta_i = ht*it;
+		theta_up = ht*(it + 1);
+		theta_down = ht*(it - 1);
+		invSin = 1.0 / sin(theta_i);
+		sin_up = sin(theta_up);
+		sin_down = sin(theta_down);
+		double factor = invRad * 0.5 * invGridLen * invSin;
+		fReal u_left = uPhi->getValueAt(np - 2, it);
+		fReal u_right = uPhi->getValueAt(1, it);
+		fReal u_up = uTheta->getValueAt(0, it + 1);
+		fReal u_down = uTheta->getValueAt(0, it - 1);
+		fReal seamVal = factor * (u_right - u_left + u_up * sin_up - u_down * sin_down);
+		f[it * (np + 1)] = seamVal;
+		f[np + it * (np + 1)] = seamVal;
+	}
+
+	// poles
+	for (ip = 0; ip < np; ip++) {
+		gridShift = (ip + np / 2) % np;
+		fReal factor = invRad * 0.5 * invGridLen;
+		fReal u_down = uTheta->getValueAt(ip, 1);
+		fReal u_up = uTheta->getValueAt(gridShift, 1);
+		fReal NP_val = factor * (u_up - u_down);
+		f[ip] = NP_val;
+		u_down = uTheta->getValueAt(ip, np - 2);
+		u_up = uTheta->getValueAt(gridShift, np - 2);
+		fReal SP_val = factor * (u_up - u_down);
+		f[ip + nt * (np + 1)] = SP_val;
+	}
+	f[np + nt * (np + 1)] = f[nt * (np + 1)];
 
 	/* Initializing ipar array to make it free from garbage */
 	for (i = 0; i<128; i++)
