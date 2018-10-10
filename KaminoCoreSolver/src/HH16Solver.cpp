@@ -50,15 +50,14 @@ void HH16Solver::stepForward(fReal timeStep)
     timer.startTimer();
     advection();
     this->advectionTime += timer.stopTimer();
-    this->swapAttrBuffers();
 
 	// GEOMETRIC
+
+	/*
 	
     timer.startTimer();
     geometric(); // Buffer is swapped here
     this->geometricTime += timer.stopTimer();
-
-	/*
 
 	// BODY FORCES
 

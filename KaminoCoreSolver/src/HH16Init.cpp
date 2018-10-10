@@ -8,7 +8,24 @@ void HH16Solver::initialize_velocity()
     // set u_phi initial values using FBM curl noise
     fReal gain = 4096.0 / nPhi;
 
-    for (size_t j = 0; j < u->getNTheta(); ++j)
+	for (size_t i = 0; i < u->getNPhi(); ++i) {
+		for (size_t j = 0; j < u->getNTheta(); ++j) {
+			//fReal val = FBM(cos(i * gridLen), sin(j * gridLen));
+			fReal val = sin(i * gridLen) * sin(j * gridLen);
+			u->setValueAt(i, j, val);
+		}
+	}
+
+	for (size_t i = 0; i < v->getNPhi(); ++i) {
+		for (size_t j = 0; j < v->getNTheta(); ++j) {
+			//fReal val = FBM(cos(i * gridLen), sin(j * gridLen));
+			fReal val = sin(i * gridLen) * sin(j * gridLen);
+			v->setValueAt(i, j, val);
+		}
+	}
+
+	/*
+    for (size_t j = 0; j < u->getNTheta() - 1; ++j)
     {
         for (size_t i = 1; i < u->getNPhi(); ++i)
         {
@@ -31,7 +48,7 @@ void HH16Solver::initialize_velocity()
         }
     }
     // 0 index for u_phi
-    for (size_t j = 0; j < u->getNTheta(); ++j){
+    for (size_t j = 0; j < u->getNTheta() - 1; ++j){
         fReal ur_x = 0;
         fReal ur_y = (j + 1) * gridLen;
         fReal lr_x = 0;
@@ -82,19 +99,29 @@ void HH16Solver::initialize_velocity()
         }
     }
 
-    // Heat up the next buffer.
-    for (size_t j = 0; j < u->getNTheta(); ++j) {
-        for (size_t i = 0; i < u->getNPhi(); ++i) {
-            u->writeValueTo(i, j, u->getValueAt(i, j));
-        }
-    }
-    for (size_t j = 1; j < v->getNTheta() - 1; ++j) {
-        for (size_t i = 0; i < v->getNPhi(); ++i) {
-            v->writeValueTo(i, j, v->getValueAt(i, j));
-        }
-    }
+	*/
 
-    //solvePolarVelocities(); // no longer relevant to HH16... need something else here
+	// should run a projection step here...
+
+	// Heat up the next buffers.
+	// Polar values are written in applyPolarBoundaryCondition()
+
+	for (size_t i = 0; i < u->getNPhi(); ++i) {
+		for (size_t j = 1; j < u->getNTheta() - 1; ++j) {
+			u->writeValueTo(i, j, u->getValueAt(i, j));
+			v->writeValueTo(i, j, v->getValueAt(i, j));
+		}
+	}
+
+    // Heat up the polar buffers.
+
+	for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi) {
+		this->NPBuffer[gridPhi] = u->getValueAt(gridPhi, 0);
+		this->SPBuffer[gridPhi] = u->getValueAt(gridPhi, u->getNTheta() - 1);
+	}
+
+	applyPolarBoundaryCondition();
+
     u->swapBuffer();
     v->swapBuffer();
 }

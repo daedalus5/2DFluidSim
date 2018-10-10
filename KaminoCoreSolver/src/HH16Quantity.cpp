@@ -52,6 +52,12 @@ fReal& HH16Quantity::accessValueAt(size_t x, size_t y)
 
 void HH16Quantity::writeValueTo(size_t x, size_t y, fReal val)
 {
+# ifdef DEBUGBUILD
+	//if (abs(val) > 10.0)
+	//{
+	//	std::cerr << "Velocity Problem" << std::endl;
+	//}
+# endif
     this->nextStep[getIndex(x, y)] = val;
 }
 
@@ -93,13 +99,18 @@ size_t HH16Quantity::getThetaIndexAtCoord(fReal theta)
 /*
 Bilinear interpolated for now.
 */
+// ?? PROBLEM ??
 fReal HH16Quantity::sampleAt(fReal x, fReal y, fReal uNorthP[2], fReal uSouthP[2])
 {
-    fReal phi = x;
-    fReal theta = y;
+	fReal phi = x;
+	fReal theta = y;
 
 	// should restore phi and theta that are out of bounds
-    bool isFlippedPole = validatePhiTheta(phi, theta);
+	bool isFlippedPole = validatePhiTheta(phi, theta);
+
+	if (phi > M_2PI || phi < 0 || theta > M_PI || theta < 0) {
+		std::cout << "problem" << std::endl;
+	}
 
 	// get phi/theta indices
     fReal normedPhi = phi * invGridLen;
@@ -113,7 +124,7 @@ fReal HH16Quantity::sampleAt(fReal x, fReal y, fReal uNorthP[2], fReal uSouthP[2
     fReal alphaTheta = normedTheta - static_cast<fReal>(thetaIndex);
 
 	size_t phiLower = phiIndex % nPhi;
-	size_t phiHigher = (phiLower + 1) % nPhi;
+	size_t phiHigher = (phiLower + 1) % nPhi;;
 	size_t thetaLower = thetaIndex;
 	size_t thetaHigher = thetaIndex + 1;
 
@@ -121,6 +132,7 @@ fReal HH16Quantity::sampleAt(fReal x, fReal y, fReal uNorthP[2], fReal uSouthP[2
 	fReal higherBelt = Lerp<fReal>(getValueAt(phiLower, thetaHigher), getValueAt(phiHigher, thetaHigher), alphaPhi);
 
 	fReal lerped = Lerp<fReal>(lowerBelt, higherBelt, alphaTheta);
+
 	return lerped;
 
 	/*
@@ -220,6 +232,7 @@ bool HH16Quantity::validatePhiTheta(fReal & phi, fReal & theta)
 		theta = M_2PI - theta;
 		phi += M_PI;
 		isFlipped = true;
+		// Now theta is in 0-pi range
 	}
 
 	loops = static_cast<int>(std::floor(phi / M_2PI));

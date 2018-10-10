@@ -16,7 +16,7 @@ HH16Sphere::~HH16Sphere()
 
 void HH16Sphere::run()
 {
-    HH16Solver solver(nPhi, nTheta, radius, M_2PI / nPhi, dt);
+    HH16Solver solver(nPhi, nTheta, radius, gridLen, dt);
 
     HH16Quantity* u = solver.getAttributeNamed("u");
     HH16Quantity* v = solver.getAttributeNamed("v");
