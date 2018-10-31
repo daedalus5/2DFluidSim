@@ -52,11 +52,9 @@ void HH16Solver::stepForward(fReal timeStep)
     this->advectionTime += timer.stopTimer();
 
 	// GEOMETRIC
-
-	/*
 	
     timer.startTimer();
-    geometric(); // Buffer is swapped here
+    geometric();
     this->geometricTime += timer.stopTimer();
 
 	// BODY FORCES
@@ -69,7 +67,7 @@ void HH16Solver::stepForward(fReal timeStep)
     projection();
     this->projectionTime += timer.stopTimer();
     this->timeElapsed += timeStep;
-	*/
+
 }
 
 void HH16Solver::bodyForce()
@@ -236,7 +234,7 @@ void HH16Solver::applyPolarBoundaryCondition() {
 
 		fReal u_theta_NP = uNorthP[0] * c + uNorthP[1] * s;
 		fReal u_phi_NP = -uNorthP[0] * s + uNorthP[1] * c;
-		fReal u_theta_SP = uSouthP[0] * c + uSouthP[1] * s;
+		fReal u_theta_SP = -uSouthP[0] * c + -uSouthP[1] * s;
 		fReal u_phi_SP = -uSouthP[0] * s + uSouthP[1] * c;
 
 		uTheta->writeValueTo(gridPhi, 0, u_theta_NP);

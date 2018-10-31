@@ -8,10 +8,13 @@ void HH16Solver::initialize_velocity()
     // set u_phi initial values using FBM curl noise
     fReal gain = 4096.0 / nPhi;
 
+	/*
 	for (size_t i = 0; i < u->getNPhi(); ++i) {
 		for (size_t j = 0; j < u->getNTheta(); ++j) {
 			//fReal val = FBM(cos(i * gridLen), sin(j * gridLen));
-			fReal val = sin(i * gridLen) * sin(j * gridLen);
+			//fReal val = sin(i * gridLen) * sin(j * gridLen);
+			//fReal val = 2 * cos(i * gridLen);
+			fReal val = 0.0;
 			u->setValueAt(i, j, val);
 		}
 	}
@@ -19,9 +22,63 @@ void HH16Solver::initialize_velocity()
 	for (size_t i = 0; i < v->getNPhi(); ++i) {
 		for (size_t j = 0; j < v->getNTheta(); ++j) {
 			//fReal val = FBM(cos(i * gridLen), sin(j * gridLen));
-			fReal val = sin(i * gridLen) * sin(j * gridLen);
+			//fReal val = sin(i * gridLen) * sin(j * gridLen);
+			fReal val = 3 * cos(i * gridLen);// *sin(j * gridLen);
 			v->setValueAt(i, j, val);
 		}
+	}
+	*/
+
+	// set initial u values everywhere but poles
+	for (size_t j = 1; j < u->getNTheta() - 1; ++j) {
+		for (size_t i = 0; i < u->getNPhi(); ++i) {
+			fReal theta_here = j * gridLen;
+			fReal phi_here = i * gridLen;
+			fReal theta_up = (j + 1) * gridLen;
+			fReal phi_up = i * gridLen;
+			fReal theta_down = (j - 1) * gridLen;
+			fReal phi_down = i * gridLen;
+			fReal theta_right = j * gridLen;
+			fReal phi_right = (i + 1) * gridLen;
+			fReal theta_left = j * gridLen;
+			fReal phi_left = (i - 1) * gridLen;
+			fReal noise_up = FBM(sin(phi_up), theta_up);
+			fReal noise_down = FBM(sin(phi_down), theta_down);
+			fReal noise_right = FBM(sin(phi_right), theta_right);
+			fReal noise_left = FBM(sin(phi_left), theta_left);
+			fReal noise_here = 0.5 / (radius * gridLen) * (noise_up - noise_down);
+			u->setValueAt(i, j, noise_here * gain);
+		}
+	}
+	// set initial v values everywhere but poles
+	for (size_t j = 1; j < v->getNTheta() - 1; ++j) {
+		for (size_t i = 0; i < v->getNPhi(); ++i) {
+			fReal theta_here = j * gridLen;
+			fReal phi_here = i * gridLen;
+			fReal theta_up = (j + 1) * gridLen;
+			fReal phi_up = i * gridLen;
+			fReal theta_down = (j - 1) * gridLen;
+			fReal phi_down = i * gridLen;
+			fReal theta_right = j * gridLen;
+			fReal phi_right = (i + 1) * gridLen;
+			fReal theta_left = j * gridLen;
+			fReal phi_left = (i - 1) * gridLen;
+			fReal noise_up = FBM(sin(phi_up), theta_up);
+			fReal noise_down = FBM(sin(phi_down), theta_down);
+			fReal noise_right = FBM(sin(phi_right), theta_right);
+			fReal noise_left = FBM(sin(phi_left), theta_left);
+			fReal noise_here = -0.5 / (radius * gridLen) * (noise_right - noise_left);
+			//fReal noise_here = -0.5 / (radius * gridLen * sin(j * gridLen)) * (noise_right - noise_left);
+			v->setValueAt(i, j, noise_here * gain);
+		}
+	}
+
+	// initialize poles to zero
+	for (size_t i = 0; i < u->getNPhi(); ++i) {
+		u->setValueAt(i, 0, 0.0);
+		v->setValueAt(i, 0, 0.0);
+		u->setValueAt(i, u->getNTheta() - 1, 0.0);
+		v->setValueAt(i, v->getNTheta() - 1, 0.0);
 	}
 
 	/*
@@ -98,7 +155,6 @@ void HH16Solver::initialize_velocity()
             v->setValueAt(i, j, avgNoise * gain);
         }
     }
-
 	*/
 
 	// should run a projection step here...

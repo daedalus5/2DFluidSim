@@ -87,7 +87,7 @@ void HH16Solver::solvePolarVelocitiesAdvection()
 
 	// HH16 central differencing scheme
 
-	for (size_t gridPhi = 0; gridPhi < nPhi; ++gridPhi)
+	for (size_t gridPhi = 0; gridPhi; ++gridPhi)
 	{
 		size_t gridShift = (gridPhi + nPhi / 2) % nPhi;
 
@@ -95,21 +95,27 @@ void HH16Solver::solvePolarVelocitiesAdvection()
 		u_n = uTheta->getValueAt(gridPhi, 0);
 		u_down = uTheta->getValueAt(gridPhi, 1);
 		u_up = uTheta->getValueAt(gridShift, 1);
-		delta_u = abs(u_up) - abs(u_down);
-		sign = signCheck(delta_u, u_up, u_down);
-		delta_u *= sign;
-		u_star = u_n - timeStep * (u_n / radius) * (delta_u / (2.0 * gridLen));
+		delta_u = u_down - u_n;
+		//delta_u = abs(u_up) - abs(u_down);
+		//sign = signCheck(delta_u, u_up, u_down);
+		//delta_u *= sign;
+		//delta_u = u_up - u_down;
+		u_star = u_n - timeStep * (u_n / radius) * (delta_u / (1.0 * gridLen));
 		this->NPBuffer[gridPhi] = u_star;
+		//this->NPBuffer[gridShift] = -u_star;
 
 		// South pole
 		u_n = uTheta->getValueAt(gridPhi, nTheta - 1);
 		u_down = uTheta->getValueAt(gridPhi, nTheta - 2);
 		u_up = uTheta->getValueAt(gridShift, nTheta - 2);
-		delta_u = abs(u_up) - abs(u_down);
-		sign = -signCheck(delta_u, u_up, u_down); // South pole has a flipped orientation
-		delta_u *= sign;
-		u_star = u_n - timeStep * (u_n / radius) * (delta_u / (2.0 * gridLen));
+		delta_u = u_n - u_down;
+		//delta_u = abs(u_up) - abs(u_down);
+		//sign = signCheck(delta_u, u_up, u_down); // South pole has a flipped orientation
+		//delta_u *= sign;
+		//delta_u = u_up - u_down;
+		u_star = u_n - timeStep * (u_n / radius) * (delta_u / (1.0 * gridLen));
 		this->SPBuffer[gridPhi] = u_star;
+		//this->SPBuffer[gridShift] = -u_star;
 	}
 
 	applyPolarBoundaryCondition();

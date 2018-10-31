@@ -17,6 +17,7 @@
 # include "mkl_service.h"
 /* Include Poisson Library header files */
 # include "mkl_poisson.h"
+# include "mkl_dfti.h"
 
 # define OMParallelize
 

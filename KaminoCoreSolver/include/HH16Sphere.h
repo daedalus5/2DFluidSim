@@ -21,7 +21,7 @@ private:
     
 public:
     HH16Sphere(fReal radius = 5.0, size_t nTheta = 256,
-        float dt = 0.005, float DT = 1.0 / 24.0, int frames = 10,
+        float dt = 0.005, float DT = 1.0 / 24.0, int frames = 50,
         std::string gridPath = "HH16grid/frame");
     ~HH16Sphere(); 
 

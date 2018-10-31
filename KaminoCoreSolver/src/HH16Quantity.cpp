@@ -52,12 +52,6 @@ fReal& HH16Quantity::accessValueAt(size_t x, size_t y)
 
 void HH16Quantity::writeValueTo(size_t x, size_t y, fReal val)
 {
-# ifdef DEBUGBUILD
-	//if (abs(val) > 10.0)
-	//{
-	//	std::cerr << "Velocity Problem" << std::endl;
-	//}
-# endif
     this->nextStep[getIndex(x, y)] = val;
 }
 
