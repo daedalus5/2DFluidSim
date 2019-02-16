@@ -192,6 +192,7 @@ private:
 	void initialize_velocity();
 	/* This temporary function is for rebuttal phase's steady flow sample*/
 	void initializeVelocityFromOmega(Eigen::Vector3d omega);
+	Eigen::Vector3d omega;
 	/* initialize pressure attribute */
 	void initialize_pressure();
 	/* initialize density distribution */
@@ -234,6 +235,8 @@ public:
 	~KaminoSolver();
 
 	void stepForward(fReal timeStep);
+	void evaluateTruncation();
+	void evaluateTruncationSkewed();
 
 	void addCenteredAttr(std::string name, fReal xOffset = 0.5, fReal yOffset = 0.5);
 	void addStaggeredAttr(std::string name, fReal xOffset, fReal yOffset);

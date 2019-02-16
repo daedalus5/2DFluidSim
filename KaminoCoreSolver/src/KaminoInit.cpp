@@ -177,8 +177,11 @@ Eigen::Vector3d sphericalCrossProd(const Eigen::Vector3d& omega, const Eigen::Ve
 
 void KaminoSolver::initializeVelocityFromOmega(Eigen::Vector3d omega)
 {
+	this->omega = omega;
 	KaminoQuantity* u = this->staggeredAttr["u"];
+	KaminoQuantity* uOri = this->staggeredAttr["uOriginal"];
 	KaminoQuantity* v = this->staggeredAttr["v"];
+	KaminoQuantity* vOri = this->staggeredAttr["vOriginal"];
 
 	for (size_t beltJ = 0; beltJ < this->nTheta; ++beltJ)
 	{
@@ -191,21 +194,25 @@ void KaminoSolver::initializeVelocityFromOmega(Eigen::Vector3d omega)
 			Eigen::Vector3d r(radius, phiLeft, beltTheta);
 			Eigen::Vector3d vel = sphericalCrossProd(omega, r);
 			u->setValueAt(gridI, beltJ, vel[phiComp]);
+			uOri->setValueAt(gridI, beltJ, vel[phiComp]);
 
 			fReal phiRight = beltPhi + 0.5 * gridLen;
 			r = Eigen::Vector3d(radius, phiRight, beltTheta);
 			vel = sphericalCrossProd(omega, r);
 			u->setValueAt((gridI + 1) % nPhi, beltJ, vel[phiComp]);
+			uOri->setValueAt((gridI + 1) % nPhi, beltJ, vel[phiComp]);
 
 			fReal thetaLower = beltTheta - 0.5 * gridLen;
 			r = Eigen::Vector3d(radius, beltPhi, thetaLower);
 			vel = sphericalCrossProd(omega, r);
-			v->setValueAt(gridI, beltJ, vel[thetaComp]);
+			v->setValueAt(gridI, beltJ, 0.0);
+			vOri->setValueAt(gridI, beltJ, 0.0);
 
 			fReal thetaHigher = beltTheta + 0.5 * gridLen;
 			r = Eigen::Vector3d(radius, beltPhi, thetaHigher);
 			vel = sphericalCrossProd(omega, r);
-			v->setValueAt(gridI, beltJ + 1, vel[thetaComp]);
+			v->setValueAt(gridI, beltJ + 1, 0.0);
+			vOri->setValueAt(gridI, beltJ + 1, 0.0);
 		}
 	}
 
@@ -215,6 +222,7 @@ void KaminoSolver::initializeVelocityFromOmega(Eigen::Vector3d omega)
 		for (size_t i = 0; i < u->getNPhi(); ++i)
 		{
 			u->writeValueTo(i, j, u->getValueAt(i, j));
+			uOri->writeValueTo(i, j, uOri->getValueAt(i, j));
 		}
 	}
 	for (size_t j = 0; j < v->getNTheta(); ++j)
@@ -222,12 +230,88 @@ void KaminoSolver::initializeVelocityFromOmega(Eigen::Vector3d omega)
 		for (size_t i = 0; i < v->getNPhi(); ++i)
 		{
 			v->writeValueTo(i, j, v->getValueAt(i, j));
+			vOri->writeValueTo(i, j, vOri->getValueAt(i, j));
 		}
 	}
 
 	solvePolarVelocities();
 	u->swapBuffer();
 	v->swapBuffer();
+	uOri->swapBuffer();
+	vOri->swapBuffer();
+}
+
+void KaminoSolver::evaluateTruncation()
+{
+	KaminoQuantity* u = this->staggeredAttr["u"];
+	KaminoQuantity* uOri = this->staggeredAttr["uOriginal"];
+	KaminoQuantity* v = this->staggeredAttr["v"];
+	KaminoQuantity* vOri = this->staggeredAttr["vOriginal"];
+
+	fReal minTruncUTheta = 0.0;
+	fReal minTruncUPhi = 0.0;
+
+	for (size_t j = 0; j < u->getNTheta(); ++j)
+	{
+		for (size_t i = 0; i < u->getNPhi(); ++i)
+		{
+			fReal uCurrent = u->getValueAt(i, j);
+			fReal uPrevious = uOri->getValueAt(i, j);
+			fReal uError = std::abs(uPrevious - uCurrent);
+			minTruncUPhi = uError > minTruncUPhi ? uError : minTruncUPhi;
+		}
+	}
+	for (size_t j = 0; j < v->getNTheta(); ++j)
+	{
+		for (size_t i = 0; i < v->getNPhi(); ++i)
+		{
+			fReal vCurrent = v->getValueAt(i, j);
+			fReal vPrevious = vOri->getValueAt(i, j);
+			fReal vError = std::abs(vPrevious - vCurrent);
+			minTruncUTheta = vError > minTruncUTheta ? vError : minTruncUTheta;
+		}
+	}
+
+	std::cout << "Truncation error along u:" << minTruncUPhi << std::endl;
+	std::cout << "Truncation error along v:" << minTruncUTheta << std::endl;
+}
+
+void KaminoSolver::evaluateTruncationSkewed()
+{
+	KaminoQuantity* u = this->staggeredAttr["u"];
+	KaminoQuantity* uOri = this->staggeredAttr["uOriginal"];
+	KaminoQuantity* v = this->staggeredAttr["v"];
+	KaminoQuantity* vOri = this->staggeredAttr["vOriginal"];
+
+	fReal truncUTheta = 0.0;
+	fReal truncUPhi = 0.0;
+
+	for (size_t j = 1; j < u->getNTheta() - 1; ++j)
+	{
+		for (size_t i = 0; i < u->getNPhi(); ++i)
+		{
+			fReal uCurrent = u->getValueAt(i, j);
+			fReal uPrevious = uOri->getValueAt(i, j);
+			fReal uError = std::abs(uPrevious - uCurrent);
+			truncUPhi += uError;
+		}
+	}
+	truncUPhi /= (u->getNTheta() * u->getNPhi());
+
+	for (size_t j = 1; j < v->getNTheta() - 1; ++j)
+	{
+		for (size_t i = 0; i < v->getNPhi(); ++i)
+		{
+			fReal vCurrent = v->getValueAt(i, j);
+			fReal vPrevious = vOri->getValueAt(i, j);
+			fReal vError = std::abs(vPrevious - vCurrent);
+			truncUTheta += vError;
+		}
+	}
+	truncUTheta /= (v->getNTheta() * v->getNPhi());
+
+	std::cout << "Truncation error along u:" << truncUPhi << std::endl;
+	std::cout << "Truncation error along v:" << truncUTheta << std::endl;
 }
 
 fReal KaminoSolver::fPhi(const fReal x)

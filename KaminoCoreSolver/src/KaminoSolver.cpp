@@ -24,13 +24,15 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 
 	addStaggeredAttr("u", -0.5, 0.5);		// u velocity
 	addStaggeredAttr("v", 0.0, 0.0);		// v velocity
+	addStaggeredAttr("uOriginal", -0.5, 0.5);
+	addStaggeredAttr("vOriginal", 0.0, 0.0);
 	addCenteredAttr("p", 0.0, 0.5);			// p pressure
 	addCenteredAttr("density", 0.0, 0.5);	// density
 
 	this->gridTypes = new gridType[nPhi * nTheta];
 	
 	//initialize_velocity();
-	Eigen::Vector3d omega = Eigen::Vector3d(0.8, 0.0, 0.4);
+	Eigen::Vector3d omega = Eigen::Vector3d(0.3, 0.0, 0.2);
 	initializeVelocityFromOmega(omega);
 	initialize_pressure();
 	initialize_density();
@@ -83,13 +85,15 @@ void KaminoSolver::stepForward(fReal timeStep)
 	this->swapAttrBuffers();
 
 	timer.startTimer();
-	geometric(); // Buffer is swapped here
+	//geometric(); // Buffer is swapped here
 	this->geometricTime += timer.stopTimer();
 	//bodyForce();
 	timer.startTimer();
-	projection();
+	//projection();
 	this->projectionTime += timer.stopTimer();
 	this->timeElapsed += timeStep;
+
+	//evaluateTruncation();
 }
 
 // Phi: 0 - 2pi  Theta: 0 - pi
@@ -181,7 +185,7 @@ void KaminoSolver::addStaggeredAttr(std::string name, fReal xOffset, fReal yOffs
 	size_t attrnPhi = this->nPhi;
 	size_t attrnTheta = this->nTheta;
 	// Is the staggered attribute uTheta?
-	if (name == "v")
+	if (name == "v" || name == "vOriginal")
 	{
 		attrnTheta += 1;
 	}

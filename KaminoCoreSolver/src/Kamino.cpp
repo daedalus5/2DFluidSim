@@ -58,6 +58,7 @@ void Kamino::run()
             //particles.updatePositions(u, v, dt);
             T += dt;
         }
+		solver.evaluateTruncation();
         solver.stepForward(dt + i*DT - T);
         //particles.updatePositions(u, v, dt);
         T = i*DT;
