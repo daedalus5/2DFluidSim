@@ -14,35 +14,6 @@ void KaminoSolver::initialize_velocity()
 	KaminoQuantity* u = this->staggeredAttr["u"];
 	KaminoQuantity* v = this->staggeredAttr["v"];
 
-	// OLD
-	// fReal f = 0.0;
-	// fReal g = 0.0;
-	// size_t sizePhi = u->getNPhi();
-	// size_t sizeTheta = u->getNTheta();
-	// for (size_t j = 0; j < sizeTheta; ++j) {
-	// 	for (size_t i = 0; i < sizePhi; ++i) {
-	// 		f = fPhi(i * gridLen);
-	// 		g = gTheta(j * gridLen);
-	// 		u->setValueAt(i, j, A + (f * g));
-	// 	}
-	// }
-
-	// fReal l = 0.0;
-	// fReal m = 0.0;
-	// sizePhi = v->getNPhi();
-	// sizeTheta = v->getNTheta();
-	
-	// // rest of sphere
-	// for (size_t j = 1; j < sizeTheta - 1; ++j) {
-	// 	for (size_t i = 0; i < sizePhi; ++i) {
-	// 		l = lPhi(i * gridLen);
-	// 		m = mTheta(j * gridLen);
-	// 		v->setValueAt(i, j, (l * m));
-	// 	}
-	// }
-
-	// NEW
-	// set u_phi initial values using FBM curl noise
 	fReal gain = 4096.0 / nPhi;
 
 	for (size_t j = 0; j < u->getNTheta(); ++j)
@@ -68,7 +39,8 @@ void KaminoSolver::initialize_velocity()
 		}
 	}
 	// phi = 0 seam
-	for (size_t j = 0; j < u->getNTheta(); ++j){
+	for (size_t j = 0; j < u->getNTheta(); ++j)
+	{
 		fReal ur_x = gridLen / 2;
 		fReal ur_y = (j + 1) * gridLen;
 		fReal lr_x = gridLen / 2;
@@ -88,16 +60,16 @@ void KaminoSolver::initialize_velocity()
 	}
 
 	// u_theta at poles is set to zero
-	for(size_t i = 0; i < v->getNPhi(); ++i)
+	for (size_t i = 0; i < v->getNPhi(); ++i)
 	{
 		v->setValueAt(i, 0, 0);
 		v->setValueAt(i, v->getNTheta() - 1, 0);
 	}
 
 	// set u_theta initial values using FBM curl noise
-	for(size_t j = 1; j < v->getNTheta() - 1; ++j)
+	for (size_t j = 1; j < v->getNTheta() - 1; ++j)
 	{
-		for(size_t i = 0 ; i < v->getNPhi(); ++i)
+		for (size_t i = 0; i < v->getNPhi(); ++i)
 		{
 			fReal ur_x = (i + 1) * gridLen;
 			fReal ur_y = j * gridLen + gridLen / 2;
@@ -119,13 +91,18 @@ void KaminoSolver::initialize_velocity()
 	}
 
 	// Heat up the next buffer.
-	for (size_t j = 0; j < u->getNTheta(); ++j) {
-		for (size_t i = 0; i < u->getNPhi(); ++i) {
+	for (size_t j = 0; j < u->getNTheta(); ++j)
+	{
+		for (size_t i = 0; i < u->getNPhi(); ++i)
+		{
 			u->writeValueTo(i, j, u->getValueAt(i, j));
 		}
 	}
-	for (size_t j = 1; j < v->getNTheta() - 1; ++j) {
-		for (size_t i = 0; i < v->getNPhi(); ++i) {
+
+	for (size_t j = 1; j < v->getNTheta() - 1; ++j)
+	{
+		for (size_t i = 0; i < v->getNPhi(); ++i)
+		{
 			v->writeValueTo(i, j, v->getValueAt(i, j));
 		}
 	}
