@@ -37,11 +37,11 @@ private:
     Eigen::Matrix<fReal, 3, 1>* colorMap;
 
     /* initialize density field in solver */
-    void initializeDensity(KaminoQuantity* d, const fReal skewPhi, const fReal skewTheta);
+    void initializeDensity(KaminoQuantity* d);
     /* define the locations of SOLID and FLUID grid cells */
-    void defineCellTypes(gridType* g, const fReal skewPhi, const fReal skewTheta);
+    void defineCellTypes(KaminoQuantity* d, gridType* g);
     /* load color image for particle color initialization */
-    void loadColorImage(const fReal skewPhi, const fReal skewTheta);
+    void loadColorImage(KaminoQuantity* d);
 
     size_t getIndex(size_t x, size_t y);
 	

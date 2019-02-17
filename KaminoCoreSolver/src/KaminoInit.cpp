@@ -9,7 +9,7 @@ void KaminoSolver::initialize_pressure()
 	}
 }
 
-void KaminoSolver::initialize_velocity(const fReal skewPhi, const fReal skewTheta)
+void KaminoSolver::initialize_velocity()
 {
 	KaminoQuantity* u = this->staggeredAttr["u"];
 	KaminoQuantity* v = this->staggeredAttr["v"];
@@ -94,40 +94,23 @@ void KaminoSolver::initialize_velocity(const fReal skewPhi, const fReal skewThet
 	solvePolarVelocities();
 
 	// Set up the skewed values.
-	int skewIOffset = std::abs(std::floor(skewPhi / gridLen));
-	int skewJOffset = std::abs(std::floor(skewTheta / gridLen));
+	
+	size_t skewedPhiInd = 0;
+	size_t skewedThetaInd = 0;
 	for (int j = 0; j < u->getNTheta(); ++j)
 	{
-		int skewedJ = j - skewJOffset;
-		if (skewedJ < 0)
-		{
-			skewedJ += u->getNTheta();
-		}
 		for (int i = 0; i < u->getNPhi(); ++i)
 		{
-			int skewedI = i - skewIOffset;
-			if (skewedI < 0)
-			{
-				skewedI += u->getNPhi();
-			}
-			u->writeValueTo(skewedI, skewedJ, u->getValueAt(i, j));
+			u->convert2SlewedCoord(i, j, skewedPhiInd, skewedThetaInd);
+			u->writeValueTo(i, j, u->getValueAt(skewedPhiInd, skewedThetaInd));
 		}
 	}
 	for (int j = 1; j < v->getNTheta() - 1; ++j)
 	{
-		int skewedJ = j - skewJOffset;
-		if (skewedJ < 0)
-		{
-			skewedJ += v->getNTheta();
-		}
 		for (int i = 0; i < v->getNPhi(); ++i)
 		{
-			int skewedI = i - skewIOffset;
-			if (skewedI < 0)
-			{
-				skewedI += v->getNPhi();
-			}
-			v->writeValueTo(skewedI, skewedJ, v->getValueAt(i, j));
+			v->convert2SlewedCoord(i, j, skewedPhiInd, skewedThetaInd);
+			v->writeValueTo(i, j, v->getValueAt(skewedPhiInd, skewedThetaInd));
 		}
 	}
 

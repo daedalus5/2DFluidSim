@@ -34,10 +34,6 @@ const fReal density = 1000.0;
 const fReal uSolid = 0.0;
 const fReal vSolid = 0.0;
 
-// Skewed Value.
-const fReal skewPhiVal = (fReal)0.0;
-const fReal skewThetaVal = (fReal)0.0;
-
 // Handy Lerp.
 template <class Type>
 Type KaminoLerp(const Type &fromEndPoint, const Type &toEndPoint, double factor)
@@ -111,6 +107,8 @@ public:
 
 	fReal getPhiOffset();
 	fReal getThetaOffset();
+
+	void convert2SlewedCoord(const size_t& phiInd, const size_t& thetaInd, size_t& phiSkewedInd, size_t& thetaSkewedInd);
 };
 
 bool validatePhiTheta(fReal & phi, fReal & theta);
@@ -195,7 +193,7 @@ private:
 	void swapAttrBuffers();
 
 	/* distribute initial velocity values at grid points */
-	void initialize_velocity(const fReal skewPhi, const fReal skewTheta);
+	void initialize_velocity();
 	/* This temporary function is for rebuttal phase's steady flow sample*/
 	void initializeVelocityFromOmega(Eigen::Vector3d omega);
 	/* initialize pressure attribute */

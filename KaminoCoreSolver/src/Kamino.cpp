@@ -36,10 +36,10 @@ void Kamino::run()
 {
     KaminoSolver solver(nPhi, nTheta, radius, M_PI / nTheta, dt, A, B, C, D, E);
     KaminoQuantity* d = solver.getAttributeNamed("density");
-    initializeDensity(d, skewPhiVal, skewThetaVal);
+    initializeDensity(d);
     gridType* g = solver.getGridTypeHandle();
-    defineCellTypes(g, skewPhiVal, skewThetaVal);
-	loadColorImage(skewPhiVal, skewThetaVal);
+    defineCellTypes(d, g);
+	loadColorImage(d);
 
     KaminoParticles particles(particleDensity, radius, gridLen, &solver, nPhi, nTheta, densityImage, colorMap);
 
@@ -70,7 +70,7 @@ void Kamino::run()
 	std::cout << "Performance: " << frames / cpu_time << " frames per second" << std::endl;
 }
 
-void Kamino::loadColorImage(const fReal skewPhi, const fReal skewTheta)
+void Kamino::loadColorImage(KaminoQuantity* d)
 {
     // read in image
     Mat image_in;
@@ -90,32 +90,23 @@ void Kamino::loadColorImage(const fReal skewPhi, const fReal skewTheta)
     resize(image_flipped, image_sized, size);
 
 	// Set up the skewed values.
-	int skewIOffset = std::abs(std::floor(skewPhi / gridLen));
-	int skewJOffset = std::abs(std::floor(skewTheta / gridLen));
+	size_t skewedPhiInd = 0;
+	size_t skewedThetaInd = 0;
 
-    for(size_t i = 0; i < nPhi; ++i)
-    {
-		int skewedI = i - skewIOffset;
-		if (skewedI < 0)
+	for (size_t i = 0; i < nPhi; ++i)
+	{
+		for (size_t j = 0; j < nTheta; ++j)
 		{
-			skewedI += nPhi;
+			d->convert2SlewedCoord(i, j, skewedPhiInd, skewedThetaInd);
+			Point3_<uchar>* p = image_sized.ptr<Point3_<uchar>>(skewedThetaInd, skewedPhiInd);
+			colorMap[getIndex(i, j)][2] = p->x / 255.0; // B
+			colorMap[getIndex(i, j)][1] = p->y / 255.0; // G
+			colorMap[getIndex(i, j)][0] = p->z / 255.0; // R
 		}
-        for(size_t j = 0; j < nTheta; ++j)
-        {
-			int skewedJ = j - skewJOffset;
-			if (skewedJ < 0)
-			{
-				skewedJ += nTheta;
-			}
-            Point3_<uchar>* p = image_sized.ptr<Point3_<uchar>>(j, i);
-            colorMap[getIndex(skewedI, skewedJ)][2] = p->x / 255.0; // B
-            colorMap[getIndex(skewedI, skewedJ)][1] = p->y / 255.0; // G
-            colorMap[getIndex(skewedI, skewedJ)][0] = p->z / 255.0; // R
-        }
-    }
+	}
 }
 
-void Kamino::initializeDensity(KaminoQuantity* d, const fReal skewPhi, const fReal skewTheta)
+void Kamino::initializeDensity(KaminoQuantity* d)
 {
 	// read in image
 	Mat image_in;
@@ -138,31 +129,22 @@ void Kamino::initializeDensity(KaminoQuantity* d, const fReal skewPhi, const fRe
 	resize(image_gray, image_sized, size);
 
 	// Set up the skewed values.
-	int skewIOffset = std::abs(std::floor(skewPhi / gridLen));
-	int skewJOffset = std::abs(std::floor(skewTheta / gridLen));
+	size_t skewedPhiInd = 0;
+	size_t skewedThetaInd = 0;
 
 	for (size_t i = 0; i < nPhi; ++i)
 	{
-		int skewedI = i - skewIOffset;
-		if (skewedI < 0)
-		{
-			skewedI += nPhi;
-		}
 		for (size_t j = 0; j < nTheta; ++j)
 		{
-			int skewedJ = j - skewJOffset;
-			if (skewedJ < 0)
-			{
-				skewedJ += nTheta;
-			}
-			Scalar intensity = image_sized.at<uchar>(Point(i, j));
+			d->convert2SlewedCoord(i, j, skewedPhiInd, skewedThetaInd);
+			Scalar intensity = image_sized.at<uchar>(Point(skewedPhiInd, skewedThetaInd));
 			fReal scale = static_cast <fReal> (intensity.val[0]) / 255.0;
-			d->setValueAt(skewedI, skewedJ, scale);
+			d->setValueAt(i, j, scale);
 		}
 	}
 }
 
-void Kamino::defineCellTypes(gridType* g, const fReal skewPhi, const fReal skewTheta)
+void Kamino::defineCellTypes(KaminoQuantity* d, gridType* g)
 {
     for (size_t gPhi = 0; gPhi < nPhi; ++gPhi)
     {
@@ -193,28 +175,19 @@ void Kamino::defineCellTypes(gridType* g, const fReal skewPhi, const fReal skewT
 	resize(image_gray, image_sized, size);
 
 	// Set up the skewed values.
-	int skewIOffset = std::abs(std::floor(skewPhi / gridLen));
-	int skewJOffset = std::abs(std::floor(skewTheta / gridLen));
+	size_t skewedPhiInd = 0;
+	size_t skewedThetaInd = 0;
 
 	//define SOLID cells beneath some threshold
 	for (size_t i = 0; i < nPhi; ++i)
 	{
-		int skewedI = i - skewIOffset;
-		if (skewedI < 0)
-		{
-			skewedI += nPhi;
-		}
 		for (size_t j = 0; j < nTheta; ++j)
 		{
-			int skewedJ = j - skewJOffset;
-			if (skewedJ < 0)
-			{
-				skewedJ += nTheta;
-			}
-			Scalar intensity = image_sized.at<uchar>(Point(i, j));
+			d->convert2SlewedCoord(i, j, skewedPhiInd, skewedThetaInd);
+			Scalar intensity = image_sized.at<uchar>(Point(skewedPhiInd, skewedThetaInd));
 			if (intensity.val[0] > 128)
 			{
-				*(g + getIndex(skewedI, skewedJ)) = SOLIDGRID;
+				*(g + getIndex(i, j)) = SOLIDGRID;
 			}
 		}
 	}

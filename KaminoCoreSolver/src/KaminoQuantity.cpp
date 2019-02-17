@@ -50,6 +50,43 @@ void KaminoQuantity::setValueAt(size_t x, size_t y, fReal val)
 	this->accessValueAt(x, y) = val;
 }
 
+// Skewed Value.
+const fReal skewPhiVal = (fReal)(M_PI / 2.0);
+const fReal skewThetaVal = (fReal)(M_PI / 2.0);
+
+void KaminoQuantity::convert2SlewedCoord(const size_t& phiInd, const size_t& thetaInd, size_t& phiSlewedInd, size_t& thetaSlewedInd)
+{
+	fReal phi = getPhiCoordAtIndex(phiInd);
+	fReal theta = getThetaCoordAtIndex(thetaInd);
+
+	fReal x = std::sin(theta) * std::cos(phi);
+	fReal y = std::sin(theta) * std::sin(phi);
+	fReal z = std::cos(theta);
+
+	fReal xSlewed = x;
+	fReal ySlewed = y * std::cos(skewThetaVal) - z * std::sin(skewThetaVal);
+	fReal zSlewed = y * std::sin(skewThetaVal) + z * std::cos(skewThetaVal);
+
+	fReal thetaSlewed = std::acos(zSlewed);
+	fReal phiSlewed = std::acos(xSlewed / std::sin(thetaSlewed));
+	if (ySlewed < 0.0)
+	{
+		phiSlewed = M_2PI - phiSlewed;
+	}
+	phiSlewed += skewPhiVal;
+	if (phiSlewed < 0.0)
+	{
+		phiSlewed += M_2PI;
+	}
+	if (phiSlewed > M_2PI)
+	{
+		phiSlewed -= M_2PI;
+	}
+
+	phiSlewedInd = getPhiIndexAtCoord(phiSlewed) % nPhi;
+	thetaSlewedInd = getThetaIndexAtCoord(thetaSlewed) % nTheta;
+}
+
 fReal& KaminoQuantity::accessValueAt(size_t x, size_t y)
 {
 	return this->thisStep[getIndex(x, y)];
