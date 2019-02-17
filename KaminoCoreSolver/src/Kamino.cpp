@@ -36,10 +36,10 @@ void Kamino::run()
 {
     KaminoSolver solver(nPhi, nTheta, radius, M_PI / nTheta, dt, A, B, C, D, E);
     KaminoQuantity* d = solver.getAttributeNamed("density");
-    initializeDensity(d);
+    initializeDensity(d, skewPhiVal, skewThetaVal);
     gridType* g = solver.getGridTypeHandle();
-    defineCellTypes(g);
-	loadColorImage();
+    defineCellTypes(g, skewPhiVal, skewThetaVal);
+	loadColorImage(skewPhiVal, skewThetaVal);
 
     KaminoParticles particles(particleDensity, radius, gridLen, &solver, nPhi, nTheta, densityImage, colorMap);
 
@@ -70,7 +70,7 @@ void Kamino::run()
 	std::cout << "Performance: " << frames / cpu_time << " frames per second" << std::endl;
 }
 
-void Kamino::loadColorImage()
+void Kamino::loadColorImage(const fReal skewPhi, const fReal skewTheta)
 {
     // read in image
     Mat image_in;
@@ -88,19 +88,34 @@ void Kamino::loadColorImage()
     Mat image_sized;
     Size size(nPhi, nTheta);
     resize(image_flipped, image_sized, size);
+
+	// Set up the skewed values.
+	int skewIOffset = std::abs(std::floor(skewPhi / gridLen));
+	int skewJOffset = std::abs(std::floor(skewTheta / gridLen));
+
     for(size_t i = 0; i < nPhi; ++i)
     {
+		int skewedI = i - skewIOffset;
+		if (skewedI < 0)
+		{
+			skewedI += nPhi;
+		}
         for(size_t j = 0; j < nTheta; ++j)
         {
+			int skewedJ = j - skewJOffset;
+			if (skewedJ < 0)
+			{
+				skewedJ += nTheta;
+			}
             Point3_<uchar>* p = image_sized.ptr<Point3_<uchar>>(j, i);
-            colorMap[getIndex(i, j)][2] = p->x / 255.0; // B
-            colorMap[getIndex(i, j)][1] = p->y / 255.0; // G
-            colorMap[getIndex(i, j)][0] = p->z / 255.0; // R
+            colorMap[getIndex(skewedI, skewedJ)][2] = p->x / 255.0; // B
+            colorMap[getIndex(skewedI, skewedJ)][1] = p->y / 255.0; // G
+            colorMap[getIndex(skewedI, skewedJ)][0] = p->z / 255.0; // R
         }
     }
 }
 
-void Kamino::initializeDensity(KaminoQuantity* d)
+void Kamino::initializeDensity(KaminoQuantity* d, const fReal skewPhi, const fReal skewTheta)
 {
 	// read in image
 	Mat image_in;
@@ -122,18 +137,32 @@ void Kamino::initializeDensity(KaminoQuantity* d)
 	Size size(nPhi, nTheta);
 	resize(image_gray, image_sized, size);
 
+	// Set up the skewed values.
+	int skewIOffset = std::abs(std::floor(skewPhi / gridLen));
+	int skewJOffset = std::abs(std::floor(skewTheta / gridLen));
+
 	for (size_t i = 0; i < nPhi; ++i)
 	{
+		int skewedI = i - skewIOffset;
+		if (skewedI < 0)
+		{
+			skewedI += nPhi;
+		}
 		for (size_t j = 0; j < nTheta; ++j)
 		{
+			int skewedJ = j - skewJOffset;
+			if (skewedJ < 0)
+			{
+				skewedJ += nTheta;
+			}
 			Scalar intensity = image_sized.at<uchar>(Point(i, j));
 			fReal scale = static_cast <fReal> (intensity.val[0]) / 255.0;
-			d->setValueAt(i, j, scale);
+			d->setValueAt(skewedI, skewedJ, scale);
 		}
 	}
 }
 
-void Kamino::defineCellTypes(gridType* g)
+void Kamino::defineCellTypes(gridType* g, const fReal skewPhi, const fReal skewTheta)
 {
     for (size_t gPhi = 0; gPhi < nPhi; ++gPhi)
     {
@@ -163,14 +192,29 @@ void Kamino::defineCellTypes(gridType* g)
 	Size size(nPhi, nTheta);
 	resize(image_gray, image_sized, size);
 
+	// Set up the skewed values.
+	int skewIOffset = std::abs(std::floor(skewPhi / gridLen));
+	int skewJOffset = std::abs(std::floor(skewTheta / gridLen));
+
 	//define SOLID cells beneath some threshold
 	for (size_t i = 0; i < nPhi; ++i)
 	{
+		int skewedI = i - skewIOffset;
+		if (skewedI < 0)
+		{
+			skewedI += nPhi;
+		}
 		for (size_t j = 0; j < nTheta; ++j)
 		{
+			int skewedJ = j - skewJOffset;
+			if (skewedJ < 0)
+			{
+				skewedJ += nTheta;
+			}
 			Scalar intensity = image_sized.at<uchar>(Point(i, j));
-			if (intensity.val[0] > 128) {
-				*(g + getIndex(i, j)) = SOLIDGRID;
+			if (intensity.val[0] > 128)
+			{
+				*(g + getIndex(skewedI, skewedJ)) = SOLIDGRID;
 			}
 		}
 	}
