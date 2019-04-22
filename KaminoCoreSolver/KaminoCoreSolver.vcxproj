@@ -64,11 +64,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-<<<<<<< HEAD
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 10.0.props" />
-=======
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 8.0.props" />
->>>>>>> master
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
