@@ -1,3 +1,5 @@
+![lollipop](lolipop_real_4k.jpg)
+
 # 2DFluidSim
 
 ----- Hardware Requirements -----

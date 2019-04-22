@@ -15,6 +15,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\CubicSolver.h" />
+    <ClInclude Include="include\GlobalIncludes.h" />
+    <ClInclude Include="include\HH16Quantity.h" />
+    <ClInclude Include="include\HH16Sphere.h" />
     <ClInclude Include="include\Kamino.h" />
     <ClInclude Include="include\KaminoQuantity.h" />
     <ClInclude Include="include\KaminoTimer.h" />
@@ -22,6 +25,13 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\CubicSolver.cpp" />
+    <ClCompile Include="src\HH16Advection.cpp" />
+    <ClCompile Include="src\HH16Geometric.cpp" />
+    <ClCompile Include="src\HH16Init.cpp" />
+    <ClCompile Include="src\HH16Projection.cpp" />
+    <ClCompile Include="src\HH16Quantity.cpp" />
+    <ClCompile Include="src\HH16Solver.cpp" />
+    <ClCompile Include="src\HH16Sphere.cpp" />
     <ClCompile Include="src\Kamino.cpp" />
     <ClCompile Include="src\KaminoAdvection.cpp" />
     <ClCompile Include="src\KaminoFFT.cpp" />
@@ -54,7 +64,11 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+<<<<<<< HEAD
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 10.0.props" />
+=======
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 8.0.props" />
+>>>>>>> master
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -79,11 +93,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018.3.210\windows\mkl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>opencv_highgui2413d.lib;opencv_imgproc2413d.lib;opencv_core2413d.lib;zlibstaticd.lib;partiod.lib;cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_highgui2413d.lib;opencv_imgproc2413d.lib;opencv_core2413d.lib;zlibstaticd.lib;partiod.lib;cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;mkl_core.lib;mkl_intel_lp64.lib;mkl_sequential.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018.3.210\windows\mkl\lib\intel64_win;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"
@@ -100,7 +116,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018.3.210\windows\mkl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
@@ -108,7 +124,8 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>opencv_highgui2413.lib;opencv_imgproc2413.lib;opencv_core2413.lib;zlibstatic.lib;partio.lib;cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_highgui2413.lib;opencv_imgproc2413.lib;opencv_core2413.lib;zlibstatic.lib;partio.lib;cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;mkl_core.lib;mkl_intel_lp64.lib;mkl_sequential.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018.3.210\windows\mkl\lib\intel64_win;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"

@@ -34,6 +34,9 @@ KaminoSolver::KaminoSolver(size_t nPhi, size_t nTheta, fReal radius, fReal gridL
 	//initializeVelocityFromOmega(omega);
 	initialize_pressure();
 	initialize_density();
+	//initializeVelocityAlpha(omega);
+	//initializeVelocityBeta(omega);
+	initialize_pressure();
 	//initialize_boundary();
 }
 

@@ -29,6 +29,15 @@
     <ClInclude Include="include\KaminoTimer.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\HH16Sphere.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GlobalIncludes.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HH16Quantity.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\KaminoQuantity.cpp">
@@ -65,6 +74,27 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\KaminoTimer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HH16Sphere.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HH16Advection.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HH16Geometric.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HH16Init.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HH16Projection.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HH16Quantity.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HH16Solver.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

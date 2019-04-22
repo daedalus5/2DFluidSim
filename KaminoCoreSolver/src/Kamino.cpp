@@ -37,6 +37,10 @@ void Kamino::run()
     KaminoSolver solver(nPhi, nTheta, radius, M_PI / nTheta, dt, A, B, C, D, E);
     KaminoQuantity* d = solver.getAttributeNamed("density");
     initializeDensity(d);
+
+	Eigen::Vector3d omega = Eigen::Vector3d(0.8, M_HPI, 0.0);
+	solver.initializeVelocityAlpha(omega);
+
     gridType* g = solver.getGridTypeHandle();
     defineCellTypes(d, g);
 	loadColorImage(d);
