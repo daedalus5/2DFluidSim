@@ -1,6 +1,6 @@
 # 2DFluidSim
 
-[![youtube](youtube_image.png)](https://www.youtube.com/watch?v=BLFr2GfCn5c)
+[![youtube](youtube_image.PNG)](https://www.youtube.com/watch?v=BLFr2GfCn5c)
 
 ## Introduction
 
@@ -57,17 +57,17 @@ In your Houdini scene, create an instance node in the network editor. Double cli
 
 Create a Kamino node. You should now have access to the following parameters:
 
-- radius: The radius of the sphere.
-- nTheta: The resolution of the simulation grid. The total amount of grids would be 2*nTheta*nTheta.
-- particleDensity: The maximum amount of particles per grid.
-- dt: The time step.
-- DT: The frame rate. It should be assigned to 1.0/FPS.
-- frames: The amount of frames to be generated.
-- spin: The spinning speed component along the equator direction.
-- uphi, utheta, vphi, vtheta: Parameters used to initialize the velocity field distribution. The higher the parameter, the more turbulent the velocity will be.
-- densityImage: The full path to an image that defines the initial density distribution of the particles. The image would be resized to fit the resolution of the simulation grid.
-- solidImage: The full path to an image that specifies whether a cell should be solid or fluid. White cells (greyscale value > 128) would be solid grids, and black ones would be fluid grids.
-- colorImage: The full path to an image that would assign colors to the particles. Extremely useful for creating various patterns flowing on the sphere, for example, Latte art patterns.
+- `radius`: The radius of the sphere.
+- `nTheta`: The resolution of the simulation grid. The total amount of grids would be 2*nTheta*nTheta.
+- `particleDensity`: The maximum amount of particles per grid.
+- `dt`: The time step.
+- `DT`: The frame rate. It should be assigned to 1.0/FPS.
+- `frames`: The amount of frames to be generated.
+- `spin`: The spinning speed component along the equator direction.
+- `uphi`, `utheta`, `vphi`, `vtheta`: Parameters used to initialize the velocity field distribution. The higher the parameter, the more turbulent the velocity will be.
+- `densityImage`: The full path to an image that defines the initial density distribution of the particles. The image would be resized to fit the resolution of the simulation grid.
+- `solidImage`: The full path to an image that specifies whether a cell should be solid or fluid. White cells (greyscale value > 128) would be solid grids, and black ones would be fluid grids.
+- `colorImage`: The full path to an image that would assign colors to the particles. Extremely useful for creating various patterns flowing on the sphere, for example, Latte art patterns.
 
 Press “Run” button to run the simulation. Wait for the pop up window to finish its job.
 Load the velocity field and particles from $HIP/output and $HIP/particles and do whatever you want to them. Typical usage would be to feed the output of the particle node to OpenVDB nodes to generate a volumetric fluid.
